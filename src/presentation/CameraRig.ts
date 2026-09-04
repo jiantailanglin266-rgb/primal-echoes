@@ -18,6 +18,9 @@ export class CameraRig {
 
   /** ロックオン対象のワールド位置を返す関数。null で Free カメラ。 */
   private lockOnTarget: (() => Vec3) | null = null;
+  /** ソフトロック対象（null を返せば無効）。 */
+  private softLockTarget: (() => Vec3 | null) | null = null;
+  private lookSuppressRemaining = 0;
 
   private readonly target = new Vec3();
   private readonly desired = new Vec3();
@@ -56,9 +59,15 @@ export class CameraRig {
     this.shakeSeed = Math.random() * 1000;
   }
 
+  setSoftLockTarget(target: (() => Vec3 | null) | null): void {
+    this.softLockTarget = target;
+  }
+
   /** マウス移動量（ピクセル）で向きを更新する。ロックオン中は無視する。 */
   applyLook(deltaX: number, deltaY: number): void {
     if (this.lockOnTarget) return;
+    // プレイヤーが自分で振っている間はソフトロックが逆らわないようにする
+    if (deltaX !== 0 || deltaY !== 0) this.lookSuppressRemaining = this.balance.softLockSuppressSeconds;
     this.yaw -= deltaX * this.balance.lookSensitivity;
     this.pitch = clamp(
       this.pitch + deltaY * this.balance.lookSensitivity,
@@ -91,6 +100,8 @@ export class CameraRig {
       const t = 1 - Math.exp(-this.balance.lockOnSharpness * frameDt);
       this.yaw += wrapAngle(desiredYaw - this.yaw) * t;
       this.pitch += (this.balance.lockOnPitchRad - this.pitch) * t;
+    } else {
+      this.applySoftLock(followPosition, frameDt);
     }
 
     const cosPitch = Math.cos(this.pitch);
@@ -117,6 +128,26 @@ export class CameraRig {
     this.camera.position.set(this.current.x, this.current.y, this.current.z);
     this.camera.lookAt(this.target.x, this.target.y, this.target.z);
     this.applyShake(frameDt);
+  }
+
+  /**
+   * ソフトロック: 視界内の近い対象へ、マウスを触っていない間だけ緩く yaw を寄せる。
+   * ロックオンのように固定はせず、「なんとなく敵の方を向いている」程度に留める。
+   */
+  private applySoftLock(followPosition: Vec3, frameDt: number): void {
+    this.lookSuppressRemaining = Math.max(0, this.lookSuppressRemaining - frameDt);
+    if (this.lookSuppressRemaining > 0 || !this.softLockTarget) return;
+    const target = this.softLockTarget();
+    if (!target) return;
+    const dx = target.x - followPosition.x;
+    const dz = target.z - followPosition.z;
+    const distance = Math.sqrt(dx * dx + dz * dz);
+    if (distance > this.balance.softLockRange || distance < 1e-3) return;
+    const desiredYaw = Math.atan2(dx, dz);
+    const delta = wrapAngle(desiredYaw - this.yaw);
+    if (Math.abs(delta) > this.balance.softLockAngleRad) return;
+    const t = 1 - Math.exp(-this.balance.softLockSharpness * frameDt);
+    this.yaw += delta * t;
   }
 
   /** 減衰する擬似ランダム振動を lookAt 後の位置へ加える（向きは変えない）。 */

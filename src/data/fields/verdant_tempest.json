@@ -34,5 +34,39 @@
     { "creatureId": "grast", "poiId": "patrol_ridge", "groups": 1 },
     { "creatureId": "skarv", "poiId": "patrol_cave_mouth", "groups": 2 },
     { "creatureId": "skarv", "poiId": "patrol_river_bank", "groups": 1 }
+  ],
+  "weather": {
+    "initial": "clear",
+    "clearMinSeconds": 180,
+    "clearMaxSeconds": 320,
+    "rainMinSeconds": 70,
+    "rainMaxSeconds": 120,
+    "rainSenseMultiplier": 0.7
+  },
+  "gimmicks": [
+    {
+      "id": "rockfall_cave_mouth",
+      "kind": "rockfall",
+      "name": "崩れかけの岩棚",
+      "position": { "x": 14, "z": -44 },
+      "triggerRadius": 3.5,
+      "impactRadius": 6.5,
+      "delaySeconds": 1.1,
+      "damage": 220,
+      "flinchDamage": 400,
+      "uses": 1
+    },
+    {
+      "id": "rockfall_forest_edge",
+      "kind": "rockfall",
+      "name": "崩れかけの岩棚",
+      "position": { "x": -26, "z": 24 },
+      "triggerRadius": 3.5,
+      "impactRadius": 6.5,
+      "delaySeconds": 1.1,
+      "damage": 220,
+      "flinchDamage": 400,
+      "uses": 1
+    }
   ]
 }

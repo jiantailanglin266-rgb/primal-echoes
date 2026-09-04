@@ -46,6 +46,12 @@ export interface CameraBalance {
   lockOnPitchRad: number;
   /** これより遠いとロックオンできない / 外れる。 */
   lockOnMaxDistance: number;
+  /** ソフトロック: この距離・角度内の対象へ、マウス操作していない間だけ緩く向く。 */
+  softLockRange: number;
+  softLockAngleRad: number;
+  softLockSharpness: number;
+  /** マウスを動かしてからこの秒数はソフトロックを止める。 */
+  softLockSuppressSeconds: number;
 }
 
 export const SHARPNESS_LEVELS = ['dull', 'normal', 'sharp', 'keen'] as const;
@@ -142,6 +148,10 @@ export const balanceSchema = {
     lockOnSharpness: 'number',
     lockOnPitchRad: 'number',
     lockOnMaxDistance: 'number',
+    softLockRange: 'number',
+    softLockAngleRad: 'number',
+    softLockSharpness: 'number',
+    softLockSuppressSeconds: 'number',
   },
   combat: {
     critMultiplier: 'number',

@@ -38,6 +38,8 @@ export interface MonsterAIContext {
   field: Field;
   subject: PerceptionSubject;
   prey?: PreyProvider;
+  /** 天候。雨なら巣（洞窟）へ避難し、知覚が鈍る。 */
+  weather?: { isRaining: boolean; senseMultiplier: number };
 }
 
 export interface MonsterAIStateChange {
@@ -118,7 +120,7 @@ export class MonsterAI {
 
     this.stateElapsed += dt;
     this.needs.update(dt, this.activityFor(this.state));
-    const seesTarget = this.perception.update(dt, m, ctx.subject, this.isAsleep);
+    const seesTarget = this.perception.update(dt, m, ctx.subject, this.isAsleep, ctx.weather?.senseMultiplier ?? 1);
 
     // 生態中に見つけたら警戒へ。睡眠中は「起こされた」か鋭い知覚でのみ。
     if (this.isInEcology && (seesTarget || this.wakeRequested)) {
@@ -175,11 +177,21 @@ export class MonsterAI {
 
   private updateIdle(dt: number, ctx: MonsterAIContext): void {
     this.waitRemaining -= dt;
+    // 雨宿り中は雨が止むまで巣に留まる（欲求が強ければ出ていく）
+    if (ctx.weather?.isRaining && this.isAtShelter(ctx) && !this.needs.wantsToEat && !this.needs.wantsToDrink) {
+      this.goalLabel = 'shelter';
+      return;
+    }
     if (this.waitRemaining > 0) return;
     this.decideNextEcology(ctx);
   }
 
-  /** 欲求の優先順: 疲労回復のための食事 > 空腹 > 渇き > 眠気 > 巡回。 */
+  private isAtShelter(ctx: MonsterAIContext): boolean {
+    const nest = ctx.field.nearestPoi('nest', this.monster.position);
+    return nest !== null && this.monster.position.horizontalDistanceTo(nest.position) <= this.monster.def.behavior.arriveDistance * 2;
+  }
+
+  /** 欲求の優先順: 疲労回復のための食事 > 空腹 > 渇き > 眠気 > 雨宿り > 巡回。 */
   private decideNextEcology(ctx: MonsterAIContext): void {
     const m = this.monster;
     if (m.condition.isExhausted || this.needs.wantsToEat) {
@@ -190,6 +202,13 @@ export class MonsterAI {
     }
     if (this.needs.wantsToSleep) {
       if (this.travelToPoi(ctx, 'nest', 'sleep')) return;
+    }
+    if (ctx.weather?.isRaining) {
+      // 雨: 洞窟の巣へ避難して待つ
+      if (this.travelToPoi(ctx, 'nest', 'idle')) {
+        this.goalLabel = 'shelter';
+        return;
+      }
     }
     const patrols = ctx.field.poisOfKind('patrol');
     const pick = this.rng.pick(patrols.filter((p) => p.position.horizontalDistanceTo(m.position) > m.def.behavior.arriveDistance));

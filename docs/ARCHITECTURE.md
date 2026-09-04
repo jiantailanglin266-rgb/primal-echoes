@@ -156,18 +156,18 @@ src/core/combat/ AttackData, PlayerCombat（先行入力/派生/回避キャン�
 src/core/monster/ Monster（集約 + 部位破壊効果集計）, MonsterStats, MonsterPart, MonsterCombat（攻撃タイムライン/反応）,
                   MonsterCondition（怒り/疲労）, MonsterNeeds（空腹/渇き/疲れ）, MonsterPerception, MonsterAI（生態 + 戦闘）
 src/core/ecosystem/ EcosystemManager（小型生物・死骸・獲物提供）, Creature, Carcass
-src/core/world/  Terrain（HeightProvider）, Field（エリア/POI）
+src/core/world/  Terrain（HeightProvider）, Field（エリア/POI）, Weather（晴/雨）, GimmickManager（落石）
 src/core/quest/  QuestManager
 src/core/inventory/ Inventory, LootTable, CarveController
 src/core/crafting/ CraftingManager
 src/core/save/   SaveManager（localStorage / memory）
 src/data/        balance.json, weapons/, monsters/, creatures/, fields/, quests/, items.json, recipes.json, schemas/, validate, DataRegistry
 src/input/       bindings, InputState, KeyboardMouseInput
-src/presentation/ SceneRenderer, CameraRig（LockOn/Collision/Shake）, PlayerView, MonsterView, EcosystemView, ProjectileView,
-                  FieldView, TerrainView, HitboxDebugView, AudioManager（合成 SE）, placeholders
+src/presentation/ SceneRenderer, CameraRig（LockOn/SoftLock/Collision/Shake）, PlayerView, MonsterView, EcosystemView, ProjectileView,
+                  FieldView, TerrainView, WeatherView（雨・霧）, GimmickView, HitSparkView, HitboxDebugView, AudioManager（合成 SE）, placeholders
 src/ui/          HudView, HubView, ResultView, PauseMenuView, DamageNumberView, styles/base.css
 src/debug/       DebugOverlay, PlaytestBot
-tests/           22 ファイル 150 テスト（core の全システム）
+tests/           23 ファイル 155 テスト（core の全システム）
 ```
 
 依存の向きは §2 のとおり。`core/` から `presentation/`・`ui/`・`three` への import は無い（`grep -r "from 'three'" src/core` が空であることを CI 条件にできる）。

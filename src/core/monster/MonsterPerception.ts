@@ -26,8 +26,8 @@ export class MonsterPerception {
   }
 
   /** 戻り値: このステップで対象を捉えているか（追跡中を含む）。 */
-  update(dt: number, monster: Monster, subject: PerceptionSubject, asleep: boolean): boolean {
-    const senseMul = asleep ? this.cfg.sleepingSenseMultiplier : 1;
+  update(dt: number, monster: Monster, subject: PerceptionSubject, asleep: boolean, environmentMultiplier = 1): boolean {
+    const senseMul = (asleep ? this.cfg.sleepingSenseMultiplier : 1) * environmentMultiplier;
     const distance = monster.position.horizontalDistanceTo(subject.position);
     const relativeAngle = monster.combat.relativeAngleTo(subject.position);
 

@@ -16,6 +16,11 @@ import { PauseMenuView } from '@ui/PauseMenuView';
 import type { WeaponDefinition } from '@data/schemas/weapon';
 import type { WeaponUpgradeRecipe } from '@data/schemas/recipe';
 import { Field } from '@core/world/Field';
+import { Weather } from '@core/world/Weather';
+import { GimmickManager } from '@core/world/GimmickManager';
+import { WeatherView } from '@presentation/WeatherView';
+import { GimmickView } from '@presentation/GimmickView';
+import { HitSparkView } from '@presentation/HitSparkView';
 import { Player } from '@core/player/Player';
 import { createEmptyIntent, type PlayerIntent } from '@core/player/PlayerIntent';
 import { Monster } from '@core/monster/Monster';
@@ -73,6 +78,11 @@ export class GameManager {
   private readonly hitStop: HitStop;
 
   readonly field: Field;
+  readonly weather: Weather;
+  readonly gimmicks: GimmickManager;
+  private readonly weatherView: WeatherView;
+  private readonly gimmickView: GimmickView;
+  private readonly hitSparks = new HitSparkView();
   readonly player: Player;
   readonly monster: Monster;
   readonly monsterAI: MonsterAI;
@@ -165,6 +175,19 @@ export class GameManager {
     this.field = new Field(loadVerdantTempest());
     this.renderer.scene.add(createFieldView(this.field));
     const terrain = this.field.terrain;
+    this.weather = new Weather(this.field.def.weather, rng);
+    this.weatherView = new WeatherView(this.weather, this.renderer.scene);
+    this.renderer.scene.add(this.weatherView.object);
+    this.gimmicks = new GimmickManager(this.field.def.gimmicks, (x, z) => terrain.getHeight(x, z), {
+      onTriggered: (g) => {
+        this.gimmickView.trigger(g);
+        this.events.emit('gimmickTriggered', { gimmickId: g.def.id, position: g.position.clone() });
+      },
+      onImpact: (impact) => this.events.emit('gimmickImpact', impact),
+    });
+    this.gimmickView = new GimmickView(this.gimmicks);
+    this.renderer.scene.add(this.gimmickView.object);
+    this.renderer.scene.add(this.hitSparks.object);
 
     this.player = new Player(this.balance.player, weapon, terrain);
     this.playerView = new PlayerView(this.player);
@@ -213,12 +236,20 @@ export class GameManager {
     );
 
     this.monsterAI = new MonsterAI(this.monster, rng);
-    this.aiContext = { field: this.field, subject: { position: this.player.controller.position, isNoisy: false }, prey: this.ecosystem };
+    this.aiContext = { field: this.field, subject: { position: this.player.controller.position, isNoisy: false }, prey: this.ecosystem, weather: this.weather };
     this.ecosystemContext = { player: this.aiContext.subject, monsters: [this.monster] };
 
     this.combatResolver = new CombatResolver(this.events, this.balance.combat, rng);
 
     this.cameraRig = new CameraRig(this.renderer.camera, terrain, this.balance.camera);
+    // ソフトロック: 生きていて見つけている/近い対象へ、マウスを触っていない間だけ緩く向く
+    this.cameraRig.setSoftLockTarget(() => {
+      const m = this.monster;
+      if (!m.isAlive || this.scene !== 'field') return null;
+      const near = this.player.controller.position.horizontalDistanceTo(m.position) <= this.balance.camera.softLockRange;
+      if (!near && !this.monsterAI.perception.detected) return null;
+      return this.lockOnPoint.set(m.position.x, m.position.y + m.def.stats.bodyRadius, m.position.z);
+    });
     this.damageNumbers = new DamageNumberView(uiRoot, (world, out) => this.projectToScreen(world, out));
     this.hud = new HudView(uiRoot);
     this.hubView = new HubView(uiRoot);
@@ -486,6 +517,8 @@ export class GameManager {
     }
     this.projectiles.clear();
     this.ecosystem.reset();
+    this.weather.reset();
+    this.gimmicks.reset();
     this.lastHitSummary = 'quest start';
   }
 
@@ -512,12 +545,15 @@ export class GameManager {
       this.cameraRig.shake(e.hitStopSeconds * fb.shakePerHitStopSecond, Math.min(fb.shakeMaxSeconds, e.hitStopSeconds * 1.5));
       this.audio.play(e.hitStopSeconds >= fb.heavyHitStopThresholdSeconds ? 'hitHeavy' : 'hitLight');
       this.monsterView.flashPart(e.partId);
+      this.hitSparks.burst(e.position, e.result.isCritical ? 16 : 9, e.result.isCritical ? 0xffb347 : 0xf4e9cf, e.result.isCritical ? 7 : 5);
       this.damageNumbers.spawn(e.position, e.result.total, { critical: e.result.isCritical });
       this.lastHitSummary = `${e.partId} ${e.result.total}${e.result.isCritical ? ' CRIT' : ''} (part ${e.result.partDamage.toFixed(0)})`;
       // 攻撃された = 発見される（寝込みを襲えば起きる）
       this.monsterAI.notifyAttacked(this.player.controller.position);
     });
     this.events.on('partBroken', (e) => {
+      const shape = this.monster.getWorldShapes().find((s) => s.part.id === e.partId);
+      if (shape) this.hitSparks.burst(shape.shape.a, 30, 0xff6b4a, 8);
       this.lastHitSummary = `PART BROKEN: ${this.monster.getPart(e.partId).def.name}`;
       this.quest?.notifyPartBroken(e.partId);
       this.cameraRig.shake(fb.shakeOnPartBreak, fb.shakeMaxSeconds);
@@ -532,6 +568,21 @@ export class GameManager {
       this.pushNotice(`${this.monster.getPart(e.partId).def.name} を切断`);
     });
     this.events.on('monsterAttackStarted', () => this.audio.play('telegraph'));
+    this.events.on('weatherChanged', (e) => {
+      this.pushNotice(e.state === 'rain' ? '雨が降り始めた' : '雨が上がった');
+      this.lastHitSummary = `weather ${e.state}`;
+    });
+    this.events.on('gimmickTriggered', (e) => {
+      this.audio.play('carve');
+      this.lastHitSummary = `gimmick ${e.gimmickId} triggered`;
+    });
+    this.events.on('gimmickImpact', (e) => {
+      this.cameraRig.shake(fb.shakeOnPartBreak * 1.5, 0.5);
+      this.audio.play('hitHeavy');
+      this.hitSparks.burst(e.position, 40, 0xb9a48a, 9);
+      this.pushNotice(e.hitMonsterIds.length > 0 ? '落石が直撃！' : '落石は外れた');
+      this.lastHitSummary = `gimmick impact hits=${e.hitMonsterIds.length}`;
+    });
     this.events.on('monsterEnraged', () => {
       this.cameraRig.shake(fb.shakeOnRoar, 0.6);
       this.audio.play('roar');
@@ -687,7 +738,10 @@ export class GameManager {
     this.player.update(this.intent, dt);
     this.field.terrain.clampToBounds(this.player.controller.position);
 
-    const carved = this.carve.update(dt, input.interactPressed, this.ecosystem.carcasses);
+    if (this.weather.update(dt)) this.events.emit('weatherChanged', { state: this.weather.state });
+    // 操作キーはギミック優先、次に剥ぎ取り
+    const gimmickUsed = this.gimmicks.update(dt, this.player.controller.position, input.interactPressed, [this.monster]);
+    const carved = this.carve.update(dt, input.interactPressed && !gimmickUsed && !this.gimmicks.prompt.available, this.ecosystem.carcasses);
     if (carved) {
       if (carved.drop) {
         this.questLoot.push(carved.drop);
@@ -793,6 +847,9 @@ export class GameManager {
       this.hitboxDebugView.end();
     }
     this.cameraRig.update(this.playerView.renderPosition, frameDt);
+    this.weatherView.update(frameDt, this.renderer.camera.position);
+    this.gimmickView.update(frameDt);
+    this.hitSparks.update(frameDt);
     this.renderer.render();
     this.damageNumbers.update(frameDt);
     if (this.scene === 'field') this.renderHud();
@@ -808,7 +865,7 @@ export class GameManager {
     m.staminaRatio = stats.staminaRatio;
     m.weaponName = combat.weapon.name;
     m.sharpnessLabel = SHARPNESS_LABELS[combat.weapon.sharpness];
-    m.objective = quest?.objectiveText ?? '';
+    m.objective = `${this.weather.isRaining ? '☂ 雨　' : ''}${quest?.objectiveText ?? ''}`;
     m.timeRemaining = quest?.timeRemaining ?? 0;
     m.timeWarning = quest?.isTimeWarning ?? false;
     m.downs = quest?.downs ?? 0;
@@ -819,6 +876,9 @@ export class GameManager {
     if (this.carve.isCarving) {
       m.prompt = '剥ぎ取り中…';
       m.promptProgress = controller.interactProgress;
+    } else if (this.gimmicks.prompt.available) {
+      m.prompt = `E: ${this.gimmicks.prompt.name}を崩す`;
+      m.promptProgress = 0;
     } else if (carve.available) {
       m.prompt = `E: 剥ぎ取る（残り ${carve.carvesRemaining}）`;
       m.promptProgress = 0;

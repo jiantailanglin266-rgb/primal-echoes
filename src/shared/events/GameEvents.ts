@@ -30,6 +30,9 @@ export type GameEvents = {
   playerHit: { damage: number; position: Vec3; attackId: string };
   playerDowned: { position: Vec3 };
   itemObtained: { itemId: string; count: number; source: 'carve' | 'reward' };
+  weatherChanged: { state: 'clear' | 'rain' };
+  gimmickTriggered: { gimmickId: string; position: Vec3 };
+  gimmickImpact: { gimmickId: string; position: Vec3; hitMonsterIds: string[] };
   weaponCrafted: { recipeId: string; weaponName: string };
   questStarted: { questId: string };
   questCompleted: { questId: string; clearTimeSeconds: number };

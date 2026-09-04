@@ -36,6 +36,37 @@ export interface CreatureSpawn {
   groups: number;
 }
 
+export interface WeatherConfig {
+  initial: 'clear' | 'rain';
+  clearMinSeconds: number;
+  clearMaxSeconds: number;
+  rainMinSeconds: number;
+  rainMaxSeconds: number;
+  /** 雨中の知覚倍率（雨音と視界の悪化）。 */
+  rainSenseMultiplier: number;
+}
+
+export const GIMMICK_KINDS = ['rockfall'] as const;
+export type GimmickKind = (typeof GIMMICK_KINDS)[number];
+
+export interface GimmickDefinition {
+  id: string;
+  kind: GimmickKind;
+  name: string;
+  position: FieldPoint;
+  /** この距離内で操作できる。 */
+  triggerRadius: number;
+  /** 効果範囲。 */
+  impactRadius: number;
+  /** 操作から効果発生までの遅れ（岩が落ちてくる時間）。 */
+  delaySeconds: number;
+  damage: number;
+  /** 怯み蓄積。脚に入れば転倒する。 */
+  flinchDamage: number;
+  /** クエスト中に使える回数。 */
+  uses: number;
+}
+
 export interface FieldDefinition {
   id: string;
   name: string;
@@ -45,6 +76,8 @@ export interface FieldDefinition {
   pointsOfInterest: PointOfInterest[];
   monsterSpawns: MonsterSpawn[];
   creatureSpawns: CreatureSpawn[];
+  weather: WeatherConfig;
+  gimmicks: GimmickDefinition[];
 }
 
 const pointSchema = { x: 'number', z: 'number' } as const satisfies Schema;
@@ -58,6 +91,28 @@ export const fieldSchema = {
   pointsOfInterest: [{ id: 'string', kind: oneOf(POI_KINDS), areaId: 'string', position: pointSchema }],
   monsterSpawns: [{ monsterId: 'string', poiId: 'string', yaw: 'number' }],
   creatureSpawns: [{ creatureId: 'string', poiId: 'string', groups: 'number' }],
+  weather: {
+    initial: oneOf(['clear', 'rain']),
+    clearMinSeconds: 'number',
+    clearMaxSeconds: 'number',
+    rainMinSeconds: 'number',
+    rainMaxSeconds: 'number',
+    rainSenseMultiplier: 'number',
+  },
+  gimmicks: [
+    {
+      id: 'string',
+      kind: oneOf(GIMMICK_KINDS),
+      name: 'string',
+      position: pointSchema,
+      triggerRadius: 'number',
+      impactRadius: 'number',
+      delaySeconds: 'number',
+      damage: 'number',
+      flinchDamage: 'number',
+      uses: 'number',
+    },
+  ],
 } as const satisfies Schema;
 
 export function assertFieldConsistency(field: FieldDefinition): void {
@@ -85,5 +140,18 @@ export function assertFieldConsistency(field: FieldDefinition): void {
     if (Math.abs(poi.position.x) > half || Math.abs(poi.position.z) > half) {
       throw new Error(`[field ${field.id}] poi ${poi.id} is outside the terrain`);
     }
+  }
+  const gimmickIds = new Set<string>();
+  for (const g of field.gimmicks) {
+    if (gimmickIds.has(g.id)) throw new Error(`[field ${field.id}] duplicate gimmick id "${g.id}"`);
+    gimmickIds.add(g.id);
+    if (g.uses <= 0) throw new Error(`[field ${field.id}] gimmick ${g.id} needs uses > 0`);
+    if (Math.abs(g.position.x) > half || Math.abs(g.position.z) > half) {
+      throw new Error(`[field ${field.id}] gimmick ${g.id} is outside the terrain`);
+    }
+  }
+  const w = field.weather;
+  if (w.clearMinSeconds > w.clearMaxSeconds || w.rainMinSeconds > w.rainMaxSeconds) {
+    throw new Error(`[field ${field.id}] weather min must be <= max`);
   }
 }

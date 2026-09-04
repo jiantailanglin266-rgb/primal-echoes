@@ -36,7 +36,11 @@
     "collisionSamples": 12,
     "lockOnSharpness": 7,
     "lockOnPitchRad": 0.22,
-    "lockOnMaxDistance": 45
+    "lockOnMaxDistance": 45,
+    "softLockRange": 24,
+    "softLockAngleRad": 1.2,
+    "softLockSharpness": 0.9,
+    "softLockSuppressSeconds": 0.7
   },
   "combat": {
     "critMultiplier": 1.25,

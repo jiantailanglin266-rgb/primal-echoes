@@ -8,10 +8,20 @@
       "toLevel": 1,
       "displayName": "Titan Blade I — 岩鱗の刃",
       "materials": [
-        { "itemId": "valgaron_scale", "count": 3 },
-        { "itemId": "valgaron_fang", "count": 1 }
+        {
+          "itemId": "valgaron_scale",
+          "count": 3
+        },
+        {
+          "itemId": "valgaron_fang",
+          "count": 1
+        }
       ],
-      "result": { "weaponPower": 140, "sharpness": "sharp", "critRate": 0.05 }
+      "result": {
+        "weaponPower": 140,
+        "sharpness": "sharp",
+        "critRate": 0.05
+      }
     },
     {
       "id": "titan_blade_lv2",
@@ -21,11 +31,24 @@
       "toLevel": 2,
       "displayName": "Titan Blade II — 大爪の刃",
       "materials": [
-        { "itemId": "valgaron_scale", "count": 5 },
-        { "itemId": "valgaron_claw", "count": 2 },
-        { "itemId": "aether_shard", "count": 1 }
+        {
+          "itemId": "valgaron_scale",
+          "count": 5
+        },
+        {
+          "itemId": "valgaron_claw",
+          "count": 2
+        },
+        {
+          "itemId": "aether_shard",
+          "count": 1
+        }
       ],
-      "result": { "weaponPower": 165, "sharpness": "sharp", "critRate": 0.1 }
+      "result": {
+        "weaponPower": 165,
+        "sharpness": "sharp",
+        "critRate": 0.1
+      }
     },
     {
       "id": "titan_blade_lv3",
@@ -35,11 +58,24 @@
       "toLevel": 3,
       "displayName": "Titan Blade III — 岩王の断刃",
       "materials": [
-        { "itemId": "valgaron_horn", "count": 1 },
-        { "itemId": "valgaron_tail", "count": 1 },
-        { "itemId": "aether_core", "count": 1 }
+        {
+          "itemId": "valgaron_horn",
+          "count": 1
+        },
+        {
+          "itemId": "valgaron_tail",
+          "count": 1
+        },
+        {
+          "itemId": "aether_core",
+          "count": 1
+        }
       ],
-      "result": { "weaponPower": 195, "sharpness": "keen", "critRate": 0.15 }
+      "result": {
+        "weaponPower": 195,
+        "sharpness": "keen",
+        "critRate": 0.15
+      }
     },
     {
       "id": "rift_saber_lv1",
@@ -49,10 +85,20 @@
       "toLevel": 1,
       "displayName": "Rift Saber I — 結晶片の閃",
       "materials": [
-        { "itemId": "valgaron_scale", "count": 2 },
-        { "itemId": "aether_shard", "count": 1 }
+        {
+          "itemId": "valgaron_scale",
+          "count": 2
+        },
+        {
+          "itemId": "aether_shard",
+          "count": 1
+        }
       ],
-      "result": { "weaponPower": 104, "sharpness": "sharp", "critRate": 0.2 }
+      "result": {
+        "weaponPower": 104,
+        "sharpness": "sharp",
+        "critRate": 0.2
+      }
     },
     {
       "id": "rift_saber_lv2",
@@ -62,11 +108,74 @@
       "toLevel": 2,
       "displayName": "Rift Saber II — 牙裂の閃",
       "materials": [
-        { "itemId": "valgaron_fang", "count": 2 },
-        { "itemId": "aether_shard", "count": 2 },
-        { "itemId": "grast_hide", "count": 2 }
+        {
+          "itemId": "valgaron_fang",
+          "count": 2
+        },
+        {
+          "itemId": "aether_shard",
+          "count": 2
+        },
+        {
+          "itemId": "grast_hide",
+          "count": 2
+        }
       ],
-      "result": { "weaponPower": 122, "sharpness": "keen", "critRate": 0.25 }
+      "result": {
+        "weaponPower": 122,
+        "sharpness": "keen",
+        "critRate": 0.25
+      }
+    },
+    {
+      "id": "break_hammer_lv1",
+      "kind": "weaponUpgrade",
+      "weaponId": "break_hammer",
+      "fromLevel": 0,
+      "toLevel": 1,
+      "displayName": "Break Hammer I — 大爪の槌",
+      "materials": [
+        {
+          "itemId": "valgaron_scale",
+          "count": 3
+        },
+        {
+          "itemId": "valgaron_claw",
+          "count": 1
+        }
+      ],
+      "result": {
+        "weaponPower": 152,
+        "sharpness": "normal",
+        "critRate": 0.0
+      }
+    },
+    {
+      "id": "break_hammer_lv2",
+      "kind": "weaponUpgrade",
+      "weaponId": "break_hammer",
+      "fromLevel": 1,
+      "toLevel": 2,
+      "displayName": "Break Hammer II — 角砕きの槌",
+      "materials": [
+        {
+          "itemId": "valgaron_horn",
+          "count": 1
+        },
+        {
+          "itemId": "valgaron_claw",
+          "count": 2
+        },
+        {
+          "itemId": "skarv_talon",
+          "count": 2
+        }
+      ],
+      "result": {
+        "weaponPower": 178,
+        "sharpness": "sharp",
+        "critRate": 0.05
+      }
     }
   ]
 }

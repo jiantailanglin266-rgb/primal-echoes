@@ -2,6 +2,7 @@ import balanceJson from './balance.json';
 import verdantTempestJson from './fields/verdant_tempest.json';
 import titanBladeJson from './weapons/titan_blade.json';
 import riftSaberJson from './weapons/rift_saber.json';
+import breakHammerJson from './weapons/break_hammer.json';
 import valgaronJson from './monsters/valgaron.json';
 import grastJson from './creatures/grast.json';
 import skarvJson from './creatures/skarv.json';
@@ -48,6 +49,7 @@ export function loadWeapons(): Map<string, WeaponDefinition> {
   for (const [json, name] of [
     [titanBladeJson, 'weapons/titan_blade'],
     [riftSaberJson, 'weapons/rift_saber'],
+    [breakHammerJson, 'weapons/break_hammer'],
   ] as const) {
     validate(json, weaponSchema, name);
     const weapon = json as WeaponDefinition;

@@ -62,6 +62,8 @@ describe('weapon catalog', () => {
     const weapons = loadWeapons();
     expect(weapons.has('titan_blade')).toBe(true);
     expect(weapons.has('rift_saber')).toBe(true);
+    expect(weapons.has('break_hammer')).toBe(true);
+    expect(weapons.get('break_hammer')!.attacks.every((a) => a.damageType === 'impact')).toBe(true);
     const saber = weapons.get('rift_saber')!;
     expect(saber.weight).toBe('light');
     expect(saber.element.type).toBe('aether');

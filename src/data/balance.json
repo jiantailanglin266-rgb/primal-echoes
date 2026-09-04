@@ -1,0 +1,35 @@
+{
+  "player": {
+    "maxHp": 100,
+    "maxStamina": 100,
+    "staminaRegenPerSecond": 25,
+    "staminaRegenDelaySeconds": 0.6,
+    "walkSpeed": 4.5,
+    "dashSpeed": 7.5,
+    "dashStaminaPerSecond": 12,
+    "dashMinStamina": 5,
+    "turnSpeedRadPerSecond": 14,
+    "gravity": 25,
+    "capsuleRadius": 0.35,
+    "height": 1.8,
+    "dodge": {
+      "staminaCost": 20,
+      "durationSeconds": 0.55,
+      "distance": 4.0,
+      "invulnStartSeconds": 0.04,
+      "invulnEndSeconds": 0.32
+    }
+  },
+  "camera": {
+    "distance": 6.5,
+    "minDistance": 1.5,
+    "targetHeight": 1.5,
+    "pitchMinRad": -0.55,
+    "pitchMaxRad": 1.05,
+    "initialPitchRad": 0.28,
+    "lookSensitivity": 0.0022,
+    "followSharpness": 14,
+    "groundMargin": 0.45,
+    "collisionSamples": 12
+  }
+}

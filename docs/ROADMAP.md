@@ -27,9 +27,9 @@
 ## Vertical Slice 0.1 — MoSCoW 分類
 
 ### Must Have
-- [ ] 固定ステップのゲームループ、シーン遷移（Hub -> Field -> Result -> Hub）
-- [ ] プレイヤー移動・ダッシュ・回避（無敵時間）・スタミナ
-- [ ] TPS カメラ（Free / LockOn）+ カメラコリジョン（地形のみ）
+- [x] 固定ステップのゲームループ（T01 完了）/ [ ] シーン遷移（Hub -> Field -> Result -> Hub）
+- [x] プレイヤー移動・ダッシュ・回避（無敵時間）・スタミナ（T03 完了）
+- [x] TPS カメラ（Free）+ カメラコリジョン（地形のみ）（T04 完了）/ [ ] LockOn（T06）
 - [ ] Titan Blade: Light / Heavy / Charge / DodgeAttack の攻撃データとコンボ
 - [ ] HitDetection（攻撃ヒットボックス x 部位）と DamageSystem（式のデータ駆動）
 - [ ] Valgaron: Stats / 部位（head, body, forelegs, hindlegs, tail）/ 6攻撃 / 距離帯選択
@@ -68,11 +68,11 @@
 ## 実装タスク（依存関係順）
 
 ```
-T01  プロジェクト雛形（Vite+TS+Three+Vitest）、Lint、固定ステップ GameLoop、EventBus、Vec3/math   <- 最初の実装対象
-T02  data/ ローダーと型検証、balance.json
-T03  地形（平面 + 高さマップ）と PlayerController（移動/ダッシュ/回避/スタミナ）
-T04  CameraRig（Free/LockOn/Collision）
-T05  AttackData と PlayerCombat 状態機械、Titan Blade のコンボデータ
+T01  [done] プロジェクト雛形（Vite+TS+Three+Vitest）、固定ステップ GameLoop、EventBus、Vec3/math
+T02  [done] data/ ローダーと型検証、balance.json
+T03  [done] 手続き地形（HeightProvider）と PlayerController（移動/ダッシュ/回避/スタミナ）
+T04  [done] CameraRig（Free/Collision）。LockOn は T06 で追加
+T05  AttackData と PlayerCombat 状態機械、Titan Blade のコンボデータ   <- 次の実装対象
 T06  ダミーモンスター（球体）+ HitDetection + DamageSystem（単体テスト）
 T07  MonsterStats / MonsterPart（部位・耐性・partHp）
 T08  MonsterCombat（telegraph -> startup -> active -> recovery のデータ実行）+ 6 攻撃

@@ -1,0 +1,11 @@
+{
+  "size": 200,
+  "segments": 128,
+  "flatRadius": 18,
+  "flatBlendWidth": 12,
+  "hills": [
+    { "amplitude": 1.6, "frequencyX": 0.045, "frequencyZ": 0.038, "phase": 0.7 },
+    { "amplitude": 0.8, "frequencyX": 0.11, "frequencyZ": 0.09, "phase": 2.1 },
+    { "amplitude": 0.35, "frequencyX": 0.27, "frequencyZ": 0.31, "phase": 4.4 }
+  ]
+}

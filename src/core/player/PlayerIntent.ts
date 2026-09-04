@@ -11,8 +11,30 @@ export interface PlayerIntent {
   dash: boolean;
   /** このステップで回避が押された（エッジ）。 */
   dodge: boolean;
+  /** このステップで弱攻撃が押された（エッジ）。 */
+  lightAttack: boolean;
+  /** このステップで強攻撃が押された（エッジ）。 */
+  heavyAttack: boolean;
+  /** 強攻撃ボタンを保持中（チャージ判定）。 */
+  heavyHeld: boolean;
 }
 
 export function createEmptyIntent(): PlayerIntent {
-  return { move: new Vec3(), dash: false, dodge: false };
+  return {
+    move: new Vec3(),
+    dash: false,
+    dodge: false,
+    lightAttack: false,
+    heavyAttack: false,
+    heavyHeld: false,
+  };
+}
+
+export function clearIntent(intent: PlayerIntent): void {
+  intent.move.set(0, 0, 0);
+  intent.dash = false;
+  intent.dodge = false;
+  intent.lightAttack = false;
+  intent.heavyAttack = false;
+  intent.heavyHeld = false;
 }

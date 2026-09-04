@@ -12,6 +12,16 @@ export const PLACEHOLDER_COLORS = {
   gridMinor: 0x3d4c36,
   player: 0xd8b26a,
   playerWeapon: 0xb0b8c0,
+  hitboxDebug: 0xff5a3c,
+} as const;
+
+export const PLAYER_PLACEHOLDER = {
+  height: 1.8,
+  radius: 0.35,
+  /** 武器ピボット（右肩相当）の位置。 */
+  weaponPivot: { x: 0.32, y: 1.35, z: 0 },
+  /** 柄からの刃の長さ。ピボットを中心に回転させる。 */
+  weaponLength: 2.0,
 } as const;
 
 export function createGroundPlaceholder(size = 200): THREE.Group {
@@ -32,18 +42,23 @@ export function createGroundPlaceholder(size = 200): THREE.Group {
   return group;
 }
 
-/** プレイヤーの仮モデル: カプセル + 背中の板（武器）。高さ約 1.8m。 */
-export function createPlayerPlaceholder(): THREE.Group {
+export interface PlayerPlaceholder {
+  group: THREE.Group;
+  /** 武器の回転中心。ここを回すと武器が振られる。 */
+  weaponPivot: THREE.Group;
+}
+
+/** プレイヤーの仮モデル: カプセル + 肩ピボットに付いた板（武器）。高さ約 1.8m。 */
+export function createPlayerPlaceholder(): PlayerPlaceholder {
+  const { height, radius, weaponPivot: pivotPos, weaponLength } = PLAYER_PLACEHOLDER;
   const group = new THREE.Group();
   group.name = 'player-placeholder';
 
-  const bodyHeight = 1.8;
-  const radius = 0.35;
   const body = new THREE.Mesh(
-    new THREE.CapsuleGeometry(radius, bodyHeight - radius * 2, 4, 12),
+    new THREE.CapsuleGeometry(radius, height - radius * 2, 4, 12),
     new THREE.MeshStandardMaterial({ color: PLACEHOLDER_COLORS.player, roughness: 0.8 }),
   );
-  body.position.y = bodyHeight / 2;
+  body.position.y = height / 2;
   body.castShadow = true;
   group.add(body);
 
@@ -53,17 +68,20 @@ export function createPlayerPlaceholder(): THREE.Group {
     new THREE.MeshStandardMaterial({ color: 0x3a2f1c }),
   );
   nose.rotation.x = Math.PI / 2;
-  nose.position.set(0, bodyHeight * 0.8, radius + 0.1);
+  nose.position.set(0, height * 0.8, radius + 0.1);
   group.add(nose);
 
-  const weapon = new THREE.Mesh(
-    new THREE.BoxGeometry(0.15, 2.0, 0.05),
+  const weaponPivot = new THREE.Group();
+  weaponPivot.position.set(pivotPos.x, pivotPos.y, pivotPos.z);
+  group.add(weaponPivot);
+
+  const blade = new THREE.Mesh(
+    new THREE.BoxGeometry(0.16, weaponLength, 0.06),
     new THREE.MeshStandardMaterial({ color: PLACEHOLDER_COLORS.playerWeapon, metalness: 0.6, roughness: 0.4 }),
   );
-  weapon.position.set(0.1, bodyHeight * 0.55, -radius - 0.05);
-  weapon.rotation.z = 0.25;
-  weapon.castShadow = true;
-  group.add(weapon);
+  blade.position.y = weaponLength / 2;
+  blade.castShadow = true;
+  weaponPivot.add(blade);
 
-  return group;
+  return { group, weaponPivot };
 }

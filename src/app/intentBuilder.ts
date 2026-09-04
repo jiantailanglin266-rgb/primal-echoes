@@ -22,5 +22,8 @@ export function buildPlayerIntent(
 
   out.dash = input.dashHeld;
   out.dodge = input.dodgePressed;
+  out.lightAttack = input.lightAttackPressed;
+  out.heavyAttack = input.heavyAttackPressed;
+  out.heavyHeld = input.heavyAttackHeld;
   return out;
 }

@@ -30,7 +30,7 @@
 - [x] 固定ステップのゲームループ（T01 完了）/ [ ] シーン遷移（Hub -> Field -> Result -> Hub）
 - [x] プレイヤー移動・ダッシュ・回避（無敵時間）・スタミナ（T03 完了）
 - [x] TPS カメラ（Free）+ カメラコリジョン（地形のみ）（T04 完了）/ [ ] LockOn（T06）
-- [ ] Titan Blade: Light / Heavy / Charge / DodgeAttack の攻撃データとコンボ
+- [x] Titan Blade: Light / Heavy / Charge / DodgeAttack の攻撃データとコンボ（T05 完了）
 - [ ] HitDetection（攻撃ヒットボックス x 部位）と DamageSystem（式のデータ駆動）
 - [ ] Valgaron: Stats / 部位（head, body, forelegs, hindlegs, tail）/ 6攻撃 / 距離帯選択
 - [ ] Valgaron AI: 生態（Patrol -> Eat -> Drink -> Sleep）+ 戦闘 State Machine + 怒り + 疲労 + 逃走/帰巣
@@ -72,8 +72,8 @@ T01  [done] プロジェクト雛形（Vite+TS+Three+Vitest）、固定ステッ
 T02  [done] data/ ローダーと型検証、balance.json
 T03  [done] 手続き地形（HeightProvider）と PlayerController（移動/ダッシュ/回避/スタミナ）
 T04  [done] CameraRig（Free/Collision）。LockOn は T06 で追加
-T05  AttackData と PlayerCombat 状態機械、Titan Blade のコンボデータ   <- 次の実装対象
-T06  ダミーモンスター（球体）+ HitDetection + DamageSystem（単体テスト）
+T05  [done] AttackData と PlayerCombat 状態機械（先行入力/派生/回避キャンセル/チャージ）、Titan Blade データ
+T06  ダミーモンスター（球体）+ HitDetection + DamageSystem（単体テスト）+ LockOn カメラ   <- 次の実装対象
 T07  MonsterStats / MonsterPart（部位・耐性・partHp）
 T08  MonsterCombat（telegraph -> startup -> active -> recovery のデータ実行）+ 6 攻撃
 T09  MonsterAI 戦闘層（距離帯選択・怒り・疲労）

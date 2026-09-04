@@ -9,7 +9,7 @@ export type PlayerLocomotionState = 'idle' | 'walk' | 'dash' | 'dodge';
 
 /**
  * プレイヤーの移動・回避を担当する。
- * 攻撃中の挙動は PlayerCombat（T05）が「移動を禁止する」形で上から制御する予定で、
+ * 攻撃中の挙動は PlayerCombat が「移動を禁止する」形で上（Player 集約）から制御し、
  * このクラス自体は攻撃を知らない。
  */
 export class PlayerController {
@@ -19,6 +19,8 @@ export class PlayerController {
   /** 向き（Y 軸回転、ラジアン）。0 で +Z を向く。 */
   yaw = 0;
   state: PlayerLocomotionState = 'idle';
+  /** 直近の回避終了からの経過秒。回避攻撃の受付窓に使う。 */
+  timeSinceDodgeEnd = Infinity;
 
   private verticalVelocity = 0;
   private dodgeElapsed = 0;
@@ -26,6 +28,7 @@ export class PlayerController {
   private readonly dodgeDirection = new Vec3();
 
   private readonly scratchMove = new Vec3();
+  private readonly scratchForward = new Vec3();
 
   constructor(
     readonly stats: PlayerStats,
@@ -54,6 +57,21 @@ export class PlayerController {
     this.verticalVelocity = 0;
   }
 
+  /** 指定方向へ最大 maxDelta ラジアンだけ向き直る（攻撃 startup 中の微調整用）。 */
+  turnTowards(direction: Vec3, maxDelta: number): void {
+    if (direction.lengthSq() <= 1e-6) return;
+    const targetYaw = Math.atan2(direction.x, direction.z);
+    this.yaw = rotateTowards(this.yaw, targetYaw, maxDelta);
+  }
+
+  /** 向いている方向へ distance だけ移動する（攻撃の踏み込み用）。地面に沿わせる。 */
+  moveAlongForward(distance: number): void {
+    if (distance === 0) return;
+    this.getForward(this.scratchForward);
+    this.position.addScaled(this.scratchForward, distance);
+    this.position.y = Math.max(this.position.y, this.terrain.getHeight(this.position.x, this.position.z));
+  }
+
   update(intent: PlayerIntent, dt: number): void {
     this.previousPosition.copy(this.position);
 
@@ -62,6 +80,7 @@ export class PlayerController {
     } else if (intent.dodge && this.tryStartDodge(intent)) {
       this.updateDodge(dt);
     } else {
+      this.timeSinceDodgeEnd += dt;
       this.updateLocomotion(intent, dt);
     }
 
@@ -87,7 +106,7 @@ export class PlayerController {
       this.state = 'dash';
     }
 
-    this.faceTowards(move, dt);
+    this.turnTowards(move, this.balance.turnSpeedRadPerSecond * dt);
     this.position.addScaled(move, speed * magnitude * dt);
   }
 
@@ -120,12 +139,8 @@ export class PlayerController {
 
     if (t >= 1) {
       this.state = 'idle';
+      this.timeSinceDodgeEnd = 0;
     }
-  }
-
-  private faceTowards(direction: Vec3, dt: number): void {
-    const targetYaw = Math.atan2(direction.x, direction.z);
-    this.yaw = rotateTowards(this.yaw, targetYaw, this.balance.turnSpeedRadPerSecond * dt);
   }
 
   private applyGravity(dt: number): void {

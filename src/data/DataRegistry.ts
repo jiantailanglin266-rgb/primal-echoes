@@ -1,8 +1,10 @@
 import balanceJson from './balance.json';
 import devTerrainJson from './fields/dev_terrain.json';
+import titanBladeJson from './weapons/titan_blade.json';
 import { validate } from './validate';
 import { balanceSchema, type BalanceData } from './schemas/balance';
 import { terrainSchema, type ProceduralTerrainData } from './schemas/terrain';
+import { assertWeaponConsistency, weaponSchema, type WeaponDefinition } from './schemas/weapon';
 
 /**
  * ゲームデータの読み込み口。
@@ -17,4 +19,11 @@ export function loadBalance(): BalanceData {
 export function loadDevTerrain(): ProceduralTerrainData {
   validate(devTerrainJson, terrainSchema, 'fields/dev_terrain');
   return devTerrainJson as ProceduralTerrainData;
+}
+
+export function loadTitanBlade(): WeaponDefinition {
+  validate(titanBladeJson, weaponSchema, 'weapons/titan_blade');
+  const weapon = titanBladeJson as WeaponDefinition;
+  assertWeaponConsistency(weapon);
+  return weapon;
 }

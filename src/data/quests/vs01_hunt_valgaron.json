@@ -12,5 +12,6 @@
     { "itemId": "valgaron_scale", "count": 2, "chance": 1.0 },
     { "itemId": "valgaron_fang", "count": 1, "chance": 0.75 },
     { "itemId": "aether_shard", "count": 1, "chance": 0.5 }
-  ]
+  ],
+  "supplies": [{ "itemId": "vital_tonic", "count": 5 }]
 }

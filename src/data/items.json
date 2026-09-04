@@ -9,6 +9,7 @@
     { "id": "aether_shard", "name": "エーテル結晶片", "category": "material", "rarity": "rare", "description": "エーテルが結晶化した欠片。" },
     { "id": "grast_hide", "name": "グラストの毛皮", "category": "material", "rarity": "common", "description": "草食生物グラストの厚い毛皮。" },
     { "id": "grast_meat", "name": "グラストの肉", "category": "material", "rarity": "common", "description": "スカベンジャーが好む生肉。" },
-    { "id": "skarv_talon", "name": "スカルヴの鉤爪", "category": "material", "rarity": "common", "description": "腐肉食スカルヴの鋭い鉤爪。" }
+    { "id": "skarv_talon", "name": "スカルヴの鉤爪", "category": "material", "rarity": "common", "description": "腐肉食スカルヴの鋭い鉤爪。" },
+    { "id": "vital_tonic", "name": "活性薬", "category": "consumable", "rarity": "common", "description": "エーテル植物を煎じた回復薬。飲んでいる間は無防備になる。", "effect": { "healAmount": 50, "useSeconds": 1.4 } }
   ]
 }

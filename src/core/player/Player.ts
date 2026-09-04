@@ -1,5 +1,6 @@
 import type { PlayerBalance } from '@data/schemas/balance';
 import type { WeaponDefinition } from '@data/schemas/weapon';
+import type { ConsumableEffect } from '@data/schemas/item';
 import type { HeightProvider } from '@core/world/Terrain';
 import { PlayerCombat, type CombatContext } from '@core/combat/PlayerCombat';
 import type { Vec3 } from '@shared/math/Vec3';
@@ -38,6 +39,21 @@ export class Player {
   /** 武器を持ち替える（強化後など）。攻撃中は呼ばない前提（拠点でのみ使う）。 */
   equipWeapon(weapon: WeaponDefinition): void {
     this.combat = new PlayerCombat(weapon, this.stats);
+  }
+
+  /**
+   * 消耗品を使う。回避・攻撃中は使えない。
+   * 回復は即時だが useSeconds のあいだ無防備になる（「安全な隙を見つけて飲む」判断を要求する）。
+   * 戻り値: 使えたか。
+   */
+  useConsumable(effect: ConsumableEffect): boolean {
+    const c = this.controller;
+    if (!c.canAct || c.state === 'dodge' || this.combat.isBusy) return false;
+    this.combat.cancel();
+    c.startInteraction(effect.useSeconds);
+    if (c.state !== 'interact') return false;
+    this.stats.heal(effect.healAmount);
+    return true;
   }
 
   /**

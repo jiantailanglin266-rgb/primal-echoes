@@ -1,6 +1,6 @@
 # PRIMAL ECHOES — Architecture (v0.1 初期案)
 
-> 状態: 初期案。**エンジン選定はユーザー確認待ち**。本書は推奨構成（TypeScript + Three.js）を前提に書くが、
+> 状態: VS0.1 完了時点。エンジンは TypeScript + Three.js で確定（2026-09-05）。
 > 「シミュレーション層はエンジン非依存」という方針は Godot / Unity を選んだ場合も同一に適用する。
 
 ---
@@ -146,9 +146,41 @@ primal-echoes/
 
 ---
 
+## 7.5 実装済みモジュール一覧（VS0.1 時点）
+
+```
+src/app/         GameManager（シーン遷移 hub/field/result・配線）, GameLoop（固定 60Hz）, HitStop, intentBuilder
+src/core/player/ Player（集約）, PlayerController（移動/回避/被弾/拘束）, PlayerStats, PlayerIntent
+src/core/combat/ AttackData, PlayerCombat（先行入力/派生/回避キャンセル/チャージ）, DamageSystem（式）,
+                 HitDetection（球 × 部位）, shapes, CombatResolver（命中解決 + イベント発行）, Projectile, elements
+src/core/monster/ Monster（集約 + 部位破壊効果集計）, MonsterStats, MonsterPart, MonsterCombat（攻撃タイムライン/反応）,
+                  MonsterCondition（怒り/疲労）, MonsterNeeds（空腹/渇き/疲れ）, MonsterPerception, MonsterAI（生態 + 戦闘）
+src/core/ecosystem/ EcosystemManager（小型生物・死骸・獲物提供）, Creature, Carcass
+src/core/world/  Terrain（HeightProvider）, Field（エリア/POI）
+src/core/quest/  QuestManager
+src/core/inventory/ Inventory, LootTable, CarveController
+src/core/crafting/ CraftingManager
+src/core/save/   SaveManager（localStorage / memory）
+src/data/        balance.json, weapons/, monsters/, creatures/, fields/, quests/, items.json, recipes.json, schemas/, validate, DataRegistry
+src/input/       bindings, InputState, KeyboardMouseInput
+src/presentation/ SceneRenderer, CameraRig（LockOn/Collision/Shake）, PlayerView, MonsterView, EcosystemView, ProjectileView,
+                  FieldView, TerrainView, HitboxDebugView, AudioManager（合成 SE）, placeholders
+src/ui/          HudView, HubView, ResultView, PauseMenuView, DamageNumberView, styles/base.css
+src/debug/       DebugOverlay, PlaytestBot
+tests/           22 ファイル 150 テスト（core の全システム）
+```
+
+依存の向きは §2 のとおり。`core/` から `presentation/`・`ui/`・`three` への import は無い（`grep -r "from 'three'" src/core` が空であることを CI 条件にできる）。
+
 ## 8. 設計判断の記録（ADR）
 | # | 判断 | 理由 |
 |---|---|---|
 | 001 | core をエンジン非依存にする | ダメージ・AI・部位破壊を描画なしでテストしたい。将来エンジン移行の保険 |
 | 002 | 固定 60Hz シミュレーション | フレーム依存のヒット判定・無敵時間のブレを排除 |
 | 003 | 汎用物理エンジン不採用（VS0.1） | 巨大生物の部位判定は専用形状の方が制御しやすく、依存も減る |
+| 004 | 部位の当たり形状 = 描画形状（球/カプセル） | データ調整の結果を目で確認できる。本番モデル導入後も判定形状は JSON 側に残す |
+| 005 | 拠点/リザルトは DOM パネル、フィールド常駐 | VS0.1 ではロードを挟まず、シーン遷移をシミュレーション停止 + 表示切替で表現 |
+| 006 | クールダウンは攻撃終了から計測 | 開始から計測すると攻撃時間より短い値が無意味になる |
+| 007 | 投射物は発射時点の倍率を保持 | 飛行中に怒りが解けても弾の威力は変わらない（プレイヤーの予測を裏切らない） |
+| 008 | 生態層はプレイヤー位置を参照しない | 「プレイヤーがいなくても動いている」を構造で保証。橋渡しは知覚だけ |
+| 009 | SE は WebAudio 合成 | 外部素材ゼロで完全オリジナル。差し替え時は ID を維持して中身だけ変える |

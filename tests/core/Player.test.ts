@@ -69,6 +69,22 @@ describe('Player aggregate', () => {
     expect(player.combat.current?.attack.id).toBe(weapon.dodgeAttackId);
   });
 
+  it('consumable heals instantly but locks the player for useSeconds', () => {
+    player.stats.hp = 30;
+    expect(player.useConsumable({ healAmount: 50, useSeconds: 1.4 })).toBe(true);
+    expect(player.stats.hp).toBe(80);
+    expect(player.controller.state).toBe('interact');
+    intent.move.set(0, 0, 1);
+    step(player, intent, 1.0);
+    expect(player.controller.position.z).toBeCloseTo(0, 3);
+    step(player, intent, 0.5);
+    expect(player.controller.state).not.toBe('interact');
+    // 攻撃中は使えない
+    intent.lightAttack = true;
+    step(player, intent, DT);
+    expect(player.useConsumable({ healAmount: 50, useSeconds: 1 })).toBe(false);
+  });
+
   it('cannot dash while charging', () => {
     intent.move.set(0, 0, 1);
     intent.dash = true;

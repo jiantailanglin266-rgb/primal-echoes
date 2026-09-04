@@ -6,7 +6,10 @@
 - ジャンル: 3D ハンティングアクション RPG
 - 舞台: ヴァルディア大陸 / 生体エネルギー「エーテル」
 - プレイヤー: レンジャー（巨大生物調査・討伐専門家）
-- 現在の目標: **Vertical Slice 0.1**（Titan Blade × Valgaron × 翠嵐峡谷 × Hunt クエスト 1 本）
+- 現在の状態: **Vertical Slice 0.1 完了**（Titan Blade × Valgaron × 翠嵐峡谷 × Hunt クエスト 1 本、プレースホルダー表示）
+
+## 遊べること（VS0.1）
+拠点で任務を受注 → フィールドで生態を観察・追跡 → 戦闘（部位破壊・怒り・疲労・転倒・気絶・逃走）→ 討伐 → 剥ぎ取り → リザルト → 拠点で武器強化（3 段階）→ 再出発。素材と強化は自動保存される。
 
 ## 技術スタック
 TypeScript (strict) / Three.js / Vite / Vitest。
@@ -24,7 +27,21 @@ npm install
 npm run dev
 ```
 
-ブラウザで `http://localhost:5173/?debug=1` を開くとデバッグオーバーレイが有効になる。
+ブラウザで `http://localhost:5173/` を開く。キャンバスをクリックするとマウスでカメラを回せる（ポインターロック）。
+
+| 操作 | キー |
+|---|---|
+| 移動 / ダッシュ | WASD / Shift |
+| 回避 | Space |
+| 弱攻撃 / 強攻撃（長押しで溜め） | J / K |
+| ロックオン | Tab または Q |
+| 剥ぎ取り | E（死骸のそばで） |
+| 活性薬 | H |
+| 一時停止 | Esc |
+
+### デバッグ
+- `?debug=1` でオーバーレイと当たり判定表示。F1 回復 / F2 無限スタミナ / F3 討伐 / F4 モンスター初期化 / F5 AI 停止 / F6 怒り / F7 モンスターの背後へワープ / F9 任務中断
+- `?bot=1` で通しプレイ検証ボット。コンソールから `__game.update(1/60)` を回すと早回しできる（検証手順は [docs/BALANCE.md](docs/BALANCE.md)）
 
 ## 検証
 
@@ -32,17 +49,17 @@ npm run dev
 npm run check
 ```
 
-`typecheck`（tsc）と `test`（vitest）を順に実行する。各 Phase はこれが通った状態で完了とする。
+`typecheck`（tsc）と `test`（vitest、150 件）を順に実行する。各 Phase はこれが通った状態で完了とする。
 
 ## ドキュメント
 | ファイル | 内容 |
 |---|---|
 | [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) | ゲームデザイン（コンセプト・戦闘・モンスター・生態系・VS0.1 定義） |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | レイヤー構成・モジュール責務・データ駆動・ADR |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Phase / MoSCoW / 依存順タスク |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Phase / MoSCoW / 依存順タスクと進捗 |
 | [docs/ASSET_TODO.md](docs/ASSET_TODO.md) | 必要な外部アセット一覧 |
-| [docs/BALANCE.md](docs/BALANCE.md) | 調整値の記録と根拠 |
+| [docs/BALANCE.md](docs/BALANCE.md) | 調整値の記録と根拠、通しプレイ検証ログ |
 
 ## オリジナリティ方針
 既存作品からはジャンルの抽象的な仕組み（狩猟ループ・重量感戦闘・素材クラフト・生態観察・部位戦術）のみを参考にし、
-固有のモンスター・キャラ・技・名称・UI・音・モデル・世界観は一切流用しない。
+固有のモンスター・キャラ・技・名称・UI・音・モデル・世界観は一切流用しない。音も外部素材を使わず合成している。

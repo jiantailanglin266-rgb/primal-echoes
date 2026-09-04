@@ -26,6 +26,8 @@ export interface HudModel {
   promptProgress: number;
   /** 直近に入手したアイテムの通知行。 */
   notices: string[];
+  /** クイックアイテム欄の表示。 */
+  itemSlot: string;
 }
 
 export function createHudModel(): HudModel {
@@ -48,6 +50,7 @@ export function createHudModel(): HudModel {
     prompt: '',
     promptProgress: 0,
     notices: [],
+    itemSlot: '',
   };
 }
 
@@ -68,6 +71,7 @@ export class HudView {
   private readonly promptText: HTMLElement;
   private readonly promptFill: HTMLElement;
   private readonly notices: HTMLElement;
+  private readonly itemSlot: HTMLElement;
   private lastBadges = '';
   private lastNotices = '';
 
@@ -79,6 +83,7 @@ export class HudView {
         <div class="pe-bar pe-bar-hp"><div class="pe-bar-fill"></div></div>
         <div class="pe-bar pe-bar-stamina"><div class="pe-bar-fill"></div></div>
         <div class="pe-hud-downs"></div>
+        <div class="pe-hud-item"></div>
       </div>
       <div class="pe-hud-quest">
         <div class="pe-hud-timer"></div>
@@ -112,6 +117,7 @@ export class HudView {
     this.promptText = q(this.root, '.pe-hud-prompt-text');
     this.promptFill = q(this.root, '.pe-bar-prompt .pe-bar-fill');
     this.notices = q(this.root, '.pe-hud-notices');
+    this.itemSlot = q(this.root, '.pe-hud-item');
   }
 
   set visible(value: boolean) {
@@ -127,6 +133,7 @@ export class HudView {
     setText(this.timer, formatTime(m.timeRemaining));
     this.timer.classList.toggle('is-warning', m.timeWarning);
     setText(this.downs, m.maxDowns > 0 ? `力尽き ${m.downs}/${m.maxDowns}` : '');
+    setText(this.itemSlot, m.itemSlot);
 
     this.monsterPanel.hidden = !m.monsterVisible;
     if (m.monsterVisible) {

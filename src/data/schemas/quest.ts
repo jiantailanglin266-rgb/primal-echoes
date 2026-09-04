@@ -23,6 +23,8 @@ export interface QuestDefinition {
   /** 討伐後、リザルトへ移るまでの猶予（剥ぎ取り時間）。 */
   returnDelaySeconds: number;
   rewards: QuestRewardMaterial[];
+  /** 出発時に支給される消耗品（クエスト内でのみ有効、持ち越さない）。 */
+  supplies: { itemId: string; count: number }[];
 }
 
 export const questSchema = {
@@ -36,4 +38,5 @@ export const questSchema = {
   maxDowns: 'number',
   returnDelaySeconds: 'number',
   rewards: [{ itemId: 'string', count: 'number', chance: 'number' }],
+  supplies: [{ itemId: 'string', count: 'number' }],
 } as const satisfies Schema;

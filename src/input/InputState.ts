@@ -18,6 +18,7 @@ export interface InputState {
   specialPressed: boolean;
   lockOnPressed: boolean;
   interactPressed: boolean;
+  useItemPressed: boolean;
   abandonQuestPressed: boolean;
   pausePressed: boolean;
   debugHealPlayerPressed: boolean;
@@ -43,6 +44,7 @@ export function createEmptyInputState(): InputState {
     specialPressed: false,
     lockOnPressed: false,
     interactPressed: false,
+    useItemPressed: false,
     abandonQuestPressed: false,
     pausePressed: false,
     debugHealPlayerPressed: false,

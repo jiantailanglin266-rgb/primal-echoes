@@ -41,6 +41,7 @@ import { HudView, createHudModel } from '@ui/HudView';
 import { HubView } from '@ui/HubView';
 import { ResultView } from '@ui/ResultView';
 import { DebugOverlay } from '@debug/DebugOverlay';
+import { PlaytestBot } from '@debug/PlaytestBot';
 import { EventBus } from '@shared/events/EventBus';
 import type { GameEvents } from '@shared/events/GameEvents';
 import { Random } from '@shared/rng/Random';
@@ -81,6 +82,9 @@ export class GameManager {
   quest: QuestManager | null = null;
   readonly items: Map<string, ItemDefinition>;
   readonly inventory = new Inventory();
+  /** クエスト中だけ有効な支給品（持ち越さない）。 */
+  readonly pouch = new Inventory();
+  private static readonly QUICK_ITEM_ID = 'vital_tonic';
   readonly carve: CarveController;
   readonly crafting: CraftingManager;
   readonly recipes: WeaponUpgradeRecipe[];
@@ -88,6 +92,8 @@ export class GameManager {
   readonly audio = new AudioManager();
   private readonly pauseMenu: PauseMenuView;
   private paused = false;
+  /** `?bot=1` で有効。通しプレイの自動検証用。 */
+  bot: PlaytestBot | null = null;
   private questClears: Record<string, number> = {};
   private savedAt: string | null = null;
   /** 強化前の基準となる武器定義。強化はこれに性能を上書きして適用する。 */
@@ -137,7 +143,10 @@ export class GameManager {
     assertItemReferences(this.items, valgaronDef.carves.map((c) => c.itemId), `monsters/${valgaronDef.id}.carves`);
     assertItemReferences(this.items, valgaronDef.partBreakRewards.map((r) => r.itemId), `monsters/${valgaronDef.id}.partBreakRewards`);
     for (const c of this.creatureDefs.values()) assertItemReferences(this.items, c.carves.map((x) => x.itemId), `creatures/${c.id}.carves`);
-    for (const q of this.quests) assertItemReferences(this.items, q.rewards.map((r) => r.itemId), `quests/${q.id}.rewards`);
+    for (const q of this.quests) {
+      assertItemReferences(this.items, q.rewards.map((r) => r.itemId), `quests/${q.id}.rewards`);
+      assertItemReferences(this.items, q.supplies.map((s) => s.itemId), `quests/${q.id}.supplies`);
+    }
     const rng = new Random(0xc0ffee);
     this.rng = rng;
 
@@ -237,6 +246,9 @@ export class GameManager {
 
     const debugEnabled = DebugOverlay.isEnabled();
     this.debug = debugEnabled ? new DebugOverlay(debugRoot) : null;
+    if (new URLSearchParams(window.location.search).get('bot') === '1') {
+      this.bot = new PlaytestBot(this.player, this.monster);
+    }
     this.hitboxDebugView = debugEnabled ? new HitboxDebugView() : null;
     if (this.hitboxDebugView) this.renderer.scene.add(this.hitboxDebugView.object);
     this.setupDebugLines();
@@ -358,6 +370,8 @@ export class GameManager {
     this.resetWorldForQuest();
     this.questLoot = [];
     this.notices.length = 0;
+    this.pouch.clear();
+    for (const s of def.supplies) this.pouch.add(s.itemId, s.count);
     this.quest = new QuestManager(def, this.balance.quest);
     this.quest.start();
     this.setScene('field');
@@ -464,6 +478,10 @@ export class GameManager {
   private subscribeEvents(): void {
     const fb = this.balance.feedback;
     this.events.on('hit', (e) => {
+      if (this.bot) {
+        this.bot.stats.hitsLanded++;
+        this.bot.stats.damageDealt += e.result.total;
+      }
       this.hitStop.trigger(e.hitStopSeconds);
       this.cameraRig.shake(e.hitStopSeconds * fb.shakePerHitStopSecond, Math.min(fb.shakeMaxSeconds, e.hitStopSeconds * 1.5));
       this.audio.play(e.hitStopSeconds >= fb.heavyHitStopThresholdSeconds ? 'hitHeavy' : 'hitLight');
@@ -496,6 +514,7 @@ export class GameManager {
       if (e.source === 'carve') this.audio.play('carve');
     });
     this.events.on('monsterDied', () => {
+      if (this.bot) this.bot.stats.killedAtSeconds = this.quest?.elapsed ?? null;
       this.cameraRig.setLockOnTarget(null);
       this.lastHitSummary = 'MONSTER DOWN';
       // 討伐した大型の死骸は剥ぎ取り対象として残す（T15）。スカベンジャーも寄ってくる。
@@ -503,12 +522,14 @@ export class GameManager {
       this.quest?.notifyMonsterDied(this.monster.def.id);
     });
     this.events.on('playerHit', (e) => {
+      if (this.bot) this.bot.stats.damageTaken += e.damage;
       this.damageNumbers.spawn(e.position, e.damage, { player: true });
       this.lastHitSummary = `PLAYER HIT by ${e.attackId}: -${e.damage}`;
       this.cameraRig.shake(fb.shakeOnPlayerHit, 0.35);
       this.audio.play('playerHurt');
     });
     this.events.on('playerDowned', () => {
+      if (this.bot) this.bot.stats.downs++;
       this.lastHitSummary = 'PLAYER DOWNED';
       this.quest?.notifyPlayerDowned();
       this.carve.cancel();
@@ -634,6 +655,8 @@ export class GameManager {
     this.cameraRig.getForwardXZ(this.cameraForward);
     this.cameraRig.getRightXZ(this.cameraRight);
     buildPlayerIntent(input, this.cameraForward, this.cameraRight, this.intent);
+    if (this.bot) this.bot.update(dt, input, this.intent, this.ecosystem.carcasses);
+    if (input.useItemPressed) this.useQuickItem();
 
     this.player.update(this.intent, dt);
     this.field.terrain.clampToBounds(this.player.controller.position);
@@ -678,6 +701,16 @@ export class GameManager {
     }
 
     this.updateQuest(dt);
+  }
+
+  private useQuickItem(): void {
+    const id = GameManager.QUICK_ITEM_ID;
+    const def = this.items.get(id);
+    if (!def?.effect || !this.pouch.has(id)) return;
+    if (!this.player.useConsumable(def.effect)) return;
+    this.pouch.remove(id);
+    this.audio.play('itemGet');
+    this.pushNotice(`${def.name} を使用（残り ${this.pouch.count(id)}）`);
   }
 
   private updateQuest(dt: number): void {
@@ -768,6 +801,8 @@ export class GameManager {
       m.promptProgress = 0;
     }
     m.notices = this.notices.map((n) => n.text);
+    const quickDef = this.items.get(GameManager.QUICK_ITEM_ID);
+    m.itemSlot = quickDef ? `${quickDef.name} ×${this.pouch.count(GameManager.QUICK_ITEM_ID)}  [H]` : '';
     // 対象の情報は「見つけている / 見つけられている」ときだけ出す（観察を促す）
     const near = controller.position.horizontalDistanceTo(monster.position) <= this.balance.camera.lockOnMaxDistance;
     m.monsterVisible = monster.isAlive && (near || this.monsterAI.perception.detected);

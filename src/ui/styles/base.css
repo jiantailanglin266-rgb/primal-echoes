@@ -106,6 +106,7 @@ body {
 }
 .pe-hud-weapon { color: var(--pe-hud-dim); letter-spacing: 0.06em; font-size: 12px; }
 .pe-hud-downs { color: var(--pe-hud-dim); font-size: 12px; }
+.pe-hud-item { margin-top: 4px; padding: 4px 10px; align-self: flex-start; border: 1px solid var(--pe-line); border-radius: 4px; background: var(--pe-hud-bg); font-size: 12px; }
 
 .pe-bar {
   position: relative;

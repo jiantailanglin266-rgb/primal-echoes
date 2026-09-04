@@ -67,7 +67,7 @@
     }
   },
   "stats": {
-    "maxHp": 3200,
+    "maxHp": 2800,
     "maxStamina": 100,
     "stunThreshold": 120,
     "stunDurationSeconds": 6,
@@ -365,7 +365,7 @@
     {
       "id": "vg_bite",
       "name": "Bite",
-      "damage": 22,
+      "damage": 18,
       "damageType": "impact",
       "element": {
         "type": "none",
@@ -407,7 +407,7 @@
     {
       "id": "vg_claw",
       "name": "Claw Swipe",
-      "damage": 28,
+      "damage": 24,
       "damageType": "impact",
       "element": {
         "type": "none",
@@ -450,7 +450,7 @@
     {
       "id": "vg_tail_sweep",
       "name": "Tail Sweep",
-      "damage": 24,
+      "damage": 20,
       "damageType": "impact",
       "element": {
         "type": "none",
@@ -517,7 +517,7 @@
     {
       "id": "vg_charge",
       "name": "Charge",
-      "damage": 38,
+      "damage": 34,
       "damageType": "impact",
       "element": {
         "type": "none",
@@ -561,7 +561,7 @@
     {
       "id": "vg_jump_slam",
       "name": "Jump Slam",
-      "damage": 42,
+      "damage": 38,
       "damageType": "impact",
       "element": {
         "type": "none",
@@ -604,7 +604,7 @@
     {
       "id": "vg_rock_throw",
       "name": "Rock Throw",
-      "damage": 30,
+      "damage": 26,
       "damageType": "projectile",
       "element": {
         "type": "none",

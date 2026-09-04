@@ -52,6 +52,7 @@ export class KeyboardMouseInput {
     state.specialPressed = this.wasPressed('special');
     state.lockOnPressed = this.wasPressed('lockOn');
     state.interactPressed = this.wasPressed('interact');
+    state.useItemPressed = this.wasPressed('useItem');
     state.abandonQuestPressed = this.wasPressed('abandonQuest');
     state.pausePressed = this.wasPressed('pause');
     state.debugHealPlayerPressed = this.wasPressed('debugHealPlayer');

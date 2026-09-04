@@ -14,6 +14,7 @@ export const KEY_BINDINGS = {
   special: ['KeyL'],
   lockOn: ['Tab', 'KeyQ'],
   interact: ['KeyE'],
+  useItem: ['KeyH'],
   abandonQuest: ['F9'],
   pause: ['Escape'],
   // ---- デバッグ（?debug=1 のときだけ GameManager が処理する）----

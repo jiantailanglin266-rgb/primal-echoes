@@ -41,17 +41,17 @@
 - [x] 縮小フィールド（BaseCamp / Forest / River / Cave）と Valgaron の移動経路（T12 完了。地形は手続き生成のプレースホルダー）
 - [x] 小型生物 2 種（Grast: 逃走・群れ、Skarv: 死骸に集合）（T13 完了）
 - [x] HUD（HP / Stamina / 斬れ味 / クエスト目標 / 大型の状態バッジ）（T14 で最小版。T17 で仕上げ）
-- [x] Hit Stop / ダメージ数字（T06 完了）/ [ ] 最低限の Camera Shake
-- [ ] セーブ（インベントリ・装備・クエスト進行）
-- [ ] Debug Overlay + デバッグキー
+- [x] Hit Stop / ダメージ数字（T06 完了）/ Camera Shake（T18 完了）
+- [x] セーブ（インベントリ・装備・クエスト進行）（T19 完了）
+- [x] Debug Overlay + デバッグキー（F1〜F9、`?debug=1`）
 
 ### Should Have
 - [ ] Soft Lock
 - [ ] 環境ギミック 1 種（落石）
 - [ ] 天候（雨）で洞窟へ移動
-- [ ] 気絶（頭部蓄積）
-- [ ] 回復薬・スタミナ薬アイテム
-- [ ] 仮 SE / 仮 VFX（パーティクル）
+- [x] 気絶（頭部蓄積）（T07/T08 で実装済み）
+- [x] 回復薬（活性薬、T20）/ [ ] スタミナ薬
+- [x] 仮 SE（合成音）/ [ ] 仮 VFX（パーティクル）
 
 ### Later（VS0.2 以降）
 - 残り武器3種（Rift Saber / Break Hammer / Arc Bow）
@@ -84,10 +84,17 @@ T13  [done] 小型生物（Grast: 群れ/うろつき/逃走、Skarv: 死骸に�
 T14  [done] QuestManager（Hunt / 制限時間 / 力尽き回数 / 討伐後 45 秒の帰還猶予）+ シーン遷移（Hub -> Field -> Result -> Hub）+ HUD（HP/ST/斬れ味/タイマー/目標/対象の状態バッジ）+ 拠点・リザルト画面
 T15  [done] アイテム定義 10 種、剥ぎ取り（E キー 2.5 秒・拘束・被弾で中断・死骸ごとの回数）、抽選表、Inventory、クエスト報酬 + 部位破壊報酬、入手通知
 T16  [done] レシピ 3 段階（Titan Blade I/II/III）、CraftingManager（素材消費・段階管理・性能差し替え）、拠点の工房パネル
-T17  HUD 仕上げ / ポーズメニュー / DebugOverlay 整理   <- 次の実装対象（T18 と並行）
-T18  Hit Stop / Camera Shake / ダメージ数字 / 仮SE
-T19  SaveManager（Autosave / Manual）
-T20  通しプレイ検証・バランス初期値記録（BALANCE.md）-> VS0.1 完了
+T17  [done] ポーズメニュー（Esc: 続行/音量/中断）、HUD 通知（入手・破壊・気絶・転倒）
+T18  [done] Camera Shake（Hit Stop 長に比例）、合成 SE 11 種（外部アセット不使用）、Hit Stop / ダメージ数字は T06
+T19  [done] SaveManager（localStorage、version 付き、破損時は無視）、クエスト終了・強化で自動記録、拠点で手動記録/消去
+T20  [done] 通しプレイ検証（PlaytestBot `?bot=1` で 3 回討伐成功）・威力/HP 調整・活性薬支給・BALANCE.md 記録 -> **VS0.1 完了（2026-09-05）**
+
+## VS0.1 完了後の次アクション（VS0.2 候補・優先順）
+1. 手動プレイでの手触り確認（マウス感度・カメラ距離・攻撃の重さ）と BALANCE.md への追記
+2. 本番アセット差し替えの土台: プレイヤー/Valgaron の GLTF 読み込みと部位メッシュ対応（ASSET_TODO.md）
+3. Should Have: Soft Lock、落石ギミック、雨で洞窟へ移動、仮 VFX
+4. 残り武器（Rift Saber → Break Hammer → Arc Bow）と防具・スキル
+5. 捕獲クエストと調査クエスト
 ```
 
 依存: T01 -> T02 -> T03 -> T04 -> T05 -> T06 -> T07 -> T08 -> T09 -> T10 -> T11。

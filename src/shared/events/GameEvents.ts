@@ -16,7 +16,11 @@ export type GameEvents = {
     hitStopSeconds: number;
   };
   monsterFlinched: { monsterId: string; partId: string };
+  monsterStunned: { monsterId: string };
   partBroken: { monsterId: string; partId: string };
   partSevered: { monsterId: string; partId: string };
   monsterDied: { monsterId: string };
+  monsterAttackStarted: { monsterId: string; attackId: string; telegraphSeconds: number };
+  playerHit: { damage: number; position: Vec3; attackId: string };
+  playerDowned: { position: Vec3 };
 };

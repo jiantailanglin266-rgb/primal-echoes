@@ -1,7 +1,10 @@
 import type { CombatBalance } from '@data/schemas/balance';
+import type { MonsterAttackDefinition } from '@data/schemas/monster';
 import type { Player } from '@core/player/Player';
 import type { Monster, MonsterHitOutcome } from '@core/monster/Monster';
+import type { MonsterHitbox } from '@core/monster/MonsterCombat';
 import type { MonsterPart } from '@core/monster/MonsterPart';
+import type { Projectile } from './Projectile';
 import type { EventBus } from '@shared/events/EventBus';
 import type { GameEvents } from '@shared/events/GameEvents';
 import type { Random } from '@shared/rng/Random';
@@ -9,15 +12,20 @@ import { Vec3 } from '@shared/math/Vec3';
 import { computeDamage, createDamageResult, type DamageInput } from './DamageSystem';
 import { findHitPart, type HitCandidate } from './HitDetection';
 import type { WorldHitbox } from './PlayerCombat';
+import { spheresOverlap } from './shapes';
 
 /**
- * 「プレイヤーの攻撃がモンスターに当たった」を 1 ステップ分解決する。
- * HitDetection（どこに当たったか）と DamageSystem（いくら削るか）を繋ぎ、
- * 結果をイベントとして発行する。core 内で完結し、描画や UI は知らない。
+ * 攻撃の命中を 1 ステップ分解決する。
+ * - プレイヤー -> モンスター: HitDetection（部位）+ DamageSystem（式）
+ * - モンスター/投射物 -> プレイヤー: 被弾球との重なり + 防御式
+ * 結果はイベントとして発行する。core 内で完結し、描画や UI は知らない。
  */
 export class CombatResolver {
-  private readonly hitboxes: WorldHitbox[] = [];
+  private readonly playerHitboxes: WorldHitbox[] = [];
+  private readonly monsterHitboxes: MonsterHitbox[] = [];
   private readonly candidate: HitCandidate = { part: null as unknown as MonsterPart, depth: 0, contact: new Vec3() };
+  private readonly hurtboxCenter = new Vec3();
+  private readonly awayDirection = new Vec3();
   private readonly damageInput: DamageInput = {
     weaponPower: 0,
     motionValue: 0,
@@ -48,26 +56,62 @@ export class CombatResolver {
   /** 戻り値: このステップで成立したヒット数。 */
   resolvePlayerAttacks(player: Player, monsters: readonly Monster[]): number {
     const { controller, combat } = player;
-    combat.getActiveHitboxes(controller.position, controller.yaw, this.hitboxes);
-    if (this.hitboxes.length === 0) return 0;
+    combat.getActiveHitboxes(controller.position, controller.yaw, this.playerHitboxes);
+    if (this.playerHitboxes.length === 0) return 0;
 
     let hits = 0;
     for (const monster of monsters) {
       if (!monster.isAlive) continue;
-      for (const hitbox of this.hitboxes) {
+      for (const hitbox of this.playerHitboxes) {
         // 1 攻撃インスタンスにつき同じモンスターへは 1 回だけ
         if (hitbox.source.hitKeys.has(monster.id)) continue;
         const hit = findHitPart(hitbox, monster, this.candidate);
         if (!hit) continue;
         hitbox.source.hitKeys.add(monster.id);
-        this.applyHit(player, monster, hitbox, hit);
+        this.applyPlayerHit(player, monster, hitbox, hit);
         hits++;
       }
     }
     return hits;
   }
 
-  private applyHit(player: Player, monster: Monster, hitbox: WorldHitbox, hit: HitCandidate): void {
+  /** モンスターの攻撃と投射物がプレイヤーに当たったかを解決する。戻り値: ヒット数。 */
+  resolveMonsterAttacks(monsters: readonly Monster[], projectiles: readonly Projectile[], player: Player): number {
+    if (player.isDowned) return 0;
+    const controller = player.controller;
+    controller.getHurtboxCenter(this.hurtboxCenter);
+    const radius = controller.hurtboxRadius;
+    let hits = 0;
+
+    for (const monster of monsters) {
+      if (!monster.isAlive) continue;
+      monster.combat.getActiveHitboxes(this.monsterHitboxes);
+      for (const hitbox of this.monsterHitboxes) {
+        if (hitbox.attack.hasHitPlayer) continue;
+        if (!spheresOverlap(hitbox.center, hitbox.radius, this.hurtboxCenter, radius)) continue;
+        // 無敵中は「当たったが効かない」。判定自体は消費しないので、無敵が切れた後に持続判定へ触れれば当たる。
+        if (controller.isInvulnerable) continue;
+        hitbox.attack.hasHitPlayer = true;
+        this.awayDirection.copy(controller.position).sub(monster.position);
+        this.applyMonsterHit(player, hitbox.attack.def, monster.combat.damageMultiplier, hitbox.center);
+        hits++;
+      }
+    }
+
+    for (const projectile of projectiles) {
+      if (!projectile.alive || projectile.hasHitPlayer) continue;
+      if (!spheresOverlap(projectile.position, projectile.radius, this.hurtboxCenter, radius)) continue;
+      if (controller.isInvulnerable) continue;
+      projectile.hasHitPlayer = true;
+      projectile.alive = false;
+      this.awayDirection.copy(projectile.velocity);
+      this.applyMonsterHit(player, projectile.attack, 1, projectile.position);
+      hits++;
+    }
+    return hits;
+  }
+
+  private applyPlayerHit(player: Player, monster: Monster, hitbox: WorldHitbox, hit: HitCandidate): void {
     const weapon = player.combat.weapon;
     const attack = hitbox.source.attack;
     const sharpness = this.balance.sharpnessModifiers[weapon.sharpness];
@@ -103,8 +147,21 @@ export class CombatResolver {
       hitStopSeconds: hitbox.source.hitStopSeconds,
     });
     if (outcome.flinched) this.events.emit('monsterFlinched', { monsterId: monster.id, partId: hit.part.id });
+    if (outcome.stunned) this.events.emit('monsterStunned', { monsterId: monster.id });
     if (outcome.broke) this.events.emit('partBroken', { monsterId: monster.id, partId: hit.part.id });
     if (outcome.severed) this.events.emit('partSevered', { monsterId: monster.id, partId: hit.part.id });
     if (outcome.died) this.events.emit('monsterDied', { monsterId: monster.id });
+  }
+
+  private applyMonsterHit(player: Player, attack: MonsterAttackDefinition, multiplier: number, contact: Vec3): void {
+    const defense = player.stats.defense;
+    const k = this.balance.defenseConstant;
+    const physical = attack.damage * multiplier * (k / (k + defense));
+    const element = attack.element.type === 'none' ? 0 : attack.element.power * (1 - player.stats.getElementResist(attack.element.type));
+    const damage = Math.max(this.balance.minimumDamage, Math.round(physical + element));
+
+    const died = player.applyHit(damage, this.awayDirection, attack.knockback);
+    this.events.emit('playerHit', { damage, position: contact.clone(), attackId: attack.id });
+    if (died) this.events.emit('playerDowned', { position: player.controller.position.clone() });
   }
 }

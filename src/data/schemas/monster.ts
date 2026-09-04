@@ -1,7 +1,8 @@
-import { oneOf, type Schema } from '../validate';
-import type { HitZoneModifiers } from '@core/combat/elements';
+import { oneOf, optional, type Schema } from '../validate';
+import type { HitZoneModifiers, ElementType } from '@core/combat/elements';
+import { ELEMENT_TYPES } from '@core/combat/elements';
 import type { ShapeData } from '@core/combat/shapes';
-import { PHYSICAL_DAMAGE_TYPES, type PhysicalDamageType } from '@core/combat/AttackData';
+import { PHYSICAL_DAMAGE_TYPES, type LocalOffset, type PhysicalDamageType, type SphereHitbox } from '@core/combat/AttackData';
 
 /**
  * 部位破壊の効果。T11 で戦闘へ反映する。データ構造だけ先に固定しておく。
@@ -30,6 +31,61 @@ export interface MonsterPartDefinition {
   breakEffects: PartBreakEffect[];
 }
 
+export const RANGE_BANDS = ['near', 'middle', 'far'] as const;
+export type RangeBand = (typeof RANGE_BANDS)[number];
+
+export const MONSTER_MOTION_KINDS = ['none', 'charge', 'lunge', 'projectile'] as const;
+export type MonsterMotionKind = (typeof MONSTER_MOTION_KINDS)[number];
+
+export interface MonsterAttackMotion {
+  kind: MonsterMotionKind;
+  /** charge: active 中の前進速度（m/s）。 */
+  speed?: number;
+  /** lunge: 着地点までの最大距離（m）。 */
+  maxDistance?: number;
+  /** projectile: 水平速度・半径・重力・発射位置。 */
+  projectileSpeed?: number;
+  projectileRadius?: number;
+  projectileGravity?: number;
+  spawnOffset?: LocalOffset;
+}
+
+export interface MonsterAttackDefinition {
+  id: string;
+  name: string;
+  damage: number;
+  damageType: PhysicalDamageType;
+  element: { type: ElementType; power: number };
+  /** 予備動作。判定はまだ無く、プレイヤーが「見て」対応するための時間。 */
+  telegraphSeconds: number;
+  startupSeconds: number;
+  activeSeconds: number;
+  recoverySeconds: number;
+  staminaCost: number;
+  ranges: RangeBand[];
+  /** 抽選の重み。 */
+  weight: number;
+  cooldownSeconds: number;
+  /** ターゲットとの相対角（絶対値, rad）がこの範囲のとき使用可能。尾攻撃は背後（π 付近）だけ。 */
+  facingArc: { minRad: number; maxRad: number };
+  /** テレグラフ中にターゲットへ向き直る速度の倍率。0 で向き固定。 */
+  telegraphTurnMultiplier: number;
+  hitboxes: SphereHitbox[];
+  motion: MonsterAttackMotion;
+  knockback: { distance: number; durationSeconds: number };
+}
+
+export interface MonsterCombatConfig {
+  nearRangeMeters: number;
+  middleRangeMeters: number;
+  flinchSeconds: number;
+  toppleSeconds: number;
+  attackIntervalMinSeconds: number;
+  attackIntervalMaxSeconds: number;
+  /** これより近ければ接近をやめる。 */
+  approachStopDistance: number;
+}
+
 export interface MonsterDefinition {
   id: string;
   name: string;
@@ -45,7 +101,9 @@ export interface MonsterDefinition {
     /** 胴体の代表半径。押し出しや距離判定の基準。 */
     bodyRadius: number;
   };
+  combat: MonsterCombatConfig;
   parts: MonsterPartDefinition[];
+  attacks: MonsterAttackDefinition[];
 }
 
 const hitZoneSchema = {
@@ -60,6 +118,35 @@ const hitZoneSchema = {
 } as const satisfies Schema;
 
 const offsetSchema = { x: 'number', y: 'number', z: 'number' } as const satisfies Schema;
+
+const attackSchema = {
+  id: 'string',
+  name: 'string',
+  damage: 'number',
+  damageType: oneOf(PHYSICAL_DAMAGE_TYPES),
+  element: { type: oneOf(ELEMENT_TYPES), power: 'number' },
+  telegraphSeconds: 'number',
+  startupSeconds: 'number',
+  activeSeconds: 'number',
+  recoverySeconds: 'number',
+  staminaCost: 'number',
+  ranges: [oneOf(RANGE_BANDS)],
+  weight: 'number',
+  cooldownSeconds: 'number',
+  facingArc: { minRad: 'number', maxRad: 'number' },
+  telegraphTurnMultiplier: 'number',
+  hitboxes: [{ offset: offsetSchema, radius: 'number' }],
+  motion: {
+    kind: oneOf(MONSTER_MOTION_KINDS),
+    speed: optional('number'),
+    maxDistance: optional('number'),
+    projectileSpeed: optional('number'),
+    projectileRadius: optional('number'),
+    projectileGravity: optional('number'),
+    spawnOffset: optional(offsetSchema),
+  },
+  knockback: { distance: 'number', durationSeconds: 'number' },
+} as const satisfies Schema;
 
 /**
  * shape / breakEffects は判別共用体なので型検証は 'type'/'kind' の存在だけ見て、
@@ -78,6 +165,15 @@ export const monsterSchema = {
     turnSpeedRadPerSecond: 'number',
     bodyRadius: 'number',
   },
+  combat: {
+    nearRangeMeters: 'number',
+    middleRangeMeters: 'number',
+    flinchSeconds: 'number',
+    toppleSeconds: 'number',
+    attackIntervalMinSeconds: 'number',
+    attackIntervalMaxSeconds: 'number',
+    approachStopDistance: 'number',
+  },
   parts: [
     {
       id: 'string',
@@ -93,6 +189,7 @@ export const monsterSchema = {
       breakEffects: [{ kind: oneOf(['attackDamageMultiplier', 'attackReachMultiplier', 'disableAttack', 'toppleThresholdMultiplier']) }],
     },
   ],
+  attacks: [attackSchema],
 } as const satisfies Schema;
 
 export function assertMonsterConsistency(monster: MonsterDefinition): void {
@@ -124,6 +221,40 @@ export function assertMonsterConsistency(monster: MonsterDefinition): void {
     }
   }
   if (!ids.has('head')) throw new Error(`[monster ${monster.id}] a "head" part is required for stun logic`);
+
+  const attackIds = new Set<string>();
+  for (const attack of monster.attacks) {
+    if (attackIds.has(attack.id)) throw new Error(`[monster ${monster.id}] duplicate attack id "${attack.id}"`);
+    attackIds.add(attack.id);
+    if (attack.ranges.length === 0) throw new Error(`[monster ${monster.id}] ${attack.id}: ranges must not be empty`);
+    if (attack.facingArc.minRad > attack.facingArc.maxRad) {
+      throw new Error(`[monster ${monster.id}] ${attack.id}: facingArc.minRad must be <= maxRad`);
+    }
+    const m = attack.motion;
+    if (m.kind === 'charge' && typeof m.speed !== 'number') {
+      throw new Error(`[monster ${monster.id}] ${attack.id}: charge motion requires speed`);
+    }
+    if (m.kind === 'lunge' && typeof m.maxDistance !== 'number') {
+      throw new Error(`[monster ${monster.id}] ${attack.id}: lunge motion requires maxDistance`);
+    }
+    if (m.kind === 'projectile') {
+      if (typeof m.projectileSpeed !== 'number' || typeof m.projectileRadius !== 'number' || typeof m.projectileGravity !== 'number' || !m.spawnOffset) {
+        throw new Error(`[monster ${monster.id}] ${attack.id}: projectile motion requires speed/radius/gravity/spawnOffset`);
+      }
+    }
+  }
+  // 部位破壊効果が参照する攻撃 id の存在確認
+  for (const part of monster.parts) {
+    for (const effect of part.breakEffects) {
+      const e = effect as { attackId?: string };
+      if (e.attackId && !attackIds.has(e.attackId)) {
+        throw new Error(`[monster ${monster.id}] ${part.id}: breakEffect references unknown attack "${e.attackId}"`);
+      }
+    }
+  }
+  if (monster.combat.nearRangeMeters >= monster.combat.middleRangeMeters) {
+    throw new Error(`[monster ${monster.id}] combat.nearRangeMeters must be < middleRangeMeters`);
+  }
 
   function requireOffset(value: unknown, where: string): void {
     const v = value as Record<string, unknown> | undefined;

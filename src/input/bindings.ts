@@ -19,6 +19,7 @@ export const KEY_BINDINGS = {
   debugToggleInfiniteStamina: ['F2'],
   debugKillMonster: ['F3'],
   debugResetMonster: ['F4'],
+  debugToggleAiPause: ['F5'],
 } as const;
 
 export type BindingAction = keyof typeof KEY_BINDINGS;

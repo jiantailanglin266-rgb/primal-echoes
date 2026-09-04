@@ -22,6 +22,7 @@ export interface InputState {
   debugToggleInfiniteStaminaPressed: boolean;
   debugKillMonsterPressed: boolean;
   debugResetMonsterPressed: boolean;
+  debugToggleAiPausePressed: boolean;
 }
 
 export function createEmptyInputState(): InputState {
@@ -42,5 +43,6 @@ export function createEmptyInputState(): InputState {
     debugToggleInfiniteStaminaPressed: false,
     debugKillMonsterPressed: false,
     debugResetMonsterPressed: false,
+    debugToggleAiPausePressed: false,
   };
 }

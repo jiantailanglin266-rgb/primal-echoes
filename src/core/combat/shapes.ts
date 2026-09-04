@@ -36,6 +36,17 @@ function localToWorld(local: LocalOffset, origin: Vec3, sin: number, cos: number
   return out.set(origin.x + local.x * cos + local.z * sin, origin.y + local.y, origin.z - local.x * sin + local.z * cos);
 }
 
+/** ローカルオフセット（+Z 前方）を、origin/yaw のワールド座標へ変換する。 */
+export function transformPoint(local: LocalOffset, origin: Vec3, yaw: number, out: Vec3): Vec3 {
+  return localToWorld(local, origin, Math.sin(yaw), Math.cos(yaw), out);
+}
+
+/** 球同士の重なり判定。 */
+export function spheresOverlap(aCenter: Vec3, aRadius: number, bCenter: Vec3, bRadius: number): boolean {
+  const r = aRadius + bRadius;
+  return aCenter.distanceToSq(bCenter) <= r * r;
+}
+
 export function transformShape(shape: ShapeData, origin: Vec3, yaw: number, out: WorldShape): WorldShape {
   const sin = Math.sin(yaw);
   const cos = Math.cos(yaw);

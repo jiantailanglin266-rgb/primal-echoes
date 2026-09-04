@@ -1,15 +1,26 @@
 import type { PlayerBalance } from '@data/schemas/balance';
+import type { ElementType } from '@core/combat/elements';
 import { clamp } from '@shared/math/scalar';
 
 /**
- * プレイヤーの HP / スタミナ。
- * 攻撃力・防御力などの集計は装備システム（T15 以降）で追加する。
+ * プレイヤーの HP / スタミナ / 防御。
+ * 攻撃力・防御力・耐性の装備集計は装備システム（T15 以降）で差し込む。
  */
 export class PlayerStats {
   readonly maxHp: number;
   readonly maxStamina: number;
   hp: number;
   stamina: number;
+  /** 防具合計。装備システム導入までは 0。 */
+  defense = 0;
+  private readonly elementResist: Record<ElementType, number> = {
+    none: 0,
+    fire: 0,
+    water: 0,
+    thunder: 0,
+    ice: 0,
+    aether: 0,
+  };
 
   /** 直近のスタミナ消費からの経過秒。回復開始の遅延判定に使う。 */
   private sinceStaminaUse = Infinity;
@@ -34,6 +45,15 @@ export class PlayerStats {
 
   get hpRatio(): number {
     return this.hp / this.maxHp;
+  }
+
+  /** 属性耐性（0〜1、割合カット）。 */
+  getElementResist(type: ElementType): number {
+    return this.elementResist[type];
+  }
+
+  setElementResist(type: ElementType, value: number): void {
+    this.elementResist[type] = clamp(value, 0, 1);
   }
 
   /** 一括消費（回避など）。足りなければ消費せず false。 */

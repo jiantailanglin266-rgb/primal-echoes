@@ -53,6 +53,10 @@ export class PlayerView {
     const crouch = controller.state === 'dodge' ? 0.75 : 1;
     this.object.scale.y += (crouch - this.object.scale.y) * 0.35;
 
+    // 被弾でのけぞり、戦闘不能で倒れる（仮表現）
+    const tilt = controller.state === 'downed' ? -1.45 : controller.state === 'hurt' ? -0.45 : 0;
+    this.object.rotation.x += (tilt - this.object.rotation.x) * 0.3;
+
     this.updateWeaponPose();
   }
 

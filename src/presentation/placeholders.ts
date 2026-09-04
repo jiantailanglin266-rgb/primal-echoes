@@ -13,6 +13,8 @@ export const PLACEHOLDER_COLORS = {
   player: 0xd8b26a,
   playerWeapon: 0xb0b8c0,
   hitboxDebug: 0xff5a3c,
+  monsterHitboxDebug: 0x4cc9ff,
+  projectile: 0x6e6257,
 } as const;
 
 export const PLAYER_PLACEHOLDER = {

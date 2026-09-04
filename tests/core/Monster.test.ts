@@ -7,6 +7,9 @@ import { findHitPart, type HitCandidate } from '@core/combat/HitDetection';
 import type { MonsterPart } from '@core/monster/MonsterPart';
 import type { WorldHitbox } from '@core/combat/PlayerCombat';
 import { Vec3 } from '@shared/math/Vec3';
+import type { HeightProvider } from '@core/world/Terrain';
+
+const flat: HeightProvider = { getHeight: () => 0 };
 
 const balance = loadBalance().combat;
 const def = loadValgaron();
@@ -45,7 +48,7 @@ describe('Monster parts', () => {
   let monster: Monster;
 
   beforeEach(() => {
-    monster = new Monster('m1', def, balance);
+    monster = new Monster('m1', def, balance, flat);
   });
 
   it('breaks a breakable part when partHp reaches zero', () => {
@@ -67,7 +70,7 @@ describe('Monster parts', () => {
     expect(o.broke).toBe(true);
     expect(tail.state).toBe('broken');
 
-    const fresh = new Monster('m2', def, balance);
+    const fresh = new Monster('m2', def, balance, flat);
     const o2 = outcome();
     fresh.applyHit('tail', damage(tail.def.partHp, { damageType: 'slash' }), o2);
     expect(o2.severed).toBe(true);
@@ -96,7 +99,7 @@ describe('Monster parts', () => {
   it('decays flinch accumulation over time', () => {
     const leg = monster.getPart('foreleg_l');
     monster.applyHit('foreleg_l', damage(1, { partDamage: 0, flinchDamage: 50 }), outcome());
-    monster.update(1);
+    monster.update(1, new Vec3());
     expect(leg.flinchAccumulated).toBeCloseTo(50 - balance.flinchDecayPerSecond);
   });
 
@@ -111,8 +114,8 @@ describe('Monster parts', () => {
 });
 
 describe('HitDetection', () => {
-  const monster = new Monster('m1', def, balance);
-  monster.teleport(0, 0, 10, Math.PI); // プレイヤー（原点）の方を向く: 頭が -Z 側
+  const monster = new Monster('m1', def, balance, flat);
+  monster.teleport(0, 10, Math.PI); // プレイヤー（原点）の方を向く: 頭が -Z 側
   const candidate: HitCandidate = { part: null as unknown as MonsterPart, depth: 0, contact: new Vec3() };
 
   it('shape distance is negative when overlapping', () => {

@@ -2,7 +2,8 @@ import type { PlayerBalance } from '@data/schemas/balance';
 import type { WeaponDefinition } from '@data/schemas/weapon';
 import type { HeightProvider } from '@core/world/Terrain';
 import { PlayerCombat, type CombatContext } from '@core/combat/PlayerCombat';
-import { PlayerController } from './PlayerController';
+import type { Vec3 } from '@shared/math/Vec3';
+import { PlayerController, type KnockbackSpec } from './PlayerController';
 import { PlayerStats } from './PlayerStats';
 import { createEmptyIntent, type PlayerIntent } from './PlayerIntent';
 
@@ -30,14 +31,44 @@ export class Player {
     this.combat = new PlayerCombat(weapon, this.stats);
   }
 
+  get isDowned(): boolean {
+    return this.controller.state === 'downed';
+  }
+
+  /**
+   * 被弾処理。戻り値: この被弾で戦闘不能になったか。
+   * のけぞり中は攻撃・チャージも打ち切られる。
+   */
+  applyHit(damage: number, awayDirection: Vec3, knockback: KnockbackSpec): boolean {
+    this.stats.takeDamage(damage);
+    this.combat.cancel();
+    this.controller.applyHit(awayDirection, knockback);
+    if (!this.stats.isAlive) {
+      this.controller.down();
+      return true;
+    }
+    return false;
+  }
+
   update(intent: PlayerIntent, dt: number): void {
     const controller = this.controller;
+    const effective = this.effectiveIntent;
+
+    if (!controller.canAct) {
+      // のけぞり/戦闘不能中は入力を捨てる。攻撃状態は applyHit 時点で cancel 済み。
+      effective.move.set(0, 0, 0);
+      effective.dash = false;
+      effective.dodge = false;
+      controller.update(effective, dt);
+      this.stats.update(dt);
+      return;
+    }
+
     this.combatContext.isDodging = controller.state === 'dodge';
     this.combatContext.timeSinceDodgeEnd = controller.timeSinceDodgeEnd;
 
     const combatResult = this.combat.update(intent, this.combatContext, dt);
 
-    const effective = this.effectiveIntent;
     effective.move.copy(intent.move);
     effective.dash = intent.dash;
     effective.dodge = intent.dodge && combatResult.allowsDodge;

@@ -21,6 +21,11 @@ export interface PlayerBalance {
   gravity: number;
   capsuleRadius: number;
   height: number;
+  /** 被弾判定用の球（中心高さ・半径）。カプセルより単純で十分。 */
+  hurtboxRadius: number;
+  hurtboxHeight: number;
+  /** のけぞり終了後の無敵時間（連続被弾防止）。 */
+  postHurtInvulnSeconds: number;
   dodge: DodgeBalance;
 }
 
@@ -60,6 +65,8 @@ export interface CombatBalance {
   flinchThresholdGrowth: number;
   /** 1 ヒットの最低ダメージ。 */
   minimumDamage: number;
+  /** 被ダメージ = 攻撃力 × defenseConstant / (defenseConstant + 防御力)。 */
+  defenseConstant: number;
 }
 
 export interface BalanceData {
@@ -84,6 +91,9 @@ export const balanceSchema = {
     gravity: 'number',
     capsuleRadius: 'number',
     height: 'number',
+    hurtboxRadius: 'number',
+    hurtboxHeight: 'number',
+    postHurtInvulnSeconds: 'number',
     dodge: {
       staminaCost: 'number',
       durationSeconds: 'number',
@@ -118,5 +128,6 @@ export const balanceSchema = {
     flinchDecayPerSecond: 'number',
     flinchThresholdGrowth: 'number',
     minimumDamage: 'number',
+    defenseConstant: 'number',
   },
 } as const satisfies Schema;

@@ -5,10 +5,15 @@ import type { HeightProvider } from '@core/world/Terrain';
 import type { PlayerStats } from './PlayerStats';
 import type { PlayerIntent } from './PlayerIntent';
 
-export type PlayerLocomotionState = 'idle' | 'walk' | 'dash' | 'dodge';
+export type PlayerLocomotionState = 'idle' | 'walk' | 'dash' | 'dodge' | 'hurt' | 'downed';
+
+export interface KnockbackSpec {
+  distance: number;
+  durationSeconds: number;
+}
 
 /**
- * プレイヤーの移動・回避を担当する。
+ * プレイヤーの移動・回避・被弾リアクションを担当する。
  * 攻撃中の挙動は PlayerCombat が「移動を禁止する」形で上（Player 集約）から制御し、
  * このクラス自体は攻撃を知らない。
  */
@@ -27,6 +32,12 @@ export class PlayerController {
   private dodgeProgress = 0;
   private readonly dodgeDirection = new Vec3();
 
+  private hurtElapsed = 0;
+  private hurtProgress = 0;
+  private hurtSpec: KnockbackSpec = { distance: 0, durationSeconds: 0 };
+  private readonly hurtDirection = new Vec3();
+  private postHurtInvulnRemaining = 0;
+
   private readonly scratchMove = new Vec3();
   private readonly scratchForward = new Vec3();
 
@@ -38,16 +49,31 @@ export class PlayerController {
     this.snapToGround();
   }
 
-  /** 回避の無敵ウィンドウ内か。ヒット判定側がこれを参照してダメージを無効化する。 */
+  /** 回避の無敵ウィンドウ内、のけぞり中、のけぞり直後は被弾しない。 */
   get isInvulnerable(): boolean {
+    if (this.state === 'hurt' || this.state === 'downed') return true;
+    if (this.postHurtInvulnRemaining > 0) return true;
     if (this.state !== 'dodge') return false;
     const { invulnStartSeconds, invulnEndSeconds } = this.balance.dodge;
     return this.dodgeElapsed >= invulnStartSeconds && this.dodgeElapsed < invulnEndSeconds;
   }
 
+  get canAct(): boolean {
+    return this.state !== 'hurt' && this.state !== 'downed';
+  }
+
   /** 現在向いている方向（XZ 単位ベクトル）。 */
   getForward(out = new Vec3()): Vec3 {
     return out.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
+  }
+
+  /** 被弾判定球の中心。 */
+  getHurtboxCenter(out: Vec3): Vec3 {
+    return out.set(this.position.x, this.position.y + this.balance.hurtboxHeight, this.position.z);
+  }
+
+  get hurtboxRadius(): number {
+    return this.balance.hurtboxRadius;
   }
 
   teleport(x: number, z: number): void {
@@ -72,16 +98,55 @@ export class PlayerController {
     this.position.y = Math.max(this.position.y, this.terrain.getHeight(this.position.x, this.position.z));
   }
 
+  /**
+   * 被弾: 攻撃元から見た方向へ吹き飛ばし、のけぞり状態に入る。
+   * 回避・移動は中断される。攻撃の中断は Player 集約が行う。
+   */
+  applyHit(awayDirection: Vec3, knockback: KnockbackSpec): void {
+    if (this.state === 'downed') return;
+    this.hurtDirection.copy(awayDirection);
+    this.hurtDirection.y = 0;
+    if (this.hurtDirection.lengthSq() <= 1e-6) this.getForward(this.hurtDirection).scale(-1);
+    this.hurtDirection.normalize();
+    this.hurtSpec = knockback;
+    this.hurtElapsed = 0;
+    this.hurtProgress = 0;
+    this.state = 'hurt';
+    // 吹き飛ばされる方向の逆（攻撃元）を向く
+    this.yaw = Math.atan2(-this.hurtDirection.x, -this.hurtDirection.z);
+  }
+
+  /** 戦闘不能。以後は入力を受け付けない（復帰はクエストシステム側）。 */
+  down(): void {
+    this.state = 'downed';
+  }
+
+  revive(): void {
+    this.state = 'idle';
+    this.postHurtInvulnRemaining = this.balance.postHurtInvulnSeconds;
+  }
+
   update(intent: PlayerIntent, dt: number): void {
     this.previousPosition.copy(this.position);
+    if (this.postHurtInvulnRemaining > 0) this.postHurtInvulnRemaining -= dt;
 
-    if (this.state === 'dodge') {
-      this.updateDodge(dt);
-    } else if (intent.dodge && this.tryStartDodge(intent)) {
-      this.updateDodge(dt);
-    } else {
-      this.timeSinceDodgeEnd += dt;
-      this.updateLocomotion(intent, dt);
+    switch (this.state) {
+      case 'downed':
+        break;
+      case 'hurt':
+        this.updateHurt(dt);
+        break;
+      case 'dodge':
+        this.updateDodge(dt);
+        break;
+      default:
+        if (intent.dodge && this.tryStartDodge(intent)) {
+          this.updateDodge(dt);
+        } else {
+          this.timeSinceDodgeEnd += dt;
+          this.updateLocomotion(intent, dt);
+        }
+        break;
     }
 
     this.applyGravity(dt);
@@ -140,6 +205,21 @@ export class PlayerController {
     if (t >= 1) {
       this.state = 'idle';
       this.timeSinceDodgeEnd = 0;
+    }
+  }
+
+  private updateHurt(dt: number): void {
+    const { durationSeconds, distance } = this.hurtSpec;
+    this.hurtElapsed += dt;
+    const t = durationSeconds <= 0 ? 1 : Math.min(this.hurtElapsed / durationSeconds, 1);
+    const eased = 1 - (1 - t) * (1 - t);
+    const delta = (eased - this.hurtProgress) * distance;
+    this.hurtProgress = eased;
+    this.position.addScaled(this.hurtDirection, delta);
+
+    if (t >= 1) {
+      this.state = 'idle';
+      this.postHurtInvulnRemaining = this.balance.postHurtInvulnSeconds;
     }
   }
 

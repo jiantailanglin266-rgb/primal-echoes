@@ -18,9 +18,9 @@ const flat: HeightProvider = { getHeight: () => 0 };
 function setup() {
   const events = new EventBus<GameEvents>();
   const player = new Player(balance.player, weapon, flat);
-  const monster = new Monster('valgaron_01', loadValgaron(), balance.combat);
+  const monster = new Monster('valgaron_01', loadValgaron(), balance.combat, flat);
   // 頭がプレイヤーの目の前に来るよう配置（頭は +Z 3.2 なので、向きを反転して手前に）
-  monster.teleport(0, 0, 5.5, Math.PI);
+  monster.teleport(0, 5.5, Math.PI);
   const resolver = new CombatResolver(events, balance.combat, new Random(1));
   return { events, player, monster, resolver };
 }

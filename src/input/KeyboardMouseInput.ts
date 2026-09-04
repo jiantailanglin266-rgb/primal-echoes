@@ -56,6 +56,7 @@ export class KeyboardMouseInput {
     state.debugToggleInfiniteStaminaPressed = this.wasPressed('debugToggleInfiniteStamina');
     state.debugKillMonsterPressed = this.wasPressed('debugKillMonster');
     state.debugResetMonsterPressed = this.wasPressed('debugResetMonster');
+    state.debugToggleAiPausePressed = this.wasPressed('debugToggleAiPause');
     state.lookDeltaX = this.lookDeltaX;
     state.lookDeltaY = this.lookDeltaY;
 

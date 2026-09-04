@@ -12,6 +12,9 @@
     "gravity": 25,
     "capsuleRadius": 0.35,
     "height": 1.8,
+    "hurtboxRadius": 0.55,
+    "hurtboxHeight": 0.9,
+    "postHurtInvulnSeconds": 0.5,
     "dodge": {
       "staminaCost": 20,
       "durationSeconds": 0.55,
@@ -45,6 +48,7 @@
     },
     "flinchDecayPerSecond": 12,
     "flinchThresholdGrowth": 1.2,
-    "minimumDamage": 1
+    "minimumDamage": 1,
+    "defenseConstant": 100
   }
 }

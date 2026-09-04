@@ -30,11 +30,12 @@ export class DamageNumberView {
     private readonly project: WorldProjector,
   ) {}
 
-  spawn(world: Vec3, amount: number, options: { critical?: boolean; partBroken?: boolean } = {}): void {
+  spawn(world: Vec3, amount: number, options: { critical?: boolean; partBroken?: boolean; player?: boolean } = {}): void {
     const element = document.createElement('div');
     element.className = 'pe-damage-number';
     if (options.critical) element.classList.add('is-critical');
     if (options.partBroken) element.classList.add('is-break');
+    if (options.player) element.classList.add('is-player');
     element.textContent = String(Math.round(amount));
     this.root.appendChild(element);
     this.active.push({ element, world: world.clone(), age: 0 });

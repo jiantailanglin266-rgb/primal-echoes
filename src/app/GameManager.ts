@@ -826,7 +826,7 @@ export class GameManager {
 
   private render(alpha: number, frameDt: number): void {
     this.hitStop.update(frameDt);
-    this.playerView.sync(alpha);
+    this.playerView.sync(alpha, frameDt);
     const aiState = this.monsterAI.state;
     this.monsterView.ecologyPose = aiState === 'sleep' || aiState === 'eat' || aiState === 'drink' ? aiState : 'none';
     this.monsterView.sync(alpha, frameDt);

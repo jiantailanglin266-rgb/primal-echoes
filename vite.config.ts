@@ -4,6 +4,8 @@ import { defineConfig } from 'vitest/config';
 const alias = (dir: string) => fileURLToPath(new URL(`./src/${dir}`, import.meta.url));
 
 export default defineConfig({
+  // GitHub Pages はリポジトリ名のサブパスで配信されるため、アセット参照を相対にする
+  base: './',
   resolve: {
     alias: {
       '@app': alias('app'),

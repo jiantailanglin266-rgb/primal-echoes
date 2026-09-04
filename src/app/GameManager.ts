@@ -1,13 +1,13 @@
 import { GameLoop } from './GameLoop';
 import { HitStop } from './HitStop';
 import { buildPlayerIntent } from './intentBuilder';
-import { loadBalance, loadDevTerrain, loadTitanBlade, loadValgaron } from '@data/DataRegistry';
+import { loadBalance, loadTitanBlade, loadValgaron, loadVerdantTempest } from '@data/DataRegistry';
 import type { BalanceData } from '@data/schemas/balance';
-import { ProceduralTerrain } from '@core/world/Terrain';
+import { Field } from '@core/world/Field';
 import { Player } from '@core/player/Player';
 import { createEmptyIntent, type PlayerIntent } from '@core/player/PlayerIntent';
 import { Monster } from '@core/monster/Monster';
-import { MonsterAI } from '@core/monster/MonsterAI';
+import { MonsterAI, type MonsterAIContext } from '@core/monster/MonsterAI';
 import type { MonsterHitbox } from '@core/monster/MonsterCombat';
 import { CombatResolver } from '@core/combat/CombatResolver';
 import { ProjectileManager } from '@core/combat/Projectile';
@@ -20,7 +20,7 @@ import { PlayerView } from '@presentation/PlayerView';
 import { MonsterView } from '@presentation/MonsterView';
 import { ProjectileView } from '@presentation/ProjectileView';
 import { HitboxDebugView, type DebugSphere } from '@presentation/HitboxDebugView';
-import { createTerrainView } from '@presentation/TerrainView';
+import { createFieldView } from '@presentation/FieldView';
 import { DamageNumberView, type ScreenPoint } from '@ui/DamageNumberView';
 import { DebugOverlay } from '@debug/DebugOverlay';
 import { EventBus } from '@shared/events/EventBus';
@@ -28,12 +28,9 @@ import type { GameEvents } from '@shared/events/GameEvents';
 import { Random } from '@shared/rng/Random';
 import { Vec3 } from '@shared/math/Vec3';
 
-/** ダミー配置。フィールド定義（T12）ができるまでの固定値。 */
-const DEV_MONSTER_SPAWN = { x: 0, z: 16, yaw: Math.PI };
-
 /**
  * ゲーム全体の起動と各システムの接続を担当する。
- * Phase 2〜3: 入力 -> Player -> MonsterAI/Combat -> CombatResolver -> View / Camera / UI。
+ * 入力 -> Player -> MonsterAI（生態 + 戦闘）/ Combat -> CombatResolver -> View / Camera / UI。
  * シーン遷移（Hub / Field / Result）は T14 以降で追加する。
  */
 export class GameManager {
@@ -46,12 +43,13 @@ export class GameManager {
   private readonly debug: DebugOverlay | null;
   private readonly hitStop: HitStop;
 
-  private readonly terrain: ProceduralTerrain;
+  readonly field: Field;
   readonly player: Player;
   readonly monster: Monster;
   readonly monsterAI: MonsterAI;
   readonly projectiles: ProjectileManager;
   private readonly combatResolver: CombatResolver;
+  private readonly aiContext: MonsterAIContext;
 
   private readonly playerView: PlayerView;
   private readonly monsterView: MonsterView;
@@ -78,15 +76,19 @@ export class GameManager {
     this.renderer = new SceneRenderer(canvas);
     this.input = new KeyboardMouseInput(canvas);
 
-    this.terrain = new ProceduralTerrain(loadDevTerrain());
-    this.renderer.scene.add(createTerrainView(this.terrain));
+    this.field = new Field(loadVerdantTempest());
+    this.renderer.scene.add(createFieldView(this.field));
+    const terrain = this.field.terrain;
 
-    this.player = new Player(this.balance.player, weapon, this.terrain);
+    this.player = new Player(this.balance.player, weapon, terrain);
+    const spawn = this.field.def.playerSpawn;
+    this.player.controller.teleport(spawn.x, spawn.z);
+    this.player.controller.yaw = spawn.yaw;
     this.playerView = new PlayerView(this.player);
     this.renderer.scene.add(this.playerView.object);
 
-    this.projectiles = new ProjectileManager(this.terrain);
-    this.monster = new Monster('valgaron_01', valgaronDef, this.balance.combat, this.terrain, {
+    this.projectiles = new ProjectileManager(terrain);
+    this.monster = new Monster('valgaron_01', valgaronDef, this.balance.combat, terrain, {
       spawnProjectile: (attack, origin, target) => {
         this.projectiles.spawnArc(this.monster.id, attack, origin, target, this.balance.player.hurtboxHeight);
       },
@@ -94,8 +96,13 @@ export class GameManager {
         this.events.emit('monsterAttackStarted', { monsterId: this.monster.id, attackId: attack.id, telegraphSeconds: attack.telegraphSeconds });
       },
     });
-    this.monster.teleport(DEV_MONSTER_SPAWN.x, DEV_MONSTER_SPAWN.z, DEV_MONSTER_SPAWN.yaw);
+    const monsterSpawn = this.field.def.monsterSpawns[0];
+    if (monsterSpawn) {
+      const poi = this.field.getPoi(monsterSpawn.poiId);
+      this.monster.teleport(poi.position.x, poi.position.z, monsterSpawn.yaw);
+    }
     this.monsterAI = new MonsterAI(this.monster, rng);
+    this.aiContext = { field: this.field, subject: { position: this.player.controller.position, isNoisy: false } };
     this.monsterView = new MonsterView(this.monster);
     this.renderer.scene.add(this.monsterView.object);
     this.projectileView = new ProjectileView();
@@ -103,7 +110,8 @@ export class GameManager {
 
     this.combatResolver = new CombatResolver(this.events, this.balance.combat, rng);
 
-    this.cameraRig = new CameraRig(this.renderer.camera, this.terrain, this.balance.camera);
+    this.cameraRig = new CameraRig(this.renderer.camera, terrain, this.balance.camera);
+    this.cameraRig.yaw = spawn.yaw;
     this.damageNumbers = new DamageNumberView(uiRoot, (world, out) => this.projectToScreen(world, out));
 
     const debugEnabled = DebugOverlay.isEnabled();
@@ -136,6 +144,8 @@ export class GameManager {
       this.monsterView.flashPart(e.partId);
       this.damageNumbers.spawn(e.position, e.result.total, { critical: e.result.isCritical });
       this.lastHitSummary = `${e.partId} ${e.result.total}${e.result.isCritical ? ' CRIT' : ''} (part ${e.result.partDamage.toFixed(0)})`;
+      // 攻撃された = 発見される（寝込みを襲えば起きる）
+      this.monsterAI.notifyAttacked(this.player.controller.position);
     });
     this.events.on('partBroken', (e) => {
       this.lastHitSummary = `PART BROKEN: ${this.monster.getPart(e.partId).def.name}`;
@@ -158,6 +168,7 @@ export class GameManager {
     this.events.on('monsterCalmed', () => (this.lastHitSummary = 'calmed down'));
     this.events.on('monsterExhausted', () => (this.lastHitSummary = 'EXHAUSTED'));
     this.events.on('monsterRecovered', () => (this.lastHitSummary = 'recovered'));
+    this.events.on('monsterStateChanged', (e) => (this.lastHitSummary = `AI ${e.from} -> ${e.to}`));
   }
 
   private setupDebugLines(): void {
@@ -165,7 +176,8 @@ export class GameManager {
     const d = this.debug;
     const { controller, stats, combat } = this.player;
     const m = this.monster;
-    d.addLine(() => `sim ${this.loop.simulationTime.toFixed(2)}s  timeScale ${this.loop.timeScale.toFixed(2)}${this.hitStop.isActive ? ' HITSTOP' : ''}`);
+    const ai = this.monsterAI;
+    d.addLine(() => `sim ${this.loop.simulationTime.toFixed(2)}s  timeScale ${this.loop.timeScale.toFixed(2)}${this.hitStop.isActive ? ' HITSTOP' : ''}  area ${this.field.areaAt(controller.position)?.name ?? '-'}`);
     d.addLine(() => `move ${controller.state.padEnd(6)} pos ${controller.position.toString()} yaw ${controller.yaw.toFixed(2)}`);
     d.addLine(() => `HP ${stats.hp.toFixed(0)}/${stats.maxHp}  ST ${stats.stamina.toFixed(0)}/${stats.maxStamina}${stats.infiniteStamina ? ' (inf)' : ''}  invuln ${controller.isInvulnerable ? 'YES' : 'no'}`);
     d.addLine(() => {
@@ -174,13 +186,17 @@ export class GameManager {
       const charge = combat.state === 'charging' ? ` charge L${combat.chargeLevel} ${combat.chargeHoldSeconds.toFixed(2)}s` : '';
       return `combat ${combat.state.padEnd(9)} ${attack.padEnd(15)} ${phase}${charge}`;
     });
-    d.addLine(() => `--- ${m.def.name} (${m.id}) ---`);
+    d.addLine(() => `--- ${m.def.name} (${m.id})  area ${this.field.areaAt(m.position)?.name ?? '-'} ---`);
     d.addLine(() => `HP ${m.stats.hp.toFixed(0)}/${m.stats.maxHp}  ST ${m.stats.stamina.toFixed(0)}  stun ${m.stats.stunAccumulated.toFixed(0)}  dist ${controller.position.horizontalDistanceTo(m.position).toFixed(1)}m  angle ${m.combat.relativeAngleTo(controller.position).toFixed(2)}  lock ${this.cameraRig.isLockedOn ? 'ON' : 'off'}`);
+    d.addLine(() => {
+      const goal = ai.state === 'travel' || ai.state === 'flee' || ai.state === 'investigate' ? ` -> ${ai.goalLabel} (${m.position.horizontalDistanceTo(ai.goal).toFixed(0)}m)` : '';
+      return `ai ${ai.paused ? 'PAUSED' : ai.state.padEnd(11)} ${ai.stateElapsed.toFixed(1)}s${goal}  seen ${ai.perception.detected ? 'YES' : 'no'}  hunger ${ai.needs.hunger.toFixed(0)} thirst ${ai.needs.thirst.toFixed(0)} fatigue ${ai.needs.fatigue.toFixed(0)}`;
+    });
     d.addLine(() => {
       const c = m.combat;
       const attack = c.current?.def.id ?? '-';
       const phase = c.phase ?? (c.isIncapacitated ? `${c.reactionSecondsLeft.toFixed(1)}s` : '-');
-      return `m.combat ${c.state.padEnd(9)} ${attack.padEnd(15)} ${phase}  ai ${this.monsterAI.paused ? 'PAUSED' : this.monsterAI.mode}`;
+      return `m.combat ${c.state.padEnd(9)} ${attack.padEnd(15)} ${phase}`;
     });
     d.addLine(() => {
       const cnd = m.condition;
@@ -194,7 +210,7 @@ export class GameManager {
         .join(' '),
     );
     d.addLine(() => `last: ${this.lastHitSummary}`);
-    d.addLine(() => `pointerLock ${this.input.isPointerLocked ? 'on' : 'off (click canvas)'}  WASD/Shift/Space  J light  K heavy(hold)  Tab lock  F1 heal F2 inf.stamina F3 kill F4 reset F5 AI pause F6 enrage`);
+    d.addLine(() => `pointerLock ${this.input.isPointerLocked ? 'on' : 'off (click canvas)'}  WASD/Shift/Space  J light  K heavy(hold)  Tab lock  F1 heal F2 inf.stamina F3 kill F4 reset F5 AI pause F6 enrage F7 warp to monster`);
   }
 
   private update(dt: number): void {
@@ -209,22 +225,25 @@ export class GameManager {
     buildPlayerIntent(input, this.cameraForward, this.cameraRight, this.intent);
 
     this.player.update(this.intent, dt);
-    this.terrain.clampToBounds(this.player.controller.position);
+    this.field.terrain.clampToBounds(this.player.controller.position);
 
-    const playerPos = this.player.controller.position;
-    this.monsterAI.update(dt, playerPos);
-    const condition = this.monster.update(dt, playerPos);
+    const controller = this.player.controller;
+    this.aiContext.subject.isNoisy = controller.state === 'dash' || this.player.combat.isBusy;
+    const stateChange = this.monsterAI.update(dt, this.aiContext);
+    if (stateChange) this.events.emit('monsterStateChanged', { monsterId: this.monster.id, from: stateChange.from, to: stateChange.to });
+
+    const condition = this.monster.update(dt, controller.position);
     if (condition.enrageEnded) this.events.emit('monsterCalmed', { monsterId: this.monster.id });
     if (condition.exhaustionStarted) this.events.emit('monsterExhausted', { monsterId: this.monster.id });
     if (condition.exhaustionEnded) this.events.emit('monsterRecovered', { monsterId: this.monster.id });
-    this.terrain.clampToBounds(this.monster.position, this.monster.def.stats.bodyRadius);
+    this.field.terrain.clampToBounds(this.monster.position, this.monster.def.stats.bodyRadius);
     this.projectiles.update(dt);
 
     this.combatResolver.resolvePlayerAttacks(this.player, [this.monster]);
     this.combatResolver.resolveMonsterAttacks([this.monster], this.projectiles.projectiles, this.player);
 
     if (this.cameraRig.isLockedOn) {
-      const dist = playerPos.horizontalDistanceTo(this.monster.position);
+      const dist = controller.position.horizontalDistanceTo(this.monster.position);
       if (dist > this.balance.camera.lockOnMaxDistance || !this.monster.isAlive) this.cameraRig.setLockOnTarget(null);
     }
   }
@@ -258,6 +277,7 @@ export class GameManager {
     }
     if (input.debugResetMonsterPressed) {
       this.monster.reset();
+      this.monsterAI.reset();
       this.projectiles.clear();
       this.lastHitSummary = 'monster reset';
     }
@@ -265,6 +285,11 @@ export class GameManager {
     if (input.debugForceEnragePressed) {
       this.monster.forceEnrage();
       this.events.emit('monsterEnraged', { monsterId: this.monster.id });
+    }
+    if (input.debugWarpToMonsterPressed) {
+      const m = this.monster.position;
+      const back = this.monster.getForward().scale(-12);
+      this.player.controller.teleport(m.x + back.x, m.z + back.z);
     }
   }
 
@@ -276,6 +301,8 @@ export class GameManager {
   private render(alpha: number, frameDt: number): void {
     this.hitStop.update(frameDt);
     this.playerView.sync(alpha);
+    const aiState = this.monsterAI.state;
+    this.monsterView.ecologyPose = aiState === 'sleep' || aiState === 'eat' || aiState === 'drink' ? aiState : 'none';
     this.monsterView.sync(alpha, frameDt);
     this.projectileView.sync(this.projectiles.projectiles, alpha);
     if (this.hitboxDebugView) {

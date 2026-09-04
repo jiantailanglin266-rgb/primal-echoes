@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Monster, type MonsterHitOutcome } from '@core/monster/Monster';
-import { MonsterAI } from '@core/monster/MonsterAI';
+import { MonsterAI, type MonsterAIContext } from '@core/monster/MonsterAI';
 import { monsterAttackTotalSeconds } from '@core/monster/MonsterCombat';
 import { createDamageResult, type DamageResult } from '@core/combat/DamageSystem';
-import { loadBalance, loadValgaron } from '@data/DataRegistry';
+import { Field } from '@core/world/Field';
+import { loadBalance, loadValgaron, loadVerdantTempest } from '@data/DataRegistry';
 import type { HeightProvider } from '@core/world/Terrain';
 import { Random } from '@shared/rng/Random';
 import { Vec3 } from '@shared/math/Vec3';
@@ -147,9 +148,11 @@ describe('MonsterCondition - exhaustion', () => {
     expect(monster.condition.isExhausted).toBe(true);
     const ai = new MonsterAI(monster, new Random(11));
     const target = new Vec3(0, 0, -20); // far: 通常なら突進/投石が候補
+    const ctx: MonsterAIContext = { field: new Field(loadVerdantTempest()), subject: { position: target, isNoisy: false } };
+    ai.notifyAttacked(target);
     const chosen = new Set<string>();
     for (let i = 0; i < 60 * 30; i++) {
-      ai.update(DT, target);
+      ai.update(DT, ctx);
       monster.update(DT, target);
       if (ai.lastChosenAttackId) chosen.add(ai.lastChosenAttackId);
       monster.stats.stamina = 0; // 疲労を維持

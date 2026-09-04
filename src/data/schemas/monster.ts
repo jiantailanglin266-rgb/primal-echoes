@@ -119,11 +119,64 @@ export interface ExhaustionConfig {
   disabledAttackIds: string[];
 }
 
+export interface PerceptionConfig {
+  sightRange: number;
+  /** 正面からの半角（rad）。 */
+  sightAngleRad: number;
+  hearingRange: number;
+  /** 睡眠中の視覚・聴覚の倍率。 */
+  sleepingSenseMultiplier: number;
+  /** ターゲットがこれより遠い状態が loseTargetSeconds 続くと見失う。 */
+  loseTargetRange: number;
+  loseTargetSeconds: number;
+}
+
+export interface NeedsConfig {
+  hungerPerSecond: number;
+  thirstPerSecond: number;
+  fatiguePerSecond: number;
+  /** 戦闘中の疲れやすさ倍率。 */
+  combatFatigueMultiplier: number;
+  eatThreshold: number;
+  drinkThreshold: number;
+  sleepThreshold: number;
+  eatSeconds: number;
+  drinkSeconds: number;
+  sleepSeconds: number;
+  /** 食事で回復する内部スタミナ量。 */
+  eatRestoresStamina: number;
+  /** 睡眠中の HP 回復（最大 HP 比 / 秒）。 */
+  sleepHpRegenRatioPerSecond: number;
+  /** 初期値（クエスト開始時点でどれくらい腹が減っているか）。 */
+  initialHunger: number;
+  initialThirst: number;
+  initialFatigue: number;
+}
+
+export interface BehaviorConfig {
+  perception: PerceptionConfig;
+  needs: NeedsConfig;
+  /** HP がこの割合以下で巣へ逃げる（1 戦闘 1 回）。 */
+  fleeHpRatio: number;
+  /** 逃走後に巣で眠る時間。 */
+  fleeSleepSeconds: number;
+  /** 発見から戦闘開始までの警戒時間（振り向き・威嚇）。 */
+  alertSeconds: number;
+  /** 見失った地点を調べる時間。 */
+  investigateSeconds: number;
+  /** 巡回点での待機時間。 */
+  patrolWaitMinSeconds: number;
+  patrolWaitMaxSeconds: number;
+  /** 目的地に「着いた」とみなす距離。 */
+  arriveDistance: number;
+}
+
 export interface MonsterDefinition {
   id: string;
   name: string;
   enrage: EnrageConfig;
   exhaustion: ExhaustionConfig;
+  behavior: BehaviorConfig;
   stats: {
     maxHp: number;
     maxStamina: number;
@@ -210,6 +263,40 @@ export const monsterSchema = {
     staminaRegenPerSecond: 'number',
     exhaustedRegenPerSecond: 'number',
     disabledAttackIds: ['string'],
+  },
+  behavior: {
+    perception: {
+      sightRange: 'number',
+      sightAngleRad: 'number',
+      hearingRange: 'number',
+      sleepingSenseMultiplier: 'number',
+      loseTargetRange: 'number',
+      loseTargetSeconds: 'number',
+    },
+    needs: {
+      hungerPerSecond: 'number',
+      thirstPerSecond: 'number',
+      fatiguePerSecond: 'number',
+      combatFatigueMultiplier: 'number',
+      eatThreshold: 'number',
+      drinkThreshold: 'number',
+      sleepThreshold: 'number',
+      eatSeconds: 'number',
+      drinkSeconds: 'number',
+      sleepSeconds: 'number',
+      eatRestoresStamina: 'number',
+      sleepHpRegenRatioPerSecond: 'number',
+      initialHunger: 'number',
+      initialThirst: 'number',
+      initialFatigue: 'number',
+    },
+    fleeHpRatio: 'number',
+    fleeSleepSeconds: 'number',
+    alertSeconds: 'number',
+    investigateSeconds: 'number',
+    patrolWaitMinSeconds: 'number',
+    patrolWaitMaxSeconds: 'number',
+    arriveDistance: 'number',
   },
   stats: {
     maxHp: 'number',

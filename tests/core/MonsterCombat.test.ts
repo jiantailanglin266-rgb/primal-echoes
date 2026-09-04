@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Monster } from '@core/monster/Monster';
 import { monsterAttackTotalSeconds, type MonsterHitbox } from '@core/monster/MonsterCombat';
-import { MonsterAI } from '@core/monster/MonsterAI';
-import { loadBalance, loadValgaron } from '@data/DataRegistry';
+import { MonsterAI, type MonsterAIContext } from '@core/monster/MonsterAI';
+import { Field } from '@core/world/Field';
+import { loadBalance, loadValgaron, loadVerdantTempest } from '@data/DataRegistry';
 import type { HeightProvider } from '@core/world/Terrain';
 import { Random } from '@shared/rng/Random';
 import { Vec3 } from '@shared/math/Vec3';
@@ -137,14 +138,22 @@ describe('MonsterCombat', () => {
 });
 
 describe('MonsterAI (combat layer)', () => {
-  it('attacks when the target is in range and facing', () => {
+  function combatSetup(seed: number, targetZ: number) {
+    const field = new Field(loadVerdantTempest());
     const monster = new Monster('m', def, balance, flat);
     monster.teleport(0, 0, Math.PI);
-    const ai = new MonsterAI(monster, new Random(7));
-    const target = new Vec3(0, 0, -4);
+    const ai = new MonsterAI(monster, new Random(seed));
+    const target = new Vec3(0, 0, targetZ);
+    const ctx: MonsterAIContext = { field, subject: { position: target, isNoisy: false } };
+    ai.notifyAttacked(target); // 生態層を飛ばして即戦闘
+    return { monster, ai, ctx, target };
+  }
+
+  it('attacks when the target is in range and facing', () => {
+    const { monster, ai, ctx, target } = combatSetup(7, -4);
     let started = false;
     for (let i = 0; i < 60 * 4 && !started; i++) {
-      ai.update(DT, target);
+      ai.update(DT, ctx);
       monster.update(DT, target);
       started = monster.combat.isAttacking;
     }
@@ -154,13 +163,10 @@ describe('MonsterAI (combat layer)', () => {
   });
 
   it('approaches a far target', () => {
-    const monster = new Monster('m', def, balance, flat);
-    monster.teleport(0, 0, Math.PI);
-    const ai = new MonsterAI(monster, new Random(3));
-    const target = new Vec3(0, 0, -60);
+    const { monster, ai, ctx, target } = combatSetup(3, -60);
     const startZ = monster.position.z;
     for (let i = 0; i < 60; i++) {
-      ai.update(DT, target);
+      ai.update(DT, ctx);
       monster.update(DT, target);
       if (monster.combat.isBusy) break;
     }
@@ -168,13 +174,10 @@ describe('MonsterAI (combat layer)', () => {
   });
 
   it('does nothing while paused', () => {
-    const monster = new Monster('m', def, balance, flat);
-    monster.teleport(0, 0, Math.PI);
-    const ai = new MonsterAI(monster, new Random(3));
+    const { monster, ai, ctx, target } = combatSetup(3, -4);
     ai.paused = true;
-    const target = new Vec3(0, 0, -4);
     for (let i = 0; i < 240; i++) {
-      ai.update(DT, target);
+      ai.update(DT, ctx);
       monster.update(DT, target);
     }
     expect(monster.combat.isBusy).toBe(false);

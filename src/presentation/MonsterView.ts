@@ -37,6 +37,8 @@ export class MonsterView {
   private readonly visuals: PartVisual[] = [];
   private readonly interpolated = new Vec3();
   private elapsed = 0;
+  /** 生態 AI から渡される「眠っている / 食べている」等の仮ポーズ指示。 */
+  ecologyPose: 'none' | 'sleep' | 'eat' | 'drink' = 'none';
 
   constructor(private readonly monster: Monster) {
     this.object.name = `monster-${monster.id}`;
@@ -124,6 +126,13 @@ export class MonsterView {
       targetY = 0.3;
     } else if (combat.state === 'stunned' || combat.state === 'toppled') {
       targetScaleY = 0.75;
+    } else if (!combat.current && this.ecologyPose === 'sleep') {
+      // 睡眠: 伏せる + ゆっくり呼吸
+      targetScaleY = 0.7 + 0.03 * Math.sin(this.elapsed * 1.5);
+    } else if (!combat.current && (this.ecologyPose === 'eat' || this.ecologyPose === 'drink')) {
+      // 食事/飲水: 頭を下げる代わりに前傾
+      targetTilt = 0;
+      targetScaleY = 0.88 + 0.04 * Math.sin(this.elapsed * 5);
     } else if (m.condition.isExhausted && !combat.current) {
       targetScaleY = 0.92;
     } else if (combat.current) {

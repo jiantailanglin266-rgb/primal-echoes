@@ -21,6 +21,7 @@ export type GameEvents = {
   partSevered: { monsterId: string; partId: string };
   monsterDied: { monsterId: string };
   monsterAttackStarted: { monsterId: string; attackId: string; telegraphSeconds: number };
+  monsterStateChanged: { monsterId: string; from: string; to: string };
   monsterEnraged: { monsterId: string };
   monsterCalmed: { monsterId: string };
   monsterExhausted: { monsterId: string };

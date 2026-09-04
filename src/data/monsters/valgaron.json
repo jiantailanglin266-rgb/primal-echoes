@@ -22,6 +22,40 @@
     "exhaustedRegenPerSecond": 5,
     "disabledAttackIds": ["vg_charge", "vg_rock_throw"]
   },
+  "behavior": {
+    "perception": {
+      "sightRange": 30,
+      "sightAngleRad": 1.15,
+      "hearingRange": 14,
+      "sleepingSenseMultiplier": 0.3,
+      "loseTargetRange": 48,
+      "loseTargetSeconds": 8
+    },
+    "needs": {
+      "hungerPerSecond": 0.9,
+      "thirstPerSecond": 1.3,
+      "fatiguePerSecond": 0.45,
+      "combatFatigueMultiplier": 2.5,
+      "eatThreshold": 60,
+      "drinkThreshold": 60,
+      "sleepThreshold": 75,
+      "eatSeconds": 14,
+      "drinkSeconds": 9,
+      "sleepSeconds": 45,
+      "eatRestoresStamina": 70,
+      "sleepHpRegenRatioPerSecond": 0.003,
+      "initialHunger": 55,
+      "initialThirst": 20,
+      "initialFatigue": 15
+    },
+    "fleeHpRatio": 0.22,
+    "fleeSleepSeconds": 50,
+    "alertSeconds": 1.3,
+    "investigateSeconds": 6,
+    "patrolWaitMinSeconds": 4,
+    "patrolWaitMaxSeconds": 9,
+    "arriveDistance": 3.5
+  },
   "stats": {
     "maxHp": 3200,
     "maxStamina": 100,

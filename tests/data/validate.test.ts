@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DataValidationError, validate } from '@data/validate';
-import { loadBalance, loadDevTerrain } from '@data/DataRegistry';
+import { loadBalance, loadVerdantTempest } from '@data/DataRegistry';
 
 describe('validate', () => {
   it('accepts a matching object', () => {
@@ -29,8 +29,9 @@ describe('DataRegistry', () => {
     expect(balance.player.dodge.invulnEndSeconds).toBeLessThanOrEqual(balance.player.dodge.durationSeconds);
   });
 
-  it('loads and validates dev terrain', () => {
-    const terrain = loadDevTerrain();
-    expect(terrain.hills.length).toBeGreaterThan(0);
+  it('loads and validates the field definition', () => {
+    const field = loadVerdantTempest();
+    expect(field.terrain.hills.length).toBeGreaterThan(0);
+    expect(field.pointsOfInterest.some((p) => p.kind === 'nest')).toBe(true);
   });
 });

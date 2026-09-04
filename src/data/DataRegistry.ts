@@ -1,10 +1,10 @@
 import balanceJson from './balance.json';
-import devTerrainJson from './fields/dev_terrain.json';
+import verdantTempestJson from './fields/verdant_tempest.json';
 import titanBladeJson from './weapons/titan_blade.json';
 import valgaronJson from './monsters/valgaron.json';
 import { validate } from './validate';
 import { balanceSchema, type BalanceData } from './schemas/balance';
-import { terrainSchema, type ProceduralTerrainData } from './schemas/terrain';
+import { assertFieldConsistency, fieldSchema, type FieldDefinition } from './schemas/field';
 import { assertWeaponConsistency, weaponSchema, type WeaponDefinition } from './schemas/weapon';
 import { assertMonsterConsistency, monsterSchema, type MonsterDefinition } from './schemas/monster';
 
@@ -18,9 +18,11 @@ export function loadBalance(): BalanceData {
   return balanceJson as BalanceData;
 }
 
-export function loadDevTerrain(): ProceduralTerrainData {
-  validate(devTerrainJson, terrainSchema, 'fields/dev_terrain');
-  return devTerrainJson as ProceduralTerrainData;
+export function loadVerdantTempest(): FieldDefinition {
+  validate(verdantTempestJson, fieldSchema, 'fields/verdant_tempest');
+  const field = verdantTempestJson as unknown as FieldDefinition;
+  assertFieldConsistency(field);
+  return field;
 }
 
 export function loadTitanBlade(): WeaponDefinition {

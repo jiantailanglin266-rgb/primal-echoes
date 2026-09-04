@@ -117,6 +117,23 @@
 
 検証ログ（2026-09-05, T09）: F6 で怒り → 34.6 秒でスタミナ枯渇 → 怒り解除 + 疲労（速度 0.75）→ 回復中。
 
+### Valgaron 生態（`behavior`）
+| 項目 | 値 | 根拠 |
+|---|---|---|
+| perception.sightRange / angle | 30m / ±1.15rad（約 66°） | 森の中で「向こうが先に気付く」距離。正面以外は死角 |
+| perception.hearingRange | 14m（静かなら 7m） | 歩けば 7m まで忍び寄れる。ダッシュ・攻撃は 14m で聞こえる |
+| sleepingSenseMultiplier | 0.3 | 睡眠中は 9m / 4.2m。寝込みを襲える |
+| loseTargetRange / Seconds | 48m / 8s | 48m 以上離れて 8 秒で見失う。エリア移動で仕切り直せる |
+| needs 初期値（空腹/渇き/疲れ） | 55 / 20 / 15 | クエスト開始直後に餌場で食事中（発見しやすい）→ 約 30 秒後に川へ |
+| hunger / thirst / fatigue 毎秒 | 0.9 / 1.3 / 0.45 | 食事 ≒ 2 分に 1 回、飲水 ≒ 1 分に 1 回、睡眠 ≒ 3 分に 1 回（戦闘中は疲れ 2.5 倍） |
+| eatSeconds / drinkSeconds / sleepSeconds | 14 / 9 / 45 | 食事・睡眠は長い隙。狩猟の「観察してから襲う」報酬 |
+| eatRestoresStamina | 70 | 疲労からの本来の回復手段。食事を邪魔すれば疲労を長引かせられる |
+| fleeHpRatio / fleeSleepSeconds | 0.22 / 50s | 残り 22% で巣へ逃げて眠る（1 戦闘 1 回）。追跡して寝込みを叩くのが討伐の締め |
+| alertSeconds | 1.3 | 発見の合図。初撃を入れる猶予 |
+| arriveDistance | 3.5 | 体長に対する到着判定 |
+
+検証ログ（2026-09-05, T10）: プレイヤーがキャンプ待機の 120 秒間、drink → idle → travel → eat → idle → travel → drink と自律行動。発見なし。
+
 ## 変更履歴
 | 日付 | 項目 | 前 → 後 | 理由 |
 |---|---|---|---|

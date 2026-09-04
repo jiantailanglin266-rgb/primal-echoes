@@ -1,0 +1,32 @@
+{
+  "id": "verdant_tempest",
+  "name": "翠嵐峡谷 / Verdant Tempest",
+  "terrain": {
+    "size": 220,
+    "segments": 140,
+    "flatRadius": 18,
+    "flatBlendWidth": 12,
+    "hills": [
+      { "amplitude": 1.6, "frequencyX": 0.045, "frequencyZ": 0.038, "phase": 0.7 },
+      { "amplitude": 0.8, "frequencyX": 0.11, "frequencyZ": 0.09, "phase": 2.1 },
+      { "amplitude": 0.35, "frequencyX": 0.27, "frequencyZ": 0.31, "phase": 4.4 }
+    ]
+  },
+  "playerSpawn": { "x": 0, "z": -6, "yaw": 0 },
+  "areas": [
+    { "id": "base_camp", "name": "ベースキャンプ", "center": { "x": 0, "z": 0 }, "radius": 18 },
+    { "id": "forest", "name": "森林", "center": { "x": -48, "z": 42 }, "radius": 32 },
+    { "id": "river", "name": "川", "center": { "x": 52, "z": 38 }, "radius": 24 },
+    { "id": "cave", "name": "洞窟", "center": { "x": 22, "z": -66 }, "radius": 20 }
+  ],
+  "pointsOfInterest": [
+    { "id": "nest_cave", "kind": "nest", "areaId": "cave", "position": { "x": 24, "z": -70 } },
+    { "id": "water_river", "kind": "water", "areaId": "river", "position": { "x": 54, "z": 40 } },
+    { "id": "feeding_forest", "kind": "feeding", "areaId": "forest", "position": { "x": -46, "z": 40 } },
+    { "id": "patrol_forest_edge", "kind": "patrol", "areaId": "forest", "position": { "x": -30, "z": 18 } },
+    { "id": "patrol_river_bank", "kind": "patrol", "areaId": "river", "position": { "x": 36, "z": 22 } },
+    { "id": "patrol_ridge", "kind": "patrol", "areaId": "forest", "position": { "x": -60, "z": 70 } },
+    { "id": "patrol_cave_mouth", "kind": "patrol", "areaId": "cave", "position": { "x": 10, "z": -48 } }
+  ],
+  "monsterSpawns": [{ "monsterId": "valgaron", "poiId": "feeding_forest", "yaw": 2.4 }]
+}

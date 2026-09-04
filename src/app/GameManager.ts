@@ -154,6 +154,10 @@ export class GameManager {
     this.events.on('playerDowned', () => {
       this.lastHitSummary = 'PLAYER DOWNED (F1 to revive)';
     });
+    this.events.on('monsterEnraged', () => (this.lastHitSummary = 'ENRAGED!'));
+    this.events.on('monsterCalmed', () => (this.lastHitSummary = 'calmed down'));
+    this.events.on('monsterExhausted', () => (this.lastHitSummary = 'EXHAUSTED'));
+    this.events.on('monsterRecovered', () => (this.lastHitSummary = 'recovered'));
   }
 
   private setupDebugLines(): void {
@@ -178,13 +182,19 @@ export class GameManager {
       const phase = c.phase ?? (c.isIncapacitated ? `${c.reactionSecondsLeft.toFixed(1)}s` : '-');
       return `m.combat ${c.state.padEnd(9)} ${attack.padEnd(15)} ${phase}  ai ${this.monsterAI.paused ? 'PAUSED' : this.monsterAI.mode}`;
     });
+    d.addLine(() => {
+      const cnd = m.condition;
+      const enrage = cnd.isEnraged ? `ENRAGED ${cnd.enrageRemaining.toFixed(0)}s` : `calm (dmg ${cnd.damageSinceCalm.toFixed(0)}/${m.def.enrage.damageToTrigger}${cnd.enrageCooldownRemaining > 0 ? `, cd ${cnd.enrageCooldownRemaining.toFixed(0)}s` : ''})`;
+      const tired = cnd.isExhausted ? 'EXHAUSTED' : 'fresh';
+      return `condition ${enrage}  ${tired}  speed x${cnd.speedMultiplier.toFixed(2)}`;
+    });
     d.addLine(() =>
       m.parts
         .map((p) => `${p.id}:${p.def.breakable ? p.partHp.toFixed(0) : '-'}${p.state === 'broken' ? 'B' : p.state === 'severed' ? 'S' : ''}/f${p.flinchAccumulated.toFixed(0)}`)
         .join(' '),
     );
     d.addLine(() => `last: ${this.lastHitSummary}`);
-    d.addLine(() => `pointerLock ${this.input.isPointerLocked ? 'on' : 'off (click canvas)'}  WASD/Shift/Space  J light  K heavy(hold)  Tab lock  F1 heal F2 inf.stamina F3 kill F4 reset F5 AI pause`);
+    d.addLine(() => `pointerLock ${this.input.isPointerLocked ? 'on' : 'off (click canvas)'}  WASD/Shift/Space  J light  K heavy(hold)  Tab lock  F1 heal F2 inf.stamina F3 kill F4 reset F5 AI pause F6 enrage`);
   }
 
   private update(dt: number): void {
@@ -203,7 +213,10 @@ export class GameManager {
 
     const playerPos = this.player.controller.position;
     this.monsterAI.update(dt, playerPos);
-    this.monster.update(dt, playerPos);
+    const condition = this.monster.update(dt, playerPos);
+    if (condition.enrageEnded) this.events.emit('monsterCalmed', { monsterId: this.monster.id });
+    if (condition.exhaustionStarted) this.events.emit('monsterExhausted', { monsterId: this.monster.id });
+    if (condition.exhaustionEnded) this.events.emit('monsterRecovered', { monsterId: this.monster.id });
     this.terrain.clampToBounds(this.monster.position, this.monster.def.stats.bodyRadius);
     this.projectiles.update(dt);
 
@@ -249,6 +262,10 @@ export class GameManager {
       this.lastHitSummary = 'monster reset';
     }
     if (input.debugToggleAiPausePressed) this.monsterAI.paused = !this.monsterAI.paused;
+    if (input.debugForceEnragePressed) {
+      this.monster.forceEnrage();
+      this.events.emit('monsterEnraged', { monsterId: this.monster.id });
+    }
   }
 
   private projectToScreen(world: Vec3, out: ScreenPoint): void {

@@ -14,6 +14,7 @@ const baseInput = (): DamageInput => ({
   critRate: 0,
   critMultiplier: 1.25,
   hitZone: { slash: 0.5, impact: 0.3, projectile: 0.4, fire: 0.2, water: 0.1, thunder: 0.15, ice: 0.1, aether: 0.3 },
+  hitZoneMultiplier: 1,
   partDamageMultiplier: 1,
   stunDamage: 0,
   stunMultiplier: 0,
@@ -40,6 +41,17 @@ describe('computeDamage', () => {
     input.sharpnessPhysicalModifier = 1.2;
     input.motionValueMultiplier = 1.5;
     expect(computeDamage(input, 0.99).total).toBe(45);
+  });
+
+  it('applies the hit zone multiplier (enraged weak part) to physical and element', () => {
+    const input = baseInput();
+    input.hitZoneMultiplier = 1.3;
+    input.elementType = 'fire';
+    input.elementPower = 30;
+    input.elementMotionValue = 1;
+    const r = computeDamage(input, 0.99);
+    expect(r.physical).toBeCloseTo(25 * 1.3);
+    expect(r.element).toBeCloseTo(6 * 1.3);
   });
 
   it('rolls criticals against critRate', () => {

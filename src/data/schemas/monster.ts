@@ -86,9 +86,44 @@ export interface MonsterCombatConfig {
   approachStopDistance: number;
 }
 
+export interface EnrageConfig {
+  /** 直近の怒り解除以降に受けたダメージがこの値に達すると怒る。 */
+  damageToTrigger: number;
+  durationSeconds: number;
+  /** 怒り開始時の咆哮（無防備な硬直）。 */
+  roarSeconds: number;
+  damageMultiplier: number;
+  /** 攻撃タイムライン（telegraph/startup/recovery）と移動の速度倍率。 */
+  speedMultiplier: number;
+  /** 怒り中の攻撃スタミナ消費倍率（怒るほど疲れやすい）。 */
+  staminaCostMultiplier: number;
+  attackIntervalMultiplier: number;
+  /** 怒り中に弱点化する部位（エーテル活性部）とその肉質倍率。 */
+  weakPartIds: string[];
+  weakPartHitZoneMultiplier: number;
+  /** 怒り解除後、再び怒れるまでの時間。 */
+  cooldownSeconds: number;
+}
+
+export interface ExhaustionConfig {
+  /** スタミナがこの値以下で疲労。 */
+  staminaThreshold: number;
+  /** スタミナがここまで戻ると疲労解除。 */
+  recoverToStamina: number;
+  speedMultiplier: number;
+  attackIntervalMultiplier: number;
+  /** 通常時 / 疲労時のスタミナ自然回復（毎秒）。攻撃中は回復しない。 */
+  staminaRegenPerSecond: number;
+  exhaustedRegenPerSecond: number;
+  /** 疲労中は使えない攻撃（突進が不発になる等）。 */
+  disabledAttackIds: string[];
+}
+
 export interface MonsterDefinition {
   id: string;
   name: string;
+  enrage: EnrageConfig;
+  exhaustion: ExhaustionConfig;
   stats: {
     maxHp: number;
     maxStamina: number;
@@ -155,6 +190,27 @@ const attackSchema = {
 export const monsterSchema = {
   id: 'string',
   name: 'string',
+  enrage: {
+    damageToTrigger: 'number',
+    durationSeconds: 'number',
+    roarSeconds: 'number',
+    damageMultiplier: 'number',
+    speedMultiplier: 'number',
+    staminaCostMultiplier: 'number',
+    attackIntervalMultiplier: 'number',
+    weakPartIds: ['string'],
+    weakPartHitZoneMultiplier: 'number',
+    cooldownSeconds: 'number',
+  },
+  exhaustion: {
+    staminaThreshold: 'number',
+    recoverToStamina: 'number',
+    speedMultiplier: 'number',
+    attackIntervalMultiplier: 'number',
+    staminaRegenPerSecond: 'number',
+    exhaustedRegenPerSecond: 'number',
+    disabledAttackIds: ['string'],
+  },
   stats: {
     maxHp: 'number',
     maxStamina: 'number',
@@ -254,6 +310,15 @@ export function assertMonsterConsistency(monster: MonsterDefinition): void {
   }
   if (monster.combat.nearRangeMeters >= monster.combat.middleRangeMeters) {
     throw new Error(`[monster ${monster.id}] combat.nearRangeMeters must be < middleRangeMeters`);
+  }
+  for (const partId of monster.enrage.weakPartIds) {
+    if (!ids.has(partId)) throw new Error(`[monster ${monster.id}] enrage.weakPartIds references unknown part "${partId}"`);
+  }
+  for (const attackId of monster.exhaustion.disabledAttackIds) {
+    if (!attackIds.has(attackId)) throw new Error(`[monster ${monster.id}] exhaustion.disabledAttackIds references unknown attack "${attackId}"`);
+  }
+  if (monster.exhaustion.recoverToStamina <= monster.exhaustion.staminaThreshold) {
+    throw new Error(`[monster ${monster.id}] exhaustion.recoverToStamina must be > staminaThreshold`);
   }
 
   function requireOffset(value: unknown, where: string): void {

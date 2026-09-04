@@ -33,7 +33,7 @@
 - [x] Titan Blade: Light / Heavy / Charge / DodgeAttack の攻撃データとコンボ（T05 完了）
 - [x] HitDetection（攻撃ヒットボックス x 部位）と DamageSystem（式のデータ駆動）（T06 完了）
 - [x] Valgaron: Stats / 部位（head, body, forelegs, hindlegs, tail）（T07 完了）/ 6攻撃 / 距離帯選択（T08 完了）
-- [ ] Valgaron AI: 生態（Patrol -> Eat -> Drink -> Sleep）+ 戦闘 State Machine + 怒り + 疲労 + 逃走/帰巣
+- [ ] Valgaron AI: 生態（Patrol -> Eat -> Drink -> Sleep）+ 逃走/帰巣（T10）/ [x] 戦闘 State Machine（T08）+ 怒り + 疲労（T09 完了）
 - [ ] 部位破壊（頭・前脚）と尻尾切断、戦闘への影響
 - [ ] クエスト（Hunt / 制限時間 / 力尽き回数）+ リザルト
 - [ ] 剥ぎ取りと素材付与、インベントリ
@@ -76,8 +76,8 @@ T05  [done] AttackData と PlayerCombat 状態機械（先行入力/派生/回�
 T06  [done] Valgaron プリミティブ（部位形状 = 当たり判定）+ HitDetection + DamageSystem + LockOn + HitStop + ダメージ数字
 T07  [done] MonsterStats / MonsterPart（部位・肉質・partHp・怯み蓄積・破壊/切断判定）
 T08  [done] MonsterCombat（telegraph -> startup -> active -> recovery）+ Valgaron 6 攻撃（突進/跳躍/投石の移動含む）+ プレイヤー被弾（のけぞり/無敵/戦闘不能）+ 最小戦闘 AI（距離帯・向き・クールダウン・接近）
-T09  MonsterAI 戦闘層の拡張（怒り・疲労・スタミナ回復・攻撃セット差し替え）   <- 次の実装対象
-T10  MonsterAI 生態層（Patrol/Eat/Drink/Sleep/Flee/ReturnToNest）+ Perception
+T09  [done] MonsterCondition（怒り: 被ダメ蓄積で発動/咆哮/攻撃力・速度↑/スタミナ消費↑/頭部弱点化、疲労: スタミナ枯渇/速度↓/突進・投石不可/怒り強制解除）
+T10  MonsterAI 生態層（Patrol/Eat/Drink/Sleep/Flee/ReturnToNest）+ Perception   <- 次の実装対象
 T11  部位破壊・切断とその効果反映
 T12  フィールド定義（エリアノード・水場・巣）と Valgaron の経路
 T13  小型生物（Grast/Skarv）+ EcosystemManager 簡易版

@@ -8,10 +8,12 @@ import { Vec3 } from '@shared/math/Vec3';
 import { MonsterStats } from './MonsterStats';
 import { MonsterPart, type PartHitOutcome } from './MonsterPart';
 import { MonsterCombat, type MonsterCombatHooks } from './MonsterCombat';
+import { MonsterCondition, type ConditionUpdateResult } from './MonsterCondition';
 
 export interface MonsterHitOutcome extends PartHitOutcome {
   died: boolean;
   stunned: boolean;
+  enraged: boolean;
 }
 
 /** 部位形状のワールド座標版。HitDetection が参照する。 */
@@ -21,7 +23,7 @@ export interface PartWorldShape {
 }
 
 /**
- * 大型モンスター 1 体の集約。位置・向き・Stats・部位・攻撃実行を持つ。
+ * 大型モンスター 1 体の集約。位置・向き・Stats・部位・攻撃実行・状態（怒り/疲労）を持つ。
  * 「何をするか」の判断は MonsterAI が行い、このクラスは状態と物理的な移動だけを提供する。
  */
 export class Monster {
@@ -31,6 +33,7 @@ export class Monster {
   readonly stats: MonsterStats;
   readonly parts: MonsterPart[];
   readonly combat: MonsterCombat;
+  readonly condition: MonsterCondition;
   private readonly partsById = new Map<string, MonsterPart>();
   private readonly worldShapes: PartWorldShape[];
   private readonly scratchForward = new Vec3();
@@ -46,6 +49,7 @@ export class Monster {
     this.parts = def.parts.map((p) => new MonsterPart(p, balance));
     for (const part of this.parts) this.partsById.set(part.id, part);
     this.worldShapes = this.parts.map((part) => ({ part, shape: createWorldShape() }));
+    this.condition = new MonsterCondition(def, this.stats);
     this.combat = new MonsterCombat(this, combatHooks);
   }
 
@@ -76,16 +80,26 @@ export class Monster {
     part.applyDamage(result, outcome);
     outcome.died = this.stats.takeDamage(result.total);
     outcome.stunned = !outcome.died && this.stats.accumulateStun(result.stunDamage);
+    outcome.enraged = !outcome.died && this.condition.recordDamage(result.total);
 
-    // リアクション: 気絶 > 怯み。部位破壊・切断は必ず怯む（「削り切った」手応えのため）。
+    // リアクション優先度: 死亡 > 気絶 > 咆哮（怒り開始）> 怯み。部位破壊・切断は必ず怯む。
     if (outcome.died) {
       this.combat.reset();
     } else if (outcome.stunned) {
       this.combat.interrupt('stunned', this.def.stats.stunDurationSeconds);
+    } else if (outcome.enraged) {
+      this.combat.interrupt('roar', this.def.enrage.roarSeconds);
     } else if (outcome.flinched || outcome.broke || outcome.severed) {
       this.combat.interrupt('flinch', this.def.combat.flinchSeconds);
     }
     return outcome;
+  }
+
+  /** デバッグ/イベント用: 強制的に怒らせる。 */
+  forceEnrage(): void {
+    if (!this.isAlive || this.condition.isEnraged) return;
+    this.condition.forceEnrage();
+    this.combat.interrupt('roar', this.def.enrage.roarSeconds);
   }
 
   teleport(x: number, z: number, yaw = this.yaw): void {
@@ -123,10 +137,13 @@ export class Monster {
     this.moveBy((dx / dist) * step, (dz / dist) * step);
   }
 
-  update(dt: number, target: Vec3): void {
+  /** 戻り値: 状態遷移（怒り解除/疲労開始/疲労解除）。イベント発行は呼び出し側。 */
+  update(dt: number, target: Vec3): ConditionUpdateResult {
     this.previousPosition.copy(this.position);
     for (const part of this.parts) part.update(dt);
+    const conditionResult = this.condition.update(dt, this.combat.isBusy);
     if (this.isAlive) this.combat.update(dt, target);
+    return conditionResult;
   }
 
   /** デバッグ用: 全回復して部位も元に戻す。 */
@@ -134,5 +151,6 @@ export class Monster {
     this.stats.reset();
     for (const part of this.parts) part.reset();
     this.combat.reset();
+    this.condition.reset();
   }
 }

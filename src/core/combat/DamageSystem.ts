@@ -25,6 +25,8 @@ export interface DamageInput {
   critMultiplier: number;
   /** 部位の肉質。 */
   hitZone: HitZoneModifiers;
+  /** 肉質へ掛ける状況倍率（怒り中のエーテル活性部位など）。物理・属性の両方に掛かる。 */
+  hitZoneMultiplier: number;
   /** 攻撃側の部位ダメージ倍率（攻撃データ × チャージ段階）。 */
   partDamageMultiplier: number;
   stunDamage: number;
@@ -67,6 +69,7 @@ export function computeDamage(input: DamageInput, roll: number, out: DamageResul
     input.motionValue *
     input.motionValueMultiplier *
     input.hitZone[input.damageType] *
+    input.hitZoneMultiplier *
     input.sharpnessPhysicalModifier *
     critModifier;
 
@@ -76,6 +79,7 @@ export function computeDamage(input: DamageInput, roll: number, out: DamageResul
       input.elementPower *
       input.elementMotionValue *
       input.hitZone[input.elementType] *
+      input.hitZoneMultiplier *
       input.sharpnessElementModifier;
   }
 

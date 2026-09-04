@@ -6,13 +6,14 @@ import type { Monster } from './Monster';
 export type MonsterAIMode = 'combat';
 
 /**
- * モンスター AI（戦闘層・最小版）。
- * T09 で怒り/疲労、T10 で生態層（Patrol/Eat/Drink/Sleep/Flee）を重ねる。
+ * モンスター AI（戦闘層）。
+ * T10 で生態層（Patrol/Eat/Drink/Sleep/Flee）を重ねる。
  *
  * 判断の流れ（1 ステップ）:
  *   攻撃中/リアクション中 -> 何もしない
  *   攻撃間隔が空いている & 使える攻撃がある -> 重み付き抽選して開始
  *   それ以外 -> ターゲットへ向き直り、遠ければ接近
+ * 怒り/疲労は MonsterCondition の倍率（間隔・速度・使用不可攻撃）として反映される。
  */
 export class MonsterAI {
   mode: MonsterAIMode = 'combat';
@@ -49,10 +50,11 @@ export class MonsterAI {
     }
 
     // 攻撃できないときは位置取り: 正面へ向き、遠ければ詰める
-    m.turnTowards(target, m.def.stats.turnSpeedRadPerSecond * dt);
+    const speedMul = m.condition.speedMultiplier;
+    m.turnTowards(target, m.def.stats.turnSpeedRadPerSecond * speedMul * dt);
     if (distance > m.def.combat.approachStopDistance) {
       const band = m.combat.rangeBandFor(distance);
-      const speed = band === 'far' ? m.def.stats.runSpeed : m.def.stats.walkSpeed;
+      const speed = (band === 'far' ? m.def.stats.runSpeed : m.def.stats.walkSpeed) * speedMul;
       // 正面を向いていないときは前進しない（その場で旋回する）
       if (relativeAngle < 0.6) m.moveTowards(target, speed, dt);
     }
@@ -63,6 +65,7 @@ export class MonsterAI {
     this.candidates.length = 0;
     let totalWeight = 0;
     for (const attack of m.def.attacks) {
+      if (m.condition.isAttackDisabled(attack.id)) continue;
       if (!m.combat.canUse(attack, distance, relativeAngle)) continue;
       this.candidates.push(attack);
       totalWeight += attack.weight;
@@ -78,6 +81,6 @@ export class MonsterAI {
 
   private rollInterval(): number {
     const c = this.monster.def.combat;
-    return this.rng.range(c.attackIntervalMinSeconds, c.attackIntervalMaxSeconds);
+    return this.rng.range(c.attackIntervalMinSeconds, c.attackIntervalMaxSeconds) * this.monster.condition.attackIntervalMultiplier;
   }
 }

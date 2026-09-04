@@ -102,6 +102,21 @@
 
 検証ログ（2026-09-05, T08）: 棒立ち 12 秒で Jump Slam → Claw → Bite → Claw、被弾 3 回で HP 8。
 
+### Valgaron 怒り / 疲労（`enrage` / `exhaustion`）
+| 項目 | 値 | 根拠 |
+|---|---|---|
+| enrage.damageToTrigger | 550 | HP の約 17%。1 戦闘で 3〜4 回怒る想定（3200 / 550 ≒ 5.8、クールダウン 25 秒で間引く） |
+| enrage.durationSeconds / roarSeconds | 45 / 1.6 | 咆哮 1.6 秒は無防備。怒りの「入口」を攻めどころにする |
+| enrage.damageMultiplier / speedMultiplier | 1.3 / 1.25 | Bite 22 → 29。テレグラフ 0.5 → 0.4 秒。見切れるが余裕は減る |
+| enrage.staminaCostMultiplier | 1.6 | 怒りは 30〜40 秒でスタミナを使い切り、疲労へ落ちる（検証: 34.6 秒） |
+| enrage.weakPartIds / multiplier | head / 1.3 | エーテル活性で頭が弱点化。危険な正面に踏み込む価値を作る |
+| exhaustion.staminaThreshold / recoverTo | 20 / 60 | 疲労は約 8 秒（5/s 回復）で解除。「食事で回復」は T10 の生態層で上書き |
+| exhaustion.speedMultiplier | 0.75 | Bite テレグラフ 0.67 秒。初心者でも見切れる救済区間 |
+| exhaustion.disabledAttackIds | Charge, Rock Throw | 疲労中は遠距離から一気に詰める手段を失い、プレイヤーが距離を選べる |
+| staminaRegen（通常/疲労） | 2.5 / 5 毎秒 | 攻撃中は回復しない。攻撃を続けるほど疲れる |
+
+検証ログ（2026-09-05, T09）: F6 で怒り → 34.6 秒でスタミナ枯渇 → 怒り解除 + 疲労（速度 0.75）→ 回復中。
+
 ## 変更履歴
 | 日付 | 項目 | 前 → 後 | 理由 |
 |---|---|---|---|

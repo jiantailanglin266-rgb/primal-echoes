@@ -39,13 +39,14 @@ export class CombatResolver {
     critRate: 0,
     critMultiplier: 1,
     hitZone: { slash: 1, impact: 1, projectile: 1, fire: 1, water: 1, thunder: 1, ice: 1, aether: 1 },
+    hitZoneMultiplier: 1,
     partDamageMultiplier: 1,
     stunDamage: 0,
     stunMultiplier: 0,
     flinchDamage: 0,
     minimumDamage: 1,
   };
-  private readonly outcome: MonsterHitOutcome = { broke: false, severed: false, flinched: false, died: false, stunned: false };
+  private readonly outcome: MonsterHitOutcome = { broke: false, severed: false, flinched: false, died: false, stunned: false, enraged: false };
 
   constructor(
     private readonly events: EventBus<GameEvents>,
@@ -93,7 +94,7 @@ export class CombatResolver {
         if (controller.isInvulnerable) continue;
         hitbox.attack.hasHitPlayer = true;
         this.awayDirection.copy(controller.position).sub(monster.position);
-        this.applyMonsterHit(player, hitbox.attack.def, monster.combat.damageMultiplier, hitbox.center);
+        this.applyMonsterHit(player, hitbox.attack.def, monster.condition.damageMultiplier, hitbox.center);
         hits++;
       }
     }
@@ -129,6 +130,7 @@ export class CombatResolver {
     input.critRate = weapon.critRate;
     input.critMultiplier = this.balance.critMultiplier;
     input.hitZone = hit.part.def.hitZone;
+    input.hitZoneMultiplier = monster.condition.hitZoneMultiplierFor(hit.part.id);
     input.partDamageMultiplier = attack.partDamageMultiplier * hitbox.source.partDamageMultiplier;
     input.stunDamage = attack.stunDamage;
     input.stunMultiplier = hit.part.def.stunMultiplier;
@@ -148,6 +150,7 @@ export class CombatResolver {
     });
     if (outcome.flinched) this.events.emit('monsterFlinched', { monsterId: monster.id, partId: hit.part.id });
     if (outcome.stunned) this.events.emit('monsterStunned', { monsterId: monster.id });
+    if (outcome.enraged) this.events.emit('monsterEnraged', { monsterId: monster.id });
     if (outcome.broke) this.events.emit('partBroken', { monsterId: monster.id, partId: hit.part.id });
     if (outcome.severed) this.events.emit('partSevered', { monsterId: monster.id, partId: hit.part.id });
     if (outcome.died) this.events.emit('monsterDied', { monsterId: monster.id });

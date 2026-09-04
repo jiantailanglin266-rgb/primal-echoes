@@ -14,6 +14,9 @@ const BROKEN_COLOR = 0x3f3833;
 const FLASH_COLOR = new THREE.Color(0xffe6b0);
 const TELEGRAPH_COLOR = new THREE.Color(0xff3b2f);
 const STUN_COLOR = new THREE.Color(0xffd84d);
+/** 怒り時のエーテル活性: 甲殻の隙間が青紫に発光する想定の仮表現。 */
+const ENRAGE_COLOR = new THREE.Color(0x7a5cff);
+const EXHAUSTED_TINT = 0x5a5550;
 const FLASH_DURATION_SECONDS = 0.12;
 
 interface PartVisual {
@@ -72,11 +75,15 @@ export class MonsterView {
     const phase = combat.phase;
     const telegraphPulse = phase === 'telegraph' ? 0.5 + 0.5 * Math.sin(this.elapsed * 28) : 0;
     const stunGlow = combat.state === 'stunned' ? 0.5 + 0.5 * Math.sin(this.elapsed * 6) : 0;
+    const enraged = m.condition.isEnraged;
+    const exhausted = m.condition.isExhausted;
+    const enrageGlow = enraged ? 0.25 + 0.15 * Math.sin(this.elapsed * 4) : 0;
 
     for (const visual of this.visuals) {
       const { part, mesh, material } = visual;
       mesh.visible = !part.isSevered;
-      const base = part.isBroken ? BROKEN_COLOR : (PART_COLORS[part.id] ?? DEFAULT_PART_COLOR);
+      let base = part.isBroken ? BROKEN_COLOR : (PART_COLORS[part.id] ?? DEFAULT_PART_COLOR);
+      if (exhausted && !part.isBroken) base = EXHAUSTED_TINT;
       material.color.setHex(base);
       material.emissive.setScalar(0);
       if (visual.flashRemaining > 0) {
@@ -87,6 +94,10 @@ export class MonsterView {
         material.emissive.copy(TELEGRAPH_COLOR).multiplyScalar(0.15 + 0.35 * telegraphPulse);
       } else if (stunGlow > 0) {
         material.emissive.copy(STUN_COLOR).multiplyScalar(0.1 + 0.2 * stunGlow);
+      } else if (enrageGlow > 0) {
+        // 弱点化した部位はより強く光らせ、「ここを狙え」を見た目で伝える
+        const weak = m.def.enrage.weakPartIds.includes(part.id) ? 2.2 : 1;
+        material.emissive.copy(ENRAGE_COLOR).multiplyScalar(enrageGlow * weak);
       }
     }
 
@@ -107,8 +118,14 @@ export class MonsterView {
     } else if (combat.state === 'flinch') {
       targetY = 0.15;
       targetTilt = -0.12;
+    } else if (combat.state === 'roar') {
+      // 咆哮: 上体を起こす
+      targetScaleY = 1.15;
+      targetY = 0.3;
     } else if (combat.state === 'stunned' || combat.state === 'toppled') {
       targetScaleY = 0.75;
+    } else if (m.condition.isExhausted && !combat.current) {
+      targetScaleY = 0.92;
     } else if (combat.current) {
       const kind = combat.current.def.motion.kind;
       const phase = combat.phase;

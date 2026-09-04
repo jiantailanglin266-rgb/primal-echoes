@@ -4,7 +4,11 @@ import { wrapAngle } from '@shared/math/scalar';
 import { Vec3 } from '@shared/math/Vec3';
 import type { Monster } from './Monster';
 
-export type MonsterCombatState = 'idle' | 'attacking' | 'flinch' | 'stunned' | 'toppled';
+export type MonsterCombatState = 'idle' | 'attacking' | 'flinch' | 'stunned' | 'toppled' | 'roar';
+export type MonsterReaction = Exclude<MonsterCombatState, 'idle' | 'attacking'>;
+
+/** リアクションの重さ。重いものは軽いもので上書きされない。 */
+const REACTION_SEVERITY: Record<MonsterReaction, number> = { flinch: 1, roar: 2, toppled: 2, stunned: 3 };
 export type MonsterAttackPhase = 'telegraph' | 'startup' | 'active' | 'recovery';
 
 export interface MonsterActiveAttack {
@@ -41,8 +45,6 @@ export interface MonsterCombatHooks {
 export class MonsterCombat {
   state: MonsterCombatState = 'idle';
   current: MonsterActiveAttack | null = null;
-  /** 怒り時などにダメージへ掛ける倍率。T09 で更新する。 */
-  damageMultiplier = 1;
 
   private reactionRemaining = 0;
   private readonly cooldowns = new Map<string, number>();
@@ -63,9 +65,9 @@ export class MonsterCombat {
     return this.state === 'attacking' && this.current !== null;
   }
 
-  /** 怯み・気絶・転倒中（プレイヤーの攻撃チャンス）。 */
+  /** 怯み・気絶・転倒・咆哮中（プレイヤーの攻撃チャンス）。 */
   get isIncapacitated(): boolean {
-    return this.state === 'flinch' || this.state === 'stunned' || this.state === 'toppled';
+    return this.state !== 'idle' && this.state !== 'attacking';
   }
 
   get reactionSecondsLeft(): number {
@@ -131,7 +133,8 @@ export class MonsterCombat {
       landingResolved: false,
       projectileSpawned: false,
     };
-    this.monster.stats.stamina = Math.max(0, this.monster.stats.stamina - attack.staminaCost);
+    const cost = attack.staminaCost * this.monster.condition.staminaCostMultiplier;
+    this.monster.stats.stamina = Math.max(0, this.monster.stats.stamina - cost);
     this.hooks.onAttackStarted?.(attack);
   }
 
@@ -142,14 +145,15 @@ export class MonsterCombat {
     this.current = null;
   }
 
-  /** 怯み/気絶/転倒。進行中の攻撃は打ち切る。より重い反応で上書きされる。 */
-  interrupt(kind: 'flinch' | 'stunned' | 'toppled', seconds: number): void {
-    const severity = { flinch: 1, stunned: 3, toppled: 2 } as const;
-    const currentSeverity = this.state === 'flinch' || this.state === 'stunned' || this.state === 'toppled' ? severity[this.state] : 0;
-    if (severity[kind] < currentSeverity) return;
+  /** 怯み/気絶/転倒/咆哮。進行中の攻撃は打ち切る。より重い反応で上書きされる。 */
+  interrupt(kind: MonsterReaction, seconds: number): void {
+    const currentSeverity = this.isIncapacitated ? REACTION_SEVERITY[this.state as MonsterReaction] : 0;
+    const newSeverity = REACTION_SEVERITY[kind];
+    if (newSeverity < currentSeverity) return;
     this.state = kind;
     this.finishAttack();
-    this.reactionRemaining = Math.max(this.reactionRemaining * (severity[kind] === currentSeverity ? 1 : 0), seconds);
+    // 同じ重さなら残り時間を延長、より重い反応なら置き換える
+    this.reactionRemaining = Math.max(newSeverity === currentSeverity ? this.reactionRemaining : 0, seconds);
   }
 
   update(dt: number, target: Vec3): void {
@@ -173,15 +177,18 @@ export class MonsterCombat {
     if (!c || this.state !== 'attacking') return;
 
     const d = c.def;
+    // 怒り/疲労でタイムライン全体の速度が変わる（予備動作が短くなる = 見切りが難しくなる）
+    const speed = this.monster.condition.speedMultiplier;
+    const scaledDt = dt * speed;
     const before = c.elapsed;
-    c.elapsed += dt;
+    c.elapsed += scaledDt;
     const phaseBefore = phaseAt(d, before);
     const phaseNow = phaseAt(d, c.elapsed);
 
     // テレグラフ中は追尾（向き直り）。見てから回避できるよう、startup 以降は向きを固定する。
     if (phaseNow === 'telegraph' && d.telegraphTurnMultiplier > 0) {
       c.target.copy(target);
-      this.monster.turnTowards(target, this.monster.def.stats.turnSpeedRadPerSecond * d.telegraphTurnMultiplier * dt);
+      this.monster.turnTowards(target, this.monster.def.stats.turnSpeedRadPerSecond * d.telegraphTurnMultiplier * scaledDt);
     }
     if (phaseNow === 'startup') {
       // startup の間だけターゲット位置を記録し続け、active 開始時点の狙いにする
@@ -189,7 +196,8 @@ export class MonsterCombat {
     }
 
     if (phaseNow === 'active') {
-      this.applyMotion(c, phaseBefore !== 'active', dt);
+      // 移動量も同じ倍率で進めないと、速い個体ほど突進距離が短くなってしまう
+      this.applyMotion(c, phaseBefore !== 'active', scaledDt);
     }
 
     if (phaseNow === 'done') {
@@ -251,7 +259,6 @@ export class MonsterCombat {
     this.current = null;
     this.reactionRemaining = 0;
     this.cooldowns.clear();
-    this.damageMultiplier = 1;
   }
 }
 

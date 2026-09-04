@@ -1,6 +1,27 @@
 {
   "id": "valgaron",
   "name": "Valgaron",
+  "enrage": {
+    "damageToTrigger": 550,
+    "durationSeconds": 45,
+    "roarSeconds": 1.6,
+    "damageMultiplier": 1.3,
+    "speedMultiplier": 1.25,
+    "staminaCostMultiplier": 1.6,
+    "attackIntervalMultiplier": 0.6,
+    "weakPartIds": ["head"],
+    "weakPartHitZoneMultiplier": 1.3,
+    "cooldownSeconds": 25
+  },
+  "exhaustion": {
+    "staminaThreshold": 20,
+    "recoverToStamina": 60,
+    "speedMultiplier": 0.75,
+    "attackIntervalMultiplier": 1.6,
+    "staminaRegenPerSecond": 2.5,
+    "exhaustedRegenPerSecond": 5,
+    "disabledAttackIds": ["vg_charge", "vg_rock_throw"]
+  },
   "stats": {
     "maxHp": 3200,
     "maxStamina": 100,

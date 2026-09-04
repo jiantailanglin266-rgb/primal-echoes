@@ -20,6 +20,7 @@ export const KEY_BINDINGS = {
   debugKillMonster: ['F3'],
   debugResetMonster: ['F4'],
   debugToggleAiPause: ['F5'],
+  debugForceEnrage: ['F6'],
 } as const;
 
 export type BindingAction = keyof typeof KEY_BINDINGS;

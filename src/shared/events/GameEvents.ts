@@ -21,6 +21,10 @@ export type GameEvents = {
   partSevered: { monsterId: string; partId: string };
   monsterDied: { monsterId: string };
   monsterAttackStarted: { monsterId: string; attackId: string; telegraphSeconds: number };
+  monsterEnraged: { monsterId: string };
+  monsterCalmed: { monsterId: string };
+  monsterExhausted: { monsterId: string };
+  monsterRecovered: { monsterId: string };
   playerHit: { damage: number; position: Vec3; attackId: string };
   playerDowned: { position: Vec3 };
 };

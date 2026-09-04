@@ -3,7 +3,7 @@ import type { Player } from '@core/player/Player';
 import type { PhaseInfo } from '@core/combat/AttackData';
 import { Vec3 } from '@shared/math/Vec3';
 import { lerp } from '@shared/math/scalar';
-import { createPlayerPlaceholder } from './placeholders';
+import { createPlayerPlaceholder, createWeaponPlaceholder, type WeaponWeightClass } from './placeholders';
 
 /**
  * 武器ピボットの姿勢（オイラー角）。本番アニメが来るまでの手続きアニメ用キーポーズ。
@@ -36,14 +36,28 @@ export class PlayerView {
     return this.interpolated;
   }
 
+  private weaponWeight: WeaponWeightClass;
+
   constructor(private readonly player: Player) {
-    const placeholder = createPlayerPlaceholder();
+    this.weaponWeight = player.combat.weapon.weight;
+    const placeholder = createPlayerPlaceholder(this.weaponWeight);
     this.object = placeholder.group;
     this.weaponPivot = placeholder.weaponPivot;
     this.applyPose(WEAPON_POSES.rest);
   }
 
+  /** 武器を持ち替えたら仮メッシュも差し替える。 */
+  private syncWeaponMesh(): void {
+    const weight = this.player.combat.weapon.weight;
+    if (weight === this.weaponWeight) return;
+    this.weaponWeight = weight;
+    const old = this.weaponPivot.getObjectByName('weapon-blade');
+    if (old) this.weaponPivot.remove(old);
+    this.weaponPivot.add(createWeaponPlaceholder(weight));
+  }
+
   sync(alpha: number): void {
+    this.syncWeaponMesh();
     const controller = this.player.controller;
     this.interpolated.copy(controller.previousPosition).lerp(controller.position, alpha);
     this.object.position.set(this.interpolated.x, this.interpolated.y, this.interpolated.z);

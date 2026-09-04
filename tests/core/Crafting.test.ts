@@ -55,3 +55,17 @@ describe('CraftingManager', () => {
     expect(crafting.nextRecipe('titan_blade')).toBeNull();
   });
 });
+
+describe('weapon catalog', () => {
+  it('loads and validates every weapon, each with a consistent combo graph', async () => {
+    const { loadWeapons } = await import('@data/DataRegistry');
+    const weapons = loadWeapons();
+    expect(weapons.has('titan_blade')).toBe(true);
+    expect(weapons.has('rift_saber')).toBe(true);
+    const saber = weapons.get('rift_saber')!;
+    expect(saber.weight).toBe('light');
+    expect(saber.element.type).toBe('aether');
+    const saberCrafting = new CraftingManager(recipes, new Inventory());
+    expect(saberCrafting.nextRecipe('rift_saber')?.toLevel).toBe(1);
+  });
+});

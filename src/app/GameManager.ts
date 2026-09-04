@@ -1,7 +1,7 @@
 import { GameLoop } from './GameLoop';
 import { HitStop } from './HitStop';
 import { buildPlayerIntent } from './intentBuilder';
-import { assertItemReferences, loadBalance, loadCreatures, loadItems, loadQuests, loadRecipes, loadTitanBlade, loadValgaron, loadVerdantTempest } from '@data/DataRegistry';
+import { assertItemReferences, loadBalance, loadCreatures, loadItems, loadQuests, loadRecipes, loadValgaron, loadVerdantTempest, loadWeapons } from '@data/DataRegistry';
 import type { BalanceData } from '@data/schemas/balance';
 import type { QuestDefinition } from '@data/schemas/quest';
 import type { ItemDefinition } from '@data/schemas/item';
@@ -96,8 +96,16 @@ export class GameManager {
   bot: PlaytestBot | null = null;
   private questClears: Record<string, number> = {};
   private savedAt: string | null = null;
-  /** 強化前の基準となる武器定義。強化はこれに性能を上書きして適用する。 */
-  private readonly baseWeapon: WeaponDefinition;
+  /** 全武器の基準定義。強化はこれに性能を上書きして適用する。 */
+  readonly weapons: Map<string, WeaponDefinition>;
+  private equippedWeaponId = 'titan_blade';
+
+  /** 装備中武器の基準定義（未強化）。 */
+  private get baseWeapon(): WeaponDefinition {
+    const weapon = this.weapons.get(this.equippedWeaponId) ?? this.weapons.values().next().value;
+    if (!weapon) throw new Error('[GameManager] no weapons defined');
+    return weapon;
+  }
   private readonly creatureDefs: Map<string, CreatureDefinition>;
   private readonly rng: Random;
   /** 今回のクエスト中に得た素材（リザルト表示用）。 */
@@ -130,13 +138,14 @@ export class GameManager {
 
   constructor(canvas: HTMLCanvasElement, uiRoot: HTMLElement, debugRoot: HTMLElement) {
     this.balance = loadBalance();
-    const weapon = loadTitanBlade();
+    this.weapons = loadWeapons();
+    const weapon = this.weapons.get(this.equippedWeaponId);
+    if (!weapon) throw new Error('[GameManager] default weapon titan_blade is missing');
     const valgaronDef = loadValgaron();
     this.quests = loadQuests();
     this.items = loadItems();
     this.creatureDefs = loadCreatures();
     this.recipes = loadRecipes();
-    this.baseWeapon = weapon;
     for (const r of this.recipes) assertItemReferences(this.items, r.materials.map((m) => m.itemId), `recipes/${r.id}`);
     this.crafting = new CraftingManager(this.recipes, this.inventory);
     // 素材参照の整合性は起動時に落とす（typo をプレイ中の「何も出ない」で気付かないため）
@@ -221,6 +230,7 @@ export class GameManager {
       this.startQuest(quest);
     };
     this.hubView.onCraft = (recipeId) => this.craftWeapon(recipeId);
+    this.hubView.onEquip = (weaponId) => this.equipWeaponById(weaponId);
     this.hubView.onSave = () => {
       this.saveGame();
       this.audio.play('uiClick');
@@ -287,6 +297,7 @@ export class GameManager {
   private applySave(save: SaveData | null): void {
     if (!save) return;
     this.inventory.loadSnapshot(save.inventory);
+    if (this.weapons.has(save.equippedWeaponId)) this.equippedWeaponId = save.equippedWeaponId;
     this.player.equipWeapon(this.crafting.restore(save.crafting, this.baseWeapon));
     this.questClears = { ...save.questClears };
     this.audio.setMasterVolume(save.settings.masterVolume);
@@ -299,6 +310,7 @@ export class GameManager {
     data.inventory = this.inventory.toSnapshot();
     data.crafting = this.crafting.toProgress();
     data.questClears = { ...this.questClears };
+    data.equippedWeaponId = this.equippedWeaponId;
     data.settings.masterVolume = this.audio.masterVolume;
     return data;
   }
@@ -313,6 +325,7 @@ export class GameManager {
     this.inventory.clear();
     this.questClears = {};
     this.savedAt = null;
+    this.equippedWeaponId = 'titan_blade';
     this.player.equipWeapon(this.crafting.restore({ weaponLevels: {} }, this.baseWeapon));
     this.renderHub();
   }
@@ -330,6 +343,10 @@ export class GameManager {
     const next = this.crafting.nextRecipe(weapon.id);
     this.hubView.render({
       playerName: 'レンジャー',
+      weapons: [...this.weapons.values()].map((w) => {
+        const leveled = this.crafting.weaponAtCurrentLevel(w);
+        return { id: w.id, name: leveled.name, weaponPower: leveled.weaponPower, level: this.crafting.weaponLevel(w.id), equipped: w.id === this.equippedWeaponId };
+      }),
       weaponName: weapon.name,
       weaponPower: weapon.weaponPower,
       weaponLevel: this.crafting.weaponLevel(weapon.id),
@@ -352,6 +369,15 @@ export class GameManager {
       savedAtLabel: this.savedAt ? new Date(this.savedAt).toLocaleString('ja-JP') : '',
       questClears: Object.values(this.questClears).reduce((a, b) => a + b, 0),
     });
+  }
+
+  private equipWeaponById(weaponId: string): void {
+    if (!this.weapons.has(weaponId) || weaponId === this.equippedWeaponId) return;
+    this.equippedWeaponId = weaponId;
+    this.player.equipWeapon(this.crafting.weaponAtCurrentLevel(this.baseWeapon));
+    this.audio.play('uiClick');
+    this.saveGame();
+    this.renderHub();
   }
 
   private craftWeapon(recipeId: string): void {

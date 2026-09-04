@@ -119,7 +119,11 @@ export class PlaytestBot {
       return;
     }
 
-    if (p.combat.isBusy) return;
+    if (p.combat.isBusy) {
+      // 硬直中に次の弱攻撃を先行入力して派生させる（軽い武器はこれが本体）
+      if (p.combat.phase === 'recovery' && openWindow && p.combat.state === 'attacking') intent.lightAttack = true;
+      return;
+    }
 
     if (inFront && !combat.isIncapacitated && p.controller.state !== 'dodge') {
       // 側面へずれてから殴る

@@ -50,9 +50,25 @@ export interface PlayerPlaceholder {
   weaponPivot: THREE.Group;
 }
 
+export type WeaponWeightClass = 'light' | 'medium' | 'heavy';
+
+/** 武器の仮メッシュ。重量で長さと幅を変え、見た目で武器種が分かるようにする。 */
+export function createWeaponPlaceholder(weight: WeaponWeightClass): THREE.Mesh {
+  const dims = weight === 'heavy' ? { w: 0.16, l: PLAYER_PLACEHOLDER.weaponLength, t: 0.06 } : weight === 'medium' ? { w: 0.12, l: 1.5, t: 0.05 } : { w: 0.06, l: 1.15, t: 0.03 };
+  const color = weight === 'light' ? 0x9fd8ff : PLACEHOLDER_COLORS.playerWeapon;
+  const blade = new THREE.Mesh(
+    new THREE.BoxGeometry(dims.w, dims.l, dims.t),
+    new THREE.MeshStandardMaterial({ color, metalness: 0.6, roughness: 0.4, emissive: weight === 'light' ? 0x2a4a66 : 0x000000 }),
+  );
+  blade.position.y = dims.l / 2;
+  blade.castShadow = true;
+  blade.name = 'weapon-blade';
+  return blade;
+}
+
 /** プレイヤーの仮モデル: カプセル + 肩ピボットに付いた板（武器）。高さ約 1.8m。 */
-export function createPlayerPlaceholder(): PlayerPlaceholder {
-  const { height, radius, weaponPivot: pivotPos, weaponLength } = PLAYER_PLACEHOLDER;
+export function createPlayerPlaceholder(weight: WeaponWeightClass = 'heavy'): PlayerPlaceholder {
+  const { height, radius, weaponPivot: pivotPos } = PLAYER_PLACEHOLDER;
   const group = new THREE.Group();
   group.name = 'player-placeholder';
 
@@ -77,13 +93,7 @@ export function createPlayerPlaceholder(): PlayerPlaceholder {
   weaponPivot.position.set(pivotPos.x, pivotPos.y, pivotPos.z);
   group.add(weaponPivot);
 
-  const blade = new THREE.Mesh(
-    new THREE.BoxGeometry(0.16, weaponLength, 0.06),
-    new THREE.MeshStandardMaterial({ color: PLACEHOLDER_COLORS.playerWeapon, metalness: 0.6, roughness: 0.4 }),
-  );
-  blade.position.y = weaponLength / 2;
-  blade.castShadow = true;
-  weaponPivot.add(blade);
+  weaponPivot.add(createWeaponPlaceholder(weight));
 
   return { group, weaponPivot };
 }

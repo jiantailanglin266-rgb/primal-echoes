@@ -9,8 +9,17 @@ export interface HubCraftOption {
   canCraft: boolean;
 }
 
+export interface HubWeaponOption {
+  id: string;
+  name: string;
+  weaponPower: number;
+  level: number;
+  equipped: boolean;
+}
+
 export interface HubModel {
   playerName: string;
+  weapons: HubWeaponOption[];
   weaponName: string;
   weaponPower: number;
   weaponLevel: number;
@@ -39,7 +48,9 @@ export class HubView {
   onCraft: ((recipeId: string) => void) | null = null;
   onSave: (() => void) | null = null;
   onDeleteSave: (() => void) | null = null;
+  onEquip: ((weaponId: string) => void) | null = null;
   private readonly savedLabel: HTMLElement;
+  private readonly weaponList: HTMLElement;
 
   constructor(parent: HTMLElement) {
     this.root = document.createElement('div');
@@ -55,6 +66,8 @@ export class HubView {
           <section class="pe-panel">
             <h2>レンジャー</h2>
             <div class="pe-hub-status"></div>
+            <h2>武器</h2>
+            <div class="pe-hub-weapons"></div>
             <h2>所持素材</h2>
             <div class="pe-hub-inventory pe-lines"></div>
             <h2>記録</h2>
@@ -81,6 +94,7 @@ export class HubView {
     this.inventory = q(this.root, '.pe-hub-inventory');
     this.crafting = q(this.root, '.pe-hub-crafting');
     this.savedLabel = q(this.root, '.pe-hub-saved');
+    this.weaponList = q(this.root, '.pe-hub-weapons');
     this.root.querySelector('.pe-hub-save')?.addEventListener('click', () => this.onSave?.());
     this.root.querySelector('.pe-hub-delete')?.addEventListener('click', () => {
       if (window.confirm('記録を消去しますか？ 素材と強化が失われます。')) this.onDeleteSave?.();
@@ -101,6 +115,17 @@ export class HubView {
     `;
     this.savedLabel.textContent = m.savedAtLabel ? `最終記録: ${m.savedAtLabel}` : '記録なし（クエスト終了と強化で自動記録）';
     this.inventory.replaceChildren(...(m.inventoryLines.length ? m.inventoryLines : ['（なし）']).map((t) => line(t)));
+
+    this.weaponList.replaceChildren(
+      ...m.weapons.map((w) => {
+        const button = document.createElement('button');
+        button.className = `pe-button pe-button-small pe-weapon-option${w.equipped ? ' is-equipped' : ''}`;
+        button.textContent = `${w.equipped ? '◆ ' : ''}${w.name}  攻 ${w.weaponPower} / Lv.${w.level}`;
+        button.disabled = w.equipped;
+        button.addEventListener('click', () => this.onEquip?.(w.id));
+        return button;
+      }),
+    );
 
     this.crafting.replaceChildren();
     if (!m.craft) {

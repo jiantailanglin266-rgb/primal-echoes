@@ -1,6 +1,7 @@
 import balanceJson from './balance.json';
 import verdantTempestJson from './fields/verdant_tempest.json';
 import titanBladeJson from './weapons/titan_blade.json';
+import riftSaberJson from './weapons/rift_saber.json';
 import valgaronJson from './monsters/valgaron.json';
 import grastJson from './creatures/grast.json';
 import skarvJson from './creatures/skarv.json';
@@ -39,6 +40,21 @@ export function loadTitanBlade(): WeaponDefinition {
   const weapon = titanBladeJson as WeaponDefinition;
   assertWeaponConsistency(weapon);
   return weapon;
+}
+
+/** 全武器を id -> 定義 の Map で返す。順序は拠点の表示順。 */
+export function loadWeapons(): Map<string, WeaponDefinition> {
+  const map = new Map<string, WeaponDefinition>();
+  for (const [json, name] of [
+    [titanBladeJson, 'weapons/titan_blade'],
+    [riftSaberJson, 'weapons/rift_saber'],
+  ] as const) {
+    validate(json, weaponSchema, name);
+    const weapon = json as WeaponDefinition;
+    assertWeaponConsistency(weapon);
+    map.set(weapon.id, weapon);
+  }
+  return map;
 }
 
 /** 小型生物定義を id -> 定義 の Map で返す。 */

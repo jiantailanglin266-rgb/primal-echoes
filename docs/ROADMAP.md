@@ -89,12 +89,18 @@ T18  [done] Camera Shake（Hit Stop 長に比例）、合成 SE 11 種（外部�
 T19  [done] SaveManager（localStorage、version 付き、破損時は無視）、クエスト終了・強化で自動記録、拠点で手動記録/消去
 T20  [done] 通しプレイ検証（PlaytestBot `?bot=1` で 3 回討伐成功）・威力/HP 調整・活性薬支給・BALANCE.md 記録 -> **VS0.1 完了（2026-09-05）**
 
-## VS0.1 完了後の次アクション（VS0.2 候補・優先順）
-1. 手動プレイでの手触り確認（マウス感度・カメラ距離・攻撃の重さ）と BALANCE.md への追記
-2. 本番アセット差し替えの土台: プレイヤー/Valgaron の GLTF 読み込みと部位メッシュ対応（ASSET_TODO.md）
-3. Should Have: Soft Lock、落石ギミック、雨で洞窟へ移動、仮 VFX
-4. 残り武器（Rift Saber → Break Hammer → Arc Bow）と防具・スキル
-5. 捕獲クエストと調査クエスト
+## VS0.2（進行中）
+- [x] Rift Saber（2 本目の武器）+ 拠点での武器切替 + 武器ごとの強化 2 段階 + 装備の保存
+- [ ] Soft Lock
+- [ ] 天候（雨）で Valgaron が洞窟へ移動
+- [ ] 環境ギミック（落石）
+- [ ] 仮 VFX（ヒットスパーク）
+- [ ] 手動プレイでの手触り確認（マウス感度・カメラ距離・攻撃の重さ）と BALANCE.md への追記（ユーザー）
+
+## その後の候補
+1. 本番アセット差し替えの土台: プレイヤー/Valgaron の GLTF 読み込みと部位メッシュ対応（ASSET_TODO.md）
+2. 残り武器（Break Hammer → Arc Bow）と防具・スキル
+3. 捕獲クエストと調査クエスト
 ```
 
 依存: T01 -> T02 -> T03 -> T04 -> T05 -> T06 -> T07 -> T08 -> T09 -> T10 -> T11。

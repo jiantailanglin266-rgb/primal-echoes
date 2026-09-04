@@ -14,6 +14,8 @@ export interface SaveDataV1 {
   crafting: CraftingProgress;
   /** クエスト id -> クリア回数。 */
   questClears: Record<string, number>;
+  /** 装備中の武器 id。 */
+  equippedWeaponId: string;
   settings: SaveSettings;
 }
 
@@ -70,6 +72,7 @@ export function createEmptySave(): SaveDataV1 {
     inventory: { items: {} },
     crafting: { weaponLevels: {} },
     questClears: {},
+    equippedWeaponId: 'titan_blade',
     settings: { masterVolume: 0.6 },
   };
 }
@@ -119,6 +122,7 @@ function migrate(parsed: unknown): SaveData | null {
     inventory: isRecordOfNumbers(obj.inventory?.items) ? { items: obj.inventory.items } : base.inventory,
     crafting: isRecordOfNumbers(obj.crafting?.weaponLevels) ? { weaponLevels: obj.crafting.weaponLevels } : base.crafting,
     questClears: isRecordOfNumbers(obj.questClears) ? obj.questClears : base.questClears,
+    equippedWeaponId: typeof obj.equippedWeaponId === 'string' ? obj.equippedWeaponId : base.equippedWeaponId,
     settings: {
       masterVolume: typeof obj.settings?.masterVolume === 'number' ? clamp01(obj.settings.masterVolume) : base.settings.masterVolume,
     },

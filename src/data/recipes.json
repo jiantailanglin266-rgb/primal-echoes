@@ -40,6 +40,33 @@
         { "itemId": "aether_core", "count": 1 }
       ],
       "result": { "weaponPower": 195, "sharpness": "keen", "critRate": 0.15 }
+    },
+    {
+      "id": "rift_saber_lv1",
+      "kind": "weaponUpgrade",
+      "weaponId": "rift_saber",
+      "fromLevel": 0,
+      "toLevel": 1,
+      "displayName": "Rift Saber I — 結晶片の閃",
+      "materials": [
+        { "itemId": "valgaron_scale", "count": 2 },
+        { "itemId": "aether_shard", "count": 1 }
+      ],
+      "result": { "weaponPower": 104, "sharpness": "sharp", "critRate": 0.2 }
+    },
+    {
+      "id": "rift_saber_lv2",
+      "kind": "weaponUpgrade",
+      "weaponId": "rift_saber",
+      "fromLevel": 1,
+      "toLevel": 2,
+      "displayName": "Rift Saber II — 牙裂の閃",
+      "materials": [
+        { "itemId": "valgaron_fang", "count": 2 },
+        { "itemId": "aether_shard", "count": 2 },
+        { "itemId": "grast_hide", "count": 2 }
+      ],
+      "result": { "weaponPower": 122, "sharpness": "keen", "critRate": 0.25 }
     }
   ]
 }

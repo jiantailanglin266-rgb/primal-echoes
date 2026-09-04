@@ -262,6 +262,9 @@ body {
 .pe-hub-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .pe-button-small { padding: 6px 12px; font-size: 12px; }
 .pe-hub-saved { color: var(--pe-hud-dim); font-size: 12px; margin-top: 6px; }
+.pe-hub-weapons { display: flex; flex-direction: column; gap: 6px; }
+.pe-weapon-option { text-align: left; letter-spacing: 0.04em; }
+.pe-weapon-option.is-equipped { opacity: 1; background: rgba(216, 178, 106, 0.18); cursor: default; }
 
 .pe-result-inner { text-align: center; padding-top: 80px; }
 .pe-result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: left; margin: 28px 0; }

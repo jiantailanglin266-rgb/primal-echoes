@@ -14,6 +14,11 @@ export const KEY_BINDINGS = {
   special: ['KeyL'],
   lockOn: ['Tab', 'KeyQ'],
   interact: ['KeyE'],
+  // ---- デバッグ（?debug=1 のときだけ GameManager が処理する）----
+  debugHealPlayer: ['F1'],
+  debugToggleInfiniteStamina: ['F2'],
+  debugKillMonster: ['F3'],
+  debugResetMonster: ['F4'],
 } as const;
 
 export type BindingAction = keyof typeof KEY_BINDINGS;

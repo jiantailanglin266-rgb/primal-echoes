@@ -1,10 +1,12 @@
 import balanceJson from './balance.json';
 import devTerrainJson from './fields/dev_terrain.json';
 import titanBladeJson from './weapons/titan_blade.json';
+import valgaronJson from './monsters/valgaron.json';
 import { validate } from './validate';
 import { balanceSchema, type BalanceData } from './schemas/balance';
 import { terrainSchema, type ProceduralTerrainData } from './schemas/terrain';
 import { assertWeaponConsistency, weaponSchema, type WeaponDefinition } from './schemas/weapon';
+import { assertMonsterConsistency, monsterSchema, type MonsterDefinition } from './schemas/monster';
 
 /**
  * ゲームデータの読み込み口。
@@ -26,4 +28,11 @@ export function loadTitanBlade(): WeaponDefinition {
   const weapon = titanBladeJson as WeaponDefinition;
   assertWeaponConsistency(weapon);
   return weapon;
+}
+
+export function loadValgaron(): MonsterDefinition {
+  validate(valgaronJson, monsterSchema, 'monsters/valgaron');
+  const monster = valgaronJson as unknown as MonsterDefinition;
+  assertMonsterConsistency(monster);
+  return monster;
 }

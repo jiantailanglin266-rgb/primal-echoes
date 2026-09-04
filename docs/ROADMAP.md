@@ -31,8 +31,8 @@
 - [x] プレイヤー移動・ダッシュ・回避（無敵時間）・スタミナ（T03 完了）
 - [x] TPS カメラ（Free）+ カメラコリジョン（地形のみ）（T04 完了）/ [ ] LockOn（T06）
 - [x] Titan Blade: Light / Heavy / Charge / DodgeAttack の攻撃データとコンボ（T05 完了）
-- [ ] HitDetection（攻撃ヒットボックス x 部位）と DamageSystem（式のデータ駆動）
-- [ ] Valgaron: Stats / 部位（head, body, forelegs, hindlegs, tail）/ 6攻撃 / 距離帯選択
+- [x] HitDetection（攻撃ヒットボックス x 部位）と DamageSystem（式のデータ駆動）（T06 完了）
+- [x] Valgaron: Stats / 部位（head, body, forelegs, hindlegs, tail）（T07 完了）/ [ ] 6攻撃 / 距離帯選択（T08〜）
 - [ ] Valgaron AI: 生態（Patrol -> Eat -> Drink -> Sleep）+ 戦闘 State Machine + 怒り + 疲労 + 逃走/帰巣
 - [ ] 部位破壊（頭・前脚）と尻尾切断、戦闘への影響
 - [ ] クエスト（Hunt / 制限時間 / 力尽き回数）+ リザルト
@@ -41,7 +41,7 @@
 - [ ] 縮小フィールド（BaseCamp / Forest / River / Cave）と Valgaron の移動経路
 - [ ] 小型生物 2 種（Grast: 逃走・群れ、Skarv: 死骸に集合）
 - [ ] HUD（HP / Stamina / 斬れ味 / クエスト目標 / 大型の状態アイコン）
-- [ ] Hit Stop / ダメージ数字 / 最低限の Camera Shake
+- [x] Hit Stop / ダメージ数字（T06 完了）/ [ ] 最低限の Camera Shake
 - [ ] セーブ（インベントリ・装備・クエスト進行）
 - [ ] Debug Overlay + デバッグキー
 
@@ -73,9 +73,9 @@ T02  [done] data/ ローダーと型検証、balance.json
 T03  [done] 手続き地形（HeightProvider）と PlayerController（移動/ダッシュ/回避/スタミナ）
 T04  [done] CameraRig（Free/Collision）。LockOn は T06 で追加
 T05  [done] AttackData と PlayerCombat 状態機械（先行入力/派生/回避キャンセル/チャージ）、Titan Blade データ
-T06  ダミーモンスター（球体）+ HitDetection + DamageSystem（単体テスト）+ LockOn カメラ   <- 次の実装対象
-T07  MonsterStats / MonsterPart（部位・耐性・partHp）
-T08  MonsterCombat（telegraph -> startup -> active -> recovery のデータ実行）+ 6 攻撃
+T06  [done] Valgaron プリミティブ（部位形状 = 当たり判定）+ HitDetection + DamageSystem + LockOn + HitStop + ダメージ数字
+T07  [done] MonsterStats / MonsterPart（部位・肉質・partHp・怯み蓄積・破壊/切断判定）
+T08  MonsterCombat（telegraph -> startup -> active -> recovery のデータ実行）+ 6 攻撃 + プレイヤー被弾   <- 次の実装対象
 T09  MonsterAI 戦闘層（距離帯選択・怒り・疲労）
 T10  MonsterAI 生態層（Patrol/Eat/Drink/Sleep/Flee/ReturnToNest）+ Perception
 T11  部位破壊・切断とその効果反映

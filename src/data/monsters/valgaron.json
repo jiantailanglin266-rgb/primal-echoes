@@ -1,0 +1,110 @@
+{
+  "id": "valgaron",
+  "name": "Valgaron",
+  "stats": {
+    "maxHp": 3200,
+    "maxStamina": 100,
+    "stunThreshold": 120,
+    "stunDurationSeconds": 6,
+    "walkSpeed": 2.6,
+    "runSpeed": 9.5,
+    "turnSpeedRadPerSecond": 1.8,
+    "bodyRadius": 2.2
+  },
+  "parts": [
+    {
+      "id": "head",
+      "name": "頭部（角）",
+      "hitZone": { "slash": 0.55, "impact": 0.65, "projectile": 0.5, "fire": 0.25, "water": 0.05, "thunder": 0.15, "ice": 0.1, "aether": 0.3 },
+      "partHp": 400,
+      "breakable": true,
+      "severable": false,
+      "severDamageType": "slash",
+      "stunMultiplier": 1.0,
+      "flinchThreshold": 180,
+      "shape": { "type": "sphere", "offset": { "x": 0, "y": 2.0, "z": 3.2 }, "radius": 1.25 },
+      "breakEffects": [
+        { "kind": "attackDamageMultiplier", "attackId": "vg_charge", "multiplier": 0.7 },
+        { "kind": "attackDamageMultiplier", "attackId": "vg_bite", "multiplier": 0.85 }
+      ]
+    },
+    {
+      "id": "body",
+      "name": "胴体（甲殻）",
+      "hitZone": { "slash": 0.3, "impact": 0.3, "projectile": 0.25, "fire": 0.1, "water": 0.1, "thunder": 0.05, "ice": 0.05, "aether": 0.2 },
+      "partHp": 0,
+      "breakable": false,
+      "severable": false,
+      "severDamageType": "slash",
+      "stunMultiplier": 0,
+      "flinchThreshold": 320,
+      "shape": { "type": "capsule", "start": { "x": 0, "y": 1.9, "z": -1.6 }, "end": { "x": 0, "y": 1.9, "z": 1.6 }, "radius": 1.6 },
+      "breakEffects": []
+    },
+    {
+      "id": "foreleg_l",
+      "name": "左前脚",
+      "hitZone": { "slash": 0.42, "impact": 0.45, "projectile": 0.35, "fire": 0.15, "water": 0.1, "thunder": 0.2, "ice": 0.1, "aether": 0.25 },
+      "partHp": 300,
+      "breakable": true,
+      "severable": false,
+      "severDamageType": "slash",
+      "stunMultiplier": 0,
+      "flinchThreshold": 150,
+      "shape": { "type": "capsule", "start": { "x": 1.1, "y": 0.4, "z": 1.7 }, "end": { "x": 1.2, "y": 1.7, "z": 1.4 }, "radius": 0.6 },
+      "breakEffects": [{ "kind": "toppleThresholdMultiplier", "multiplier": 0.7 }]
+    },
+    {
+      "id": "foreleg_r",
+      "name": "右前脚",
+      "hitZone": { "slash": 0.42, "impact": 0.45, "projectile": 0.35, "fire": 0.15, "water": 0.1, "thunder": 0.2, "ice": 0.1, "aether": 0.25 },
+      "partHp": 300,
+      "breakable": true,
+      "severable": false,
+      "severDamageType": "slash",
+      "stunMultiplier": 0,
+      "flinchThreshold": 150,
+      "shape": { "type": "capsule", "start": { "x": -1.1, "y": 0.4, "z": 1.7 }, "end": { "x": -1.2, "y": 1.7, "z": 1.4 }, "radius": 0.6 },
+      "breakEffects": [{ "kind": "toppleThresholdMultiplier", "multiplier": 0.7 }]
+    },
+    {
+      "id": "hindleg_l",
+      "name": "左後脚",
+      "hitZone": { "slash": 0.36, "impact": 0.36, "projectile": 0.3, "fire": 0.15, "water": 0.1, "thunder": 0.2, "ice": 0.1, "aether": 0.2 },
+      "partHp": 0,
+      "breakable": false,
+      "severable": false,
+      "severDamageType": "slash",
+      "stunMultiplier": 0,
+      "flinchThreshold": 170,
+      "shape": { "type": "capsule", "start": { "x": 1.0, "y": 0.4, "z": -1.7 }, "end": { "x": 1.1, "y": 1.6, "z": -1.4 }, "radius": 0.55 },
+      "breakEffects": []
+    },
+    {
+      "id": "hindleg_r",
+      "name": "右後脚",
+      "hitZone": { "slash": 0.36, "impact": 0.36, "projectile": 0.3, "fire": 0.15, "water": 0.1, "thunder": 0.2, "ice": 0.1, "aether": 0.2 },
+      "partHp": 0,
+      "breakable": false,
+      "severable": false,
+      "severDamageType": "slash",
+      "stunMultiplier": 0,
+      "flinchThreshold": 170,
+      "shape": { "type": "capsule", "start": { "x": -1.0, "y": 0.4, "z": -1.7 }, "end": { "x": -1.1, "y": 1.6, "z": -1.4 }, "radius": 0.55 },
+      "breakEffects": []
+    },
+    {
+      "id": "tail",
+      "name": "尾",
+      "hitZone": { "slash": 0.48, "impact": 0.35, "projectile": 0.4, "fire": 0.2, "water": 0.1, "thunder": 0.15, "ice": 0.15, "aether": 0.25 },
+      "partHp": 350,
+      "breakable": true,
+      "severable": true,
+      "severDamageType": "slash",
+      "stunMultiplier": 0,
+      "flinchThreshold": 160,
+      "shape": { "type": "capsule", "start": { "x": 0, "y": 1.6, "z": -2.2 }, "end": { "x": 0, "y": 1.0, "z": -5.4 }, "radius": 0.5 },
+      "breakEffects": [{ "kind": "attackReachMultiplier", "attackId": "vg_tail_sweep", "multiplier": 0.6 }]
+    }
+  ]
+}

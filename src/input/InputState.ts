@@ -18,6 +18,10 @@ export interface InputState {
   specialPressed: boolean;
   lockOnPressed: boolean;
   interactPressed: boolean;
+  debugHealPlayerPressed: boolean;
+  debugToggleInfiniteStaminaPressed: boolean;
+  debugKillMonsterPressed: boolean;
+  debugResetMonsterPressed: boolean;
 }
 
 export function createEmptyInputState(): InputState {
@@ -34,5 +38,9 @@ export function createEmptyInputState(): InputState {
     specialPressed: false,
     lockOnPressed: false,
     interactPressed: false,
+    debugHealPlayerPressed: false,
+    debugToggleInfiniteStaminaPressed: false,
+    debugKillMonsterPressed: false,
+    debugResetMonsterPressed: false,
   };
 }

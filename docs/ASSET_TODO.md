@@ -13,7 +13,7 @@
 |---|---|---|---|---|
 | M-001 | プレイヤー（レンジャー）基本体型 | placeholder | カプセル + 板（`presentation/placeholders.ts`） | 将来キャラクリ対応のためモジュール分割（頭/胴/腕/腰/脚） |
 | M-002 | Titan Blade | placeholder | 薄い Box | 長さ約 2.0m。チャージ時の発光部を想定 |
-| M-003 | Valgaron | placeholder | 未作成（T06 でプリミティブ複合体） | 岩石状甲殻・巨大前脚・長い尾・発達した顎。部位ごとにメッシュ分割必須（head/body/legs×4/tail） |
+| M-003 | Valgaron | placeholder | 部位形状（球/カプセル）をそのまま描画（`presentation/MonsterView.ts`） | 岩石状甲殻・巨大前脚・長い尾・発達した顎。部位ごとにメッシュ分割必須（head/body/legs×4/tail）。当たり判定は `data/monsters/valgaron.json` の shape が正 |
 | M-004 | Grast（草食小型） | placeholder | 未作成 | 群れで行動する小型草食生物 |
 | M-005 | Skarv（腐肉食小型） | placeholder | 未作成 | 死骸に集まる |
 | M-006 | 翠嵐峡谷 地形・植生 | placeholder | 平面 + グリッド | 高さマップ→本番地形へ |

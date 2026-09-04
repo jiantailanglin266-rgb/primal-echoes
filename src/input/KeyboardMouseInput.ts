@@ -52,6 +52,10 @@ export class KeyboardMouseInput {
     state.specialPressed = this.wasPressed('special');
     state.lockOnPressed = this.wasPressed('lockOn');
     state.interactPressed = this.wasPressed('interact');
+    state.debugHealPlayerPressed = this.wasPressed('debugHealPlayer');
+    state.debugToggleInfiniteStaminaPressed = this.wasPressed('debugToggleInfiniteStamina');
+    state.debugKillMonsterPressed = this.wasPressed('debugKillMonster');
+    state.debugResetMonsterPressed = this.wasPressed('debugResetMonster');
     state.lookDeltaX = this.lookDeltaX;
     state.lookDeltaY = this.lookDeltaY;
 
@@ -74,8 +78,8 @@ export class KeyboardMouseInput {
   }
 
   private readonly onKeyDown = (e: KeyboardEvent): void => {
-    // Tab でフォーカスが飛ぶとゲーム入力が奪われるため抑止する
-    if (e.code === 'Tab' || e.code === 'Space') e.preventDefault();
+    // Tab でフォーカスが飛ぶ / F キーでブラウザ機能が動くとゲーム入力が奪われるため抑止する
+    if (e.code === 'Tab' || e.code === 'Space' || e.code.startsWith('F')) e.preventDefault();
     if (e.repeat) return;
     this.held.add(e.code);
     this.pressedSinceLastPoll.add(e.code);

@@ -1,5 +1,7 @@
 import { oneOf, optional, record, type Schema } from '../validate';
 import { PHYSICAL_DAMAGE_TYPES, attackTotalSeconds, type AttackData } from '@core/combat/AttackData';
+import { ELEMENT_TYPES, type ElementType } from '@core/combat/elements';
+import { SHARPNESS_LEVELS, type SharpnessLevel } from './balance';
 
 export const WEAPON_WEIGHTS = ['light', 'medium', 'heavy'] as const;
 export type WeaponWeight = (typeof WEAPON_WEIGHTS)[number];
@@ -21,6 +23,9 @@ export interface WeaponDefinition {
   id: string;
   name: string;
   weaponPower: number;
+  element: { type: ElementType; power: number };
+  critRate: number;
+  sharpness: SharpnessLevel;
   weight: WeaponWeight;
   /** 攻撃の startup 中に入力方向へ向き直れる速度。0 で旋回不可。 */
   startupTurnSpeedRadPerSecond: number;
@@ -68,6 +73,9 @@ export const weaponSchema = {
   id: 'string',
   name: 'string',
   weaponPower: 'number',
+  element: { type: oneOf(ELEMENT_TYPES), power: 'number' },
+  critRate: 'number',
+  sharpness: oneOf(SHARPNESS_LEVELS),
   weight: oneOf(WEAPON_WEIGHTS),
   startupTurnSpeedRadPerSecond: 'number',
   inputBufferSeconds: 'number',
@@ -130,5 +138,8 @@ export function assertWeaponConsistency(weapon: WeaponDefinition): void {
   }
   if ((levels[0] as ChargeLevel).holdSeconds > weapon.heavyTapThresholdSeconds) {
     throw new Error(`[weapon ${weapon.id}] charge.levels[0].holdSeconds must be <= heavyTapThresholdSeconds`);
+  }
+  if (weapon.critRate < 0 || weapon.critRate > 1) {
+    throw new Error(`[weapon ${weapon.id}] critRate must be within 0..1`);
   }
 }

@@ -1,0 +1,58 @@
+:root {
+  color-scheme: dark;
+  --pe-ui-font: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+  --pe-mono-font: 'Cascadia Mono', 'Consolas', 'Menlo', monospace;
+  --pe-hud-fg: #e8e4d8;
+  --pe-hud-bg: rgba(10, 12, 14, 0.55);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0b0d10;
+  font-family: var(--pe-ui-font);
+  color: var(--pe-hud-fg);
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#game-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  outline: none;
+}
+
+/* UI と Debug はキャンバスの上に重ねる。クリックはキャンバスへ透過させ、
+   個々の UI 要素だけが pointer-events を受け取る。 */
+#ui-root,
+#debug-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pe-debug-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 6px 10px;
+  background: var(--pe-hud-bg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  font-family: var(--pe-mono-font);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre;
+  pointer-events: none;
+}

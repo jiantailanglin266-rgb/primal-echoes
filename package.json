@@ -1,0 +1,27 @@
+{
+  "name": "primal-echoes",
+  "version": "0.1.0",
+  "description": "PRIMAL ECHOES - original 3D hunting action RPG (Vertical Slice)",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run test"
+  },
+  "license": "UNLICENSED",
+  "type": "module",
+  "dependencies": {
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "@types/three": "^0.185.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
+  },
+  "private": true
+}

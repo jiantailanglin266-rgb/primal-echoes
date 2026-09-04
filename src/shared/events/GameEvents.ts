@@ -17,6 +17,7 @@ export type GameEvents = {
   };
   monsterFlinched: { monsterId: string; partId: string };
   monsterStunned: { monsterId: string };
+  monsterToppled: { monsterId: string; partId: string };
   partBroken: { monsterId: string; partId: string };
   partSevered: { monsterId: string; partId: string };
   monsterDied: { monsterId: string };

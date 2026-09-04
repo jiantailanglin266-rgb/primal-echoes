@@ -17,6 +17,8 @@ export interface Projectile {
   age: number;
   alive: boolean;
   hasHitPlayer: boolean;
+  /** 発射時点のダメージ倍率（怒り・部位破壊）。飛行中に状態が変わっても弾は変わらない。 */
+  damageMultiplier: number;
 }
 
 const MAX_AGE_SECONDS = 6;
@@ -35,7 +37,7 @@ export class ProjectileManager {
    * origin から target へ届くよう初速を解く。
    * 水平速度を固定し、飛行時間から必要な鉛直初速を逆算する（狙いが常に合う = 回避を「読み」で行える）。
    */
-  spawnArc(ownerId: string, attack: MonsterAttackDefinition, origin: Vec3, target: Vec3, aimHeightOffset = 0): Projectile {
+  spawnArc(ownerId: string, attack: MonsterAttackDefinition, origin: Vec3, target: Vec3, aimHeightOffset = 0, damageMultiplier = 1): Projectile {
     const motion = attack.motion;
     const speed = motion.projectileSpeed ?? 15;
     const gravity = motion.projectileGravity ?? 10;
@@ -59,6 +61,7 @@ export class ProjectileManager {
       age: 0,
       alive: true,
       hasHitPlayer: false,
+      damageMultiplier,
     };
     this.projectiles.push(projectile);
     return projectile;

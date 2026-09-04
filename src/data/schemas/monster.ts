@@ -27,9 +27,14 @@ export interface MonsterPartDefinition {
   stunMultiplier: number;
   /** この部位への怯み蓄積がこの値に達すると怯む。 */
   flinchThreshold: number;
+  /** 蓄積が閾値に達したときの反応。脚は転倒（長い隙）。 */
+  reaction: PartReaction;
   shape: ShapeData;
   breakEffects: PartBreakEffect[];
 }
+
+export const PART_REACTIONS = ['flinch', 'topple'] as const;
+export type PartReaction = (typeof PART_REACTIONS)[number];
 
 export const RANGE_BANDS = ['near', 'middle', 'far'] as const;
 export type RangeBand = (typeof RANGE_BANDS)[number];
@@ -328,6 +333,7 @@ export const monsterSchema = {
       severDamageType: oneOf(PHYSICAL_DAMAGE_TYPES),
       stunMultiplier: 'number',
       flinchThreshold: 'number',
+      reaction: oneOf(PART_REACTIONS),
       shape: { type: oneOf(['sphere', 'capsule']), radius: 'number' },
       breakEffects: [{ kind: oneOf(['attackDamageMultiplier', 'attackReachMultiplier', 'disableAttack', 'toppleThresholdMultiplier']) }],
     },

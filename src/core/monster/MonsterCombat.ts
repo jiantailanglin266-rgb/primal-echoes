@@ -51,6 +51,7 @@ export class MonsterCombat {
   private nextInstanceId = 1;
   private readonly hitboxPool: MonsterHitbox[] = [];
   private readonly scratch = new Vec3();
+  private readonly scaledOffset = { x: 0, y: 0, z: 0 };
 
   constructor(
     private readonly monster: Monster,
@@ -115,6 +116,7 @@ export class MonsterCombat {
 
   canUse(attack: MonsterAttackDefinition, distance: number, relativeAngle: number): boolean {
     if (this.isBusy) return false;
+    if (this.monster.isAttackDisabledByBreak(attack.id)) return false;
     if (this.cooldownRemaining(attack.id) > 0) return false;
     if (!attack.ranges.includes(this.rangeBandFor(distance))) return false;
     if (relativeAngle < attack.facingArc.minRad || relativeAngle > attack.facingArc.maxRad) return false;
@@ -240,14 +242,23 @@ export class MonsterCombat {
     out.length = 0;
     const c = this.current;
     if (!c || this.phase !== 'active') return out;
+    // 尾切断などで射程が縮む: オフセットと半径をまとめて縮める
+    const reach = this.monster.attackReachMultiplier(c.def.id);
     c.def.hitboxes.forEach((hb, index) => {
       let slot = this.hitboxPool[index];
       if (!slot) {
         slot = { center: new Vec3(), radius: 0, attack: c };
         this.hitboxPool[index] = slot;
       }
-      transformPoint(hb.offset, this.monster.position, this.monster.yaw, slot.center);
-      slot.radius = hb.radius;
+      if (reach === 1) {
+        transformPoint(hb.offset, this.monster.position, this.monster.yaw, slot.center);
+      } else {
+        this.scaledOffset.x = hb.offset.x * reach;
+        this.scaledOffset.y = hb.offset.y;
+        this.scaledOffset.z = hb.offset.z * reach;
+        transformPoint(this.scaledOffset, this.monster.position, this.monster.yaw, slot.center);
+      }
+      slot.radius = hb.radius * reach;
       slot.attack = c;
       out.push(slot);
     });

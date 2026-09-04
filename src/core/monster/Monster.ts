@@ -14,6 +14,7 @@ export interface MonsterHitOutcome extends PartHitOutcome {
   died: boolean;
   stunned: boolean;
   enraged: boolean;
+  toppled: boolean;
 }
 
 /** 部位形状のワールド座標版。HitDetection が参照する。 */
@@ -22,9 +23,18 @@ export interface PartWorldShape {
   shape: WorldShape;
 }
 
+/** 破壊済み部位から集計した戦闘への影響。 */
+interface BreakEffectSummary {
+  attackDamage: Map<string, number>;
+  attackReach: Map<string, number>;
+  disabledAttacks: Set<string>;
+  toppleThresholdMultiplier: number;
+}
+
 /**
  * 大型モンスター 1 体の集約。位置・向き・Stats・部位・攻撃実行・状態（怒り/疲労）を持つ。
  * 「何をするか」の判断は MonsterAI が行い、このクラスは状態と物理的な移動だけを提供する。
+ * 部位破壊の効果はここで集計し、Combat / Resolver が参照する。
  */
 export class Monster {
   readonly position = new Vec3();
@@ -37,6 +47,7 @@ export class Monster {
   private readonly partsById = new Map<string, MonsterPart>();
   private readonly worldShapes: PartWorldShape[];
   private readonly scratchForward = new Vec3();
+  private breakEffects: BreakEffectSummary = emptySummary();
 
   constructor(
     readonly id: string,
@@ -75,18 +86,46 @@ export class Monster {
     return this.worldShapes;
   }
 
+  // ---- 部位破壊効果（Combat / Resolver から参照）----
+
+  attackDamageMultiplier(attackId: string): number {
+    return this.breakEffects.attackDamage.get(attackId) ?? 1;
+  }
+
+  attackReachMultiplier(attackId: string): number {
+    return this.breakEffects.attackReach.get(attackId) ?? 1;
+  }
+
+  isAttackDisabledByBreak(attackId: string): boolean {
+    return this.breakEffects.disabledAttacks.has(attackId);
+  }
+
+  get toppleThresholdMultiplier(): number {
+    return this.breakEffects.toppleThresholdMultiplier;
+  }
+
+  /** モンスター攻撃の総合ダメージ倍率（怒り × 部位破壊）。 */
+  totalAttackDamageMultiplier(attackId: string): number {
+    return this.condition.damageMultiplier * this.attackDamageMultiplier(attackId);
+  }
+
   applyHit(partId: string, result: DamageResult, outcome: MonsterHitOutcome): MonsterHitOutcome {
     const part = this.getPart(partId);
     part.applyDamage(result, outcome);
     outcome.died = this.stats.takeDamage(result.total);
     outcome.stunned = !outcome.died && this.stats.accumulateStun(result.stunDamage);
     outcome.enraged = !outcome.died && this.condition.recordDamage(result.total);
+    outcome.toppled = !outcome.died && outcome.flinched && part.def.reaction === 'topple';
 
-    // リアクション優先度: 死亡 > 気絶 > 咆哮（怒り開始）> 怯み。部位破壊・切断は必ず怯む。
+    if (outcome.broke || outcome.severed) this.recomputeBreakEffects();
+
+    // リアクション優先度: 死亡 > 気絶 > 転倒 > 咆哮（怒り開始）> 怯み。部位破壊・切断は必ず怯む。
     if (outcome.died) {
       this.combat.reset();
     } else if (outcome.stunned) {
       this.combat.interrupt('stunned', this.def.stats.stunDurationSeconds);
+    } else if (outcome.toppled) {
+      this.combat.interrupt('toppled', this.def.combat.toppleSeconds);
     } else if (outcome.enraged) {
       this.combat.interrupt('roar', this.def.enrage.roarSeconds);
     } else if (outcome.flinched || outcome.broke || outcome.severed) {
@@ -152,5 +191,38 @@ export class Monster {
     for (const part of this.parts) part.reset();
     this.combat.reset();
     this.condition.reset();
+    this.recomputeBreakEffects();
   }
+
+  private recomputeBreakEffects(): void {
+    const summary = emptySummary();
+    for (const part of this.parts) {
+      if (!part.isBroken) continue;
+      for (const effect of part.def.breakEffects) {
+        switch (effect.kind) {
+          case 'attackDamageMultiplier':
+            summary.attackDamage.set(effect.attackId, (summary.attackDamage.get(effect.attackId) ?? 1) * effect.multiplier);
+            break;
+          case 'attackReachMultiplier':
+            summary.attackReach.set(effect.attackId, (summary.attackReach.get(effect.attackId) ?? 1) * effect.multiplier);
+            break;
+          case 'disableAttack':
+            summary.disabledAttacks.add(effect.attackId);
+            break;
+          case 'toppleThresholdMultiplier':
+            summary.toppleThresholdMultiplier *= effect.multiplier;
+            break;
+        }
+      }
+    }
+    this.breakEffects = summary;
+    // 転倒しやすさは「転倒する部位」全部の閾値に掛ける（片脚を壊せば反対の脚も踏ん張れなくなる）
+    for (const part of this.parts) {
+      part.thresholdMultiplier = part.def.reaction === 'topple' ? summary.toppleThresholdMultiplier : 1;
+    }
+  }
+}
+
+function emptySummary(): BreakEffectSummary {
+  return { attackDamage: new Map(), attackReach: new Map(), disabledAttacks: new Set(), toppleThresholdMultiplier: 1 };
 }

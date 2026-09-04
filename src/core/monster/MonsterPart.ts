@@ -20,6 +20,11 @@ export class MonsterPart {
   state: PartState = 'intact';
   flinchAccumulated = 0;
   flinchThreshold: number;
+  /**
+   * 閾値への外部倍率（前脚破壊で転倒しやすくなる等）。Monster が部位破壊効果から設定する。
+   * 閾値そのものを書き換えないのは、怯みごとの閾値成長と独立に管理するため。
+   */
+  thresholdMultiplier = 1;
   /** 累計被ダメージ（デバッグ・報酬判定用）。 */
   totalDamageTaken = 0;
 
@@ -38,6 +43,10 @@ export class MonsterPart {
 
   get isBroken(): boolean {
     return this.state !== 'intact';
+  }
+
+  get effectiveFlinchThreshold(): number {
+    return this.flinchThreshold * this.thresholdMultiplier;
   }
 
   applyDamage(result: DamageResult, outcome: PartHitOutcome): PartHitOutcome {
@@ -62,7 +71,7 @@ export class MonsterPart {
     }
 
     this.flinchAccumulated += result.flinchDamage;
-    if (this.flinchAccumulated >= this.flinchThreshold) {
+    if (this.flinchAccumulated >= this.effectiveFlinchThreshold) {
       this.flinchAccumulated = 0;
       // 同じ部位で怯ませ続けるハメを防ぐため閾値を上げていく
       this.flinchThreshold *= this.balance.flinchThresholdGrowth;
@@ -82,6 +91,7 @@ export class MonsterPart {
     this.state = 'intact';
     this.flinchAccumulated = 0;
     this.flinchThreshold = this.def.flinchThreshold;
+    this.thresholdMultiplier = 1;
     this.totalDamageTaken = 0;
   }
 }

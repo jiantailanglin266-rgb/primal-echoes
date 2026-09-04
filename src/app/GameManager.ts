@@ -90,7 +90,14 @@ export class GameManager {
     this.projectiles = new ProjectileManager(terrain);
     this.monster = new Monster('valgaron_01', valgaronDef, this.balance.combat, terrain, {
       spawnProjectile: (attack, origin, target) => {
-        this.projectiles.spawnArc(this.monster.id, attack, origin, target, this.balance.player.hurtboxHeight);
+        this.projectiles.spawnArc(
+          this.monster.id,
+          attack,
+          origin,
+          target,
+          this.balance.player.hurtboxHeight,
+          this.monster.totalAttackDamageMultiplier(attack.id),
+        );
       },
       onAttackStarted: (attack) => {
         this.events.emit('monsterAttackStarted', { monsterId: this.monster.id, attackId: attack.id, telegraphSeconds: attack.telegraphSeconds });
@@ -164,6 +171,7 @@ export class GameManager {
     this.events.on('playerDowned', () => {
       this.lastHitSummary = 'PLAYER DOWNED (F1 to revive)';
     });
+    this.events.on('monsterToppled', (e) => (this.lastHitSummary = `TOPPLED via ${e.partId}`));
     this.events.on('monsterEnraged', () => (this.lastHitSummary = 'ENRAGED!'));
     this.events.on('monsterCalmed', () => (this.lastHitSummary = 'calmed down'));
     this.events.on('monsterExhausted', () => (this.lastHitSummary = 'EXHAUSTED'));

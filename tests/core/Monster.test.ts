@@ -24,7 +24,7 @@ function damage(total: number, overrides: Partial<DamageResult> = {}): DamageRes
 }
 
 function outcome(): MonsterHitOutcome {
-  return { broke: false, severed: false, flinched: false, died: false, stunned: false, enraged: false };
+  return { broke: false, severed: false, flinched: false, died: false, stunned: false, enraged: false, toppled: false };
 }
 
 function hitboxAt(x: number, y: number, z: number, radius = 1): WorldHitbox {

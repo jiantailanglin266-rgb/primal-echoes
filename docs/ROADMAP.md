@@ -34,7 +34,7 @@
 - [x] HitDetection（攻撃ヒットボックス x 部位）と DamageSystem（式のデータ駆動）（T06 完了）
 - [x] Valgaron: Stats / 部位（head, body, forelegs, hindlegs, tail）（T07 完了）/ 6攻撃 / 距離帯選択（T08 完了）
 - [x] Valgaron AI: 生態（Patrol -> Eat -> Drink -> Sleep）+ 逃走/帰巣 + 知覚（T10 完了）/ 戦闘 State Machine（T08）+ 怒り + 疲労（T09 完了）
-- [ ] 部位破壊（頭・前脚）と尻尾切断、戦闘への影響
+- [x] 部位破壊（頭・前脚）と尻尾切断、戦闘への影響（T11 完了）
 - [ ] クエスト（Hunt / 制限時間 / 力尽き回数）+ リザルト
 - [ ] 剥ぎ取りと素材付与、インベントリ
 - [ ] Titan Blade 強化レシピ 1 段階
@@ -78,9 +78,9 @@ T07  [done] MonsterStats / MonsterPart（部位・肉質・partHp・怯み蓄積
 T08  [done] MonsterCombat（telegraph -> startup -> active -> recovery）+ Valgaron 6 攻撃（突進/跳躍/投石の移動含む）+ プレイヤー被弾（のけぞり/無敵/戦闘不能）+ 最小戦闘 AI（距離帯・向き・クールダウン・接近）
 T09  [done] MonsterCondition（怒り: 被ダメ蓄積で発動/咆哮/攻撃力・速度↑/スタミナ消費↑/頭部弱点化、疲労: スタミナ枯渇/速度↓/突進・投石不可/怒り強制解除）
 T10  [done] MonsterAI 生態層（欲求: 空腹/渇き/疲れ -> travel/eat/drink/sleep、巡回、知覚: 視覚扇形+聴覚、alert -> combat、見失い -> investigate、瀕死 -> flee -> 巣で睡眠、寝込みを襲うと起きる）
-T11  部位破壊・切断とその効果反映   <- 次の実装対象
+T11  [done] 部位破壊効果（頭破壊: 突進/噛みつき威力↓、尾切断: 尾攻撃射程 -40%、前脚破壊: 転倒閾値 -30%、攻撃封印）+ 脚部怯み = 転倒（5 秒）
 T12  [done] フィールド定義（翠嵐峡谷: 4 エリア・巣/水場/餌場/巡回点 4・スポーン）+ Field クラス + 仮描画
-T13  小型生物（Grast/Skarv）+ EcosystemManager 簡易版
+T13  小型生物（Grast/Skarv）+ EcosystemManager 簡易版   <- 次の実装対象
 T14  QuestManager（Hunt / 制限時間 / 力尽き）+ Result 画面
 T15  剥ぎ取り・素材・Inventory
 T16  CraftingManager と Titan Blade 強化

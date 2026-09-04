@@ -23,7 +23,7 @@ function damage(total: number): DamageResult {
 }
 
 function outcome(): MonsterHitOutcome {
-  return { broke: false, severed: false, flinched: false, died: false, stunned: false, enraged: false };
+  return { broke: false, severed: false, flinched: false, died: false, stunned: false, enraged: false, toppled: false };
 }
 
 function stepFor(monster: Monster, seconds: number, target = new Vec3(0, 0, -10)): void {

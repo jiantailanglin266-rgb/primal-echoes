@@ -46,7 +46,7 @@ export class CombatResolver {
     flinchDamage: 0,
     minimumDamage: 1,
   };
-  private readonly outcome: MonsterHitOutcome = { broke: false, severed: false, flinched: false, died: false, stunned: false, enraged: false };
+  private readonly outcome: MonsterHitOutcome = { broke: false, severed: false, flinched: false, died: false, stunned: false, enraged: false, toppled: false };
 
   constructor(
     private readonly events: EventBus<GameEvents>,
@@ -94,7 +94,7 @@ export class CombatResolver {
         if (controller.isInvulnerable) continue;
         hitbox.attack.hasHitPlayer = true;
         this.awayDirection.copy(controller.position).sub(monster.position);
-        this.applyMonsterHit(player, hitbox.attack.def, monster.condition.damageMultiplier, hitbox.center);
+        this.applyMonsterHit(player, hitbox.attack.def, monster.totalAttackDamageMultiplier(hitbox.attack.def.id), hitbox.center);
         hits++;
       }
     }
@@ -106,7 +106,7 @@ export class CombatResolver {
       projectile.hasHitPlayer = true;
       projectile.alive = false;
       this.awayDirection.copy(projectile.velocity);
-      this.applyMonsterHit(player, projectile.attack, 1, projectile.position);
+      this.applyMonsterHit(player, projectile.attack, projectile.damageMultiplier, projectile.position);
       hits++;
     }
     return hits;
@@ -150,6 +150,7 @@ export class CombatResolver {
     });
     if (outcome.flinched) this.events.emit('monsterFlinched', { monsterId: monster.id, partId: hit.part.id });
     if (outcome.stunned) this.events.emit('monsterStunned', { monsterId: monster.id });
+    if (outcome.toppled) this.events.emit('monsterToppled', { monsterId: monster.id, partId: hit.part.id });
     if (outcome.enraged) this.events.emit('monsterEnraged', { monsterId: monster.id });
     if (outcome.broke) this.events.emit('partBroken', { monsterId: monster.id, partId: hit.part.id });
     if (outcome.severed) this.events.emit('partSevered', { monsterId: monster.id, partId: hit.part.id });

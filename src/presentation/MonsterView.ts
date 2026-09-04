@@ -124,8 +124,12 @@ export class MonsterView {
       // 咆哮: 上体を起こす
       targetScaleY = 1.15;
       targetY = 0.3;
-    } else if (combat.state === 'stunned' || combat.state === 'toppled') {
+    } else if (combat.state === 'stunned') {
       targetScaleY = 0.75;
+    } else if (combat.state === 'toppled') {
+      // 転倒: 横倒しに近い傾き
+      targetTilt = 0.55;
+      targetScaleY = 0.85;
     } else if (!combat.current && this.ecologyPose === 'sleep') {
       // 睡眠: 伏せる + ゆっくり呼吸
       targetScaleY = 0.7 + 0.03 * Math.sin(this.elapsed * 1.5);

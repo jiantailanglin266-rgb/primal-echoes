@@ -20,6 +20,12 @@ export interface HudModel {
   maxDowns: number;
   /** 戦闘不能中の復帰カウント（0 で非表示）。 */
   respawnCountdown: number;
+  /** 操作案内（空で非表示）。 */
+  prompt: string;
+  /** 剥ぎ取りなどの進捗 0〜1（0 で非表示）。 */
+  promptProgress: number;
+  /** 直近に入手したアイテムの通知行。 */
+  notices: string[];
 }
 
 export function createHudModel(): HudModel {
@@ -39,6 +45,9 @@ export function createHudModel(): HudModel {
     downs: 0,
     maxDowns: 0,
     respawnCountdown: 0,
+    prompt: '',
+    promptProgress: 0,
+    notices: [],
   };
 }
 
@@ -55,7 +64,12 @@ export class HudView {
   private readonly badges: HTMLElement;
   private readonly downs: HTMLElement;
   private readonly respawn: HTMLElement;
+  private readonly prompt: HTMLElement;
+  private readonly promptText: HTMLElement;
+  private readonly promptFill: HTMLElement;
+  private readonly notices: HTMLElement;
   private lastBadges = '';
+  private lastNotices = '';
 
   constructor(parent: HTMLElement) {
     this.root = el('div', 'pe-hud');
@@ -76,6 +90,11 @@ export class HudView {
         <div class="pe-hud-badges"></div>
       </div>
       <div class="pe-hud-respawn" hidden></div>
+      <div class="pe-hud-prompt" hidden>
+        <div class="pe-hud-prompt-text"></div>
+        <div class="pe-bar pe-bar-prompt"><div class="pe-bar-fill"></div></div>
+      </div>
+      <div class="pe-hud-notices"></div>
     `;
     parent.appendChild(this.root);
     this.hpFill = q(this.root, '.pe-bar-hp .pe-bar-fill');
@@ -89,6 +108,10 @@ export class HudView {
     this.badges = q(this.root, '.pe-hud-badges');
     this.downs = q(this.root, '.pe-hud-downs');
     this.respawn = q(this.root, '.pe-hud-respawn');
+    this.prompt = q(this.root, '.pe-hud-prompt');
+    this.promptText = q(this.root, '.pe-hud-prompt-text');
+    this.promptFill = q(this.root, '.pe-bar-prompt .pe-bar-fill');
+    this.notices = q(this.root, '.pe-hud-notices');
   }
 
   set visible(value: boolean) {
@@ -118,6 +141,18 @@ export class HudView {
 
     this.respawn.hidden = m.respawnCountdown <= 0;
     if (m.respawnCountdown > 0) setText(this.respawn, `戦闘不能… ${Math.ceil(m.respawnCountdown)} 秒後にキャンプで復帰`);
+
+    this.prompt.hidden = m.prompt === '' || m.respawnCountdown > 0;
+    if (m.prompt !== '') {
+      setText(this.promptText, m.prompt);
+      this.promptFill.style.width = `${(m.promptProgress * 100).toFixed(1)}%`;
+    }
+
+    const noticeKey = m.notices.join('|');
+    if (noticeKey !== this.lastNotices) {
+      this.lastNotices = noticeKey;
+      this.notices.replaceChildren(...m.notices.map((n) => el('div', 'pe-notice', n)));
+    }
   }
 }
 

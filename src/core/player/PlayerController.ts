@@ -5,7 +5,7 @@ import type { HeightProvider } from '@core/world/Terrain';
 import type { PlayerStats } from './PlayerStats';
 import type { PlayerIntent } from './PlayerIntent';
 
-export type PlayerLocomotionState = 'idle' | 'walk' | 'dash' | 'dodge' | 'hurt' | 'downed';
+export type PlayerLocomotionState = 'idle' | 'walk' | 'dash' | 'dodge' | 'hurt' | 'downed' | 'interact';
 
 export interface KnockbackSpec {
   distance: number;
@@ -31,6 +31,9 @@ export class PlayerController {
   private dodgeElapsed = 0;
   private dodgeProgress = 0;
   private readonly dodgeDirection = new Vec3();
+
+  private interactRemaining = 0;
+  private interactDuration = 0;
 
   private hurtElapsed = 0;
   private hurtProgress = 0;
@@ -59,7 +62,21 @@ export class PlayerController {
   }
 
   get canAct(): boolean {
-    return this.state !== 'hurt' && this.state !== 'downed';
+    return this.state !== 'hurt' && this.state !== 'downed' && this.state !== 'interact';
+  }
+
+  /** 剥ぎ取り等の進捗 0〜1。 */
+  get interactProgress(): number {
+    if (this.state !== 'interact' || this.interactDuration <= 0) return 0;
+    return 1 - this.interactRemaining / this.interactDuration;
+  }
+
+  /** 剥ぎ取り・採取などで一定時間その場に拘束する。被弾で中断される。 */
+  startInteraction(seconds: number): void {
+    if (!this.canAct) return;
+    this.state = 'interact';
+    this.interactDuration = seconds;
+    this.interactRemaining = seconds;
   }
 
   /** 現在向いている方向（XZ 単位ベクトル）。 */
@@ -104,6 +121,7 @@ export class PlayerController {
    */
   applyHit(awayDirection: Vec3, knockback: KnockbackSpec): void {
     if (this.state === 'downed') return;
+    this.interactRemaining = 0;
     this.hurtDirection.copy(awayDirection);
     this.hurtDirection.y = 0;
     if (this.hurtDirection.lengthSq() <= 1e-6) this.getForward(this.hurtDirection).scale(-1);
@@ -132,6 +150,13 @@ export class PlayerController {
 
     switch (this.state) {
       case 'downed':
+        break;
+      case 'interact':
+        this.interactRemaining -= dt;
+        if (this.interactRemaining <= 0) {
+          this.interactRemaining = 0;
+          this.state = 'idle';
+        }
         break;
       case 'hurt':
         this.updateHurt(dt);

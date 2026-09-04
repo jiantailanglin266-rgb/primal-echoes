@@ -20,7 +20,7 @@ import { createEmptyIntent, type PlayerIntent } from './PlayerIntent';
 export class Player {
   readonly stats: PlayerStats;
   readonly controller: PlayerController;
-  readonly combat: PlayerCombat;
+  combat: PlayerCombat;
 
   private readonly effectiveIntent = createEmptyIntent();
   private readonly combatContext: CombatContext = { isDodging: false, timeSinceDodgeEnd: Infinity };
@@ -33,6 +33,11 @@ export class Player {
 
   get isDowned(): boolean {
     return this.controller.state === 'downed';
+  }
+
+  /** 武器を持ち替える（強化後など）。攻撃中は呼ばない前提（拠点でのみ使う）。 */
+  equipWeapon(weapon: WeaponDefinition): void {
+    this.combat = new PlayerCombat(weapon, this.stats);
   }
 
   /**

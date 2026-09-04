@@ -3,6 +3,7 @@ import type { HitZoneModifiers, ElementType } from '@core/combat/elements';
 import { ELEMENT_TYPES } from '@core/combat/elements';
 import type { ShapeData } from '@core/combat/shapes';
 import { PHYSICAL_DAMAGE_TYPES, type LocalOffset, type PhysicalDamageType, type SphereHitbox } from '@core/combat/AttackData';
+import { carveEntrySchema, partBreakRewardSchema, type CarveEntry, type PartBreakReward } from './item';
 
 /**
  * 部位破壊の効果。T11 で戦闘へ反映する。データ構造だけ先に固定しておく。
@@ -203,6 +204,10 @@ export interface MonsterDefinition {
   combat: MonsterCombatConfig;
   parts: MonsterPartDefinition[];
   attacks: MonsterAttackDefinition[];
+  /** 死骸からの剥ぎ取り抽選表。 */
+  carves: CarveEntry[];
+  /** 部位破壊・切断のクエスト報酬。 */
+  partBreakRewards: PartBreakReward[];
 }
 
 const hitZoneSchema = {
@@ -346,6 +351,8 @@ export const monsterSchema = {
     },
   ],
   attacks: [attackSchema],
+  carves: [carveEntrySchema],
+  partBreakRewards: [partBreakRewardSchema],
 } as const satisfies Schema;
 
 export function assertMonsterConsistency(monster: MonsterDefinition): void {
@@ -419,6 +426,10 @@ export function assertMonsterConsistency(monster: MonsterDefinition): void {
   }
   if (monster.exhaustion.recoverToStamina <= monster.exhaustion.staminaThreshold) {
     throw new Error(`[monster ${monster.id}] exhaustion.recoverToStamina must be > staminaThreshold`);
+  }
+  if (monster.carves.length === 0) throw new Error(`[monster ${monster.id}] carves must not be empty`);
+  for (const reward of monster.partBreakRewards) {
+    if (!ids.has(reward.partId)) throw new Error(`[monster ${monster.id}] partBreakRewards references unknown part "${reward.partId}"`);
   }
 
   function requireOffset(value: unknown, where: string): void {

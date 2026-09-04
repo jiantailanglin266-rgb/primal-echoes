@@ -29,6 +29,8 @@ export type GameEvents = {
   monsterRecovered: { monsterId: string };
   playerHit: { damage: number; position: Vec3; attackId: string };
   playerDowned: { position: Vec3 };
+  itemObtained: { itemId: string; count: number; source: 'carve' | 'reward' };
+  weaponCrafted: { recipeId: string; weaponName: string };
   questStarted: { questId: string };
   questCompleted: { questId: string; clearTimeSeconds: number };
   questFailed: { questId: string; reason: string };

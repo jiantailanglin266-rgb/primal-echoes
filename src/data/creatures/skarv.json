@@ -18,5 +18,12 @@
   "herdSpacing": 2,
   "scavengeAttractRange": 70,
   "scavengeFeedSeconds": 25,
-  "carcassMeatSeconds": 30
+  "carcassMeatSeconds": 30,
+  "carves": [
+    {
+      "itemId": "skarv_talon",
+      "weight": 100,
+      "count": 1
+    }
+  ]
 }

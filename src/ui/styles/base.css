@@ -170,6 +170,41 @@ body {
   font-size: 16px;
 }
 
+.pe-hud-prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 18%;
+  transform: translateX(-50%);
+  width: 220px;
+  padding: 8px 12px;
+  background: var(--pe-hud-bg);
+  border: 1px solid var(--pe-line);
+  border-radius: 4px;
+  text-align: center;
+  font-size: 13px;
+}
+.pe-bar-prompt { height: 4px; margin-top: 6px; }
+.pe-bar-prompt .pe-bar-fill { background: var(--pe-accent); width: 0; }
+
+.pe-hud-notices {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+.pe-notice {
+  padding: 4px 12px;
+  background: var(--pe-hud-bg);
+  border: 1px solid var(--pe-line);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--pe-accent);
+}
+
 /* ---------- Screens (Hub / Result) ---------- */
 .pe-screen {
   position: absolute;
@@ -197,6 +232,12 @@ body {
 .pe-quest-card dl, .pe-result-grid dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 8px 0 14px; font-size: 13px; }
 .pe-quest-card dt, .pe-result-grid dt { color: var(--pe-hud-dim); }
 .pe-quest-card dd, .pe-result-grid dd { margin: 0; }
+
+.pe-craft-card { border: 1px solid var(--pe-line); border-radius: 6px; padding: 14px 16px; }
+.pe-craft-result { color: var(--pe-accent); font-size: 13px; margin-bottom: 8px; }
+.pe-craft-materials { padding-left: 18px; margin: 0 0 14px; font-size: 13px; line-height: 1.8; }
+.pe-craft-materials .is-short { color: var(--pe-hp-low); }
+.pe-button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .pe-button {
   font-family: var(--pe-display-font);

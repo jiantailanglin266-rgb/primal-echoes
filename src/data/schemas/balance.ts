@@ -76,11 +76,17 @@ export interface QuestBalance {
   timeWarningSeconds: number;
 }
 
+export interface CarveBalance {
+  durationSeconds: number;
+  rangeMeters: number;
+}
+
 export interface BalanceData {
   player: PlayerBalance;
   camera: CameraBalance;
   combat: CombatBalance;
   quest: QuestBalance;
+  carve: CarveBalance;
 }
 
 const sharpnessModifierSchema = { physical: 'number', element: 'number' } as const satisfies Schema;
@@ -141,5 +147,9 @@ export const balanceSchema = {
   quest: {
     respawnDelaySeconds: 'number',
     timeWarningSeconds: 'number',
+  },
+  carve: {
+    durationSeconds: 'number',
+    rangeMeters: 'number',
   },
 } as const satisfies Schema;

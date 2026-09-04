@@ -1,0 +1,14 @@
+{
+  "items": [
+    { "id": "valgaron_scale", "name": "ヴァルガロンの岩鱗", "category": "material", "rarity": "common", "description": "岩のように硬い甲殻の破片。エーテルを微量に含む。" },
+    { "id": "valgaron_fang", "name": "ヴァルガロンの牙", "category": "material", "rarity": "uncommon", "description": "獲物を噛み砕く発達した顎の牙。" },
+    { "id": "valgaron_claw", "name": "ヴァルガロンの大爪", "category": "material", "rarity": "uncommon", "description": "巨大な前脚の爪。破壊した前脚から得やすい。" },
+    { "id": "valgaron_horn", "name": "ヴァルガロンの角", "category": "material", "rarity": "rare", "description": "頭部の角。破壊しなければ手に入らない。" },
+    { "id": "valgaron_tail", "name": "ヴァルガロンの尾甲", "category": "material", "rarity": "rare", "description": "切断した尾の装甲板。" },
+    { "id": "aether_core", "name": "エーテル核", "category": "material", "rarity": "epic", "description": "タイタンの体内で凝縮したエーテルの結晶核。武器の心臓になる。" },
+    { "id": "aether_shard", "name": "エーテル結晶片", "category": "material", "rarity": "rare", "description": "エーテルが結晶化した欠片。" },
+    { "id": "grast_hide", "name": "グラストの毛皮", "category": "material", "rarity": "common", "description": "草食生物グラストの厚い毛皮。" },
+    { "id": "grast_meat", "name": "グラストの肉", "category": "material", "rarity": "common", "description": "スカベンジャーが好む生肉。" },
+    { "id": "skarv_talon", "name": "スカルヴの鉤爪", "category": "material", "rarity": "common", "description": "腐肉食スカルヴの鋭い鉤爪。" }
+  ]
+}

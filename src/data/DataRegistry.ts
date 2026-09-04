@@ -5,7 +5,11 @@ import valgaronJson from './monsters/valgaron.json';
 import grastJson from './creatures/grast.json';
 import skarvJson from './creatures/skarv.json';
 import huntValgaronJson from './quests/vs01_hunt_valgaron.json';
+import itemsJson from './items.json';
+import recipesJson from './recipes.json';
 import { validate } from './validate';
+import { itemCatalogSchema, type ItemCatalog, type ItemDefinition } from './schemas/item';
+import { assertRecipeConsistency, recipeCatalogSchema, type RecipeCatalog, type WeaponUpgradeRecipe } from './schemas/recipe';
 import { creatureSchema, type CreatureDefinition } from './schemas/creature';
 import { questSchema, type QuestDefinition } from './schemas/quest';
 import { balanceSchema, type BalanceData } from './schemas/balance';
@@ -49,6 +53,30 @@ export function loadCreatures(): Map<string, CreatureDefinition> {
     map.set(def.id, def);
   }
   return map;
+}
+
+export function loadItems(): Map<string, ItemDefinition> {
+  validate(itemsJson, itemCatalogSchema, 'items');
+  const map = new Map<string, ItemDefinition>();
+  for (const item of (itemsJson as ItemCatalog).items) {
+    if (map.has(item.id)) throw new Error(`[items] duplicate item id "${item.id}"`);
+    map.set(item.id, item);
+  }
+  return map;
+}
+
+/** 素材参照（剥ぎ取り表・報酬・レシピ）が items.json に存在することを検査する。 */
+export function assertItemReferences(items: Map<string, ItemDefinition>, ids: Iterable<string>, where: string): void {
+  for (const id of ids) {
+    if (!items.has(id)) throw new Error(`[${where}] references unknown item "${id}"`);
+  }
+}
+
+export function loadRecipes(): WeaponUpgradeRecipe[] {
+  validate(recipesJson, recipeCatalogSchema, 'recipes');
+  const catalog = recipesJson as RecipeCatalog;
+  assertRecipeConsistency(catalog);
+  return catalog.recipes;
 }
 
 export function loadQuests(): QuestDefinition[] {

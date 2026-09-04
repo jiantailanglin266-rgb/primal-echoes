@@ -18,5 +18,17 @@
   "herdSpacing": 3,
   "scavengeAttractRange": 0,
   "scavengeFeedSeconds": 0,
-  "carcassMeatSeconds": 90
+  "carcassMeatSeconds": 90,
+  "carves": [
+    {
+      "itemId": "grast_hide",
+      "weight": 60,
+      "count": 1
+    },
+    {
+      "itemId": "grast_meat",
+      "weight": 40,
+      "count": 1
+    }
+  ]
 }

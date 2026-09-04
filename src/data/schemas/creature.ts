@@ -1,4 +1,5 @@
 import { oneOf, type Schema } from '../validate';
+import { carveEntrySchema, type CarveEntry } from './item';
 
 export const CREATURE_KINDS = ['herbivore', 'scavenger'] as const;
 export type CreatureKind = (typeof CREATURE_KINDS)[number];
@@ -34,6 +35,8 @@ export interface CreatureDefinition {
   scavengeFeedSeconds: number;
   /** この生物の死骸が餌として持つ秒数。 */
   carcassMeatSeconds: number;
+  /** 剥ぎ取り抽選表。 */
+  carves: CarveEntry[];
 }
 
 export const creatureSchema = {
@@ -57,4 +60,5 @@ export const creatureSchema = {
   scavengeAttractRange: 'number',
   scavengeFeedSeconds: 'number',
   carcassMeatSeconds: 'number',
+  carves: [carveEntrySchema],
 } as const satisfies Schema;

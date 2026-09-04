@@ -643,5 +643,70 @@
         "durationSeconds": 0.45
       }
     }
+  ],
+  "carves": [
+    {
+      "itemId": "valgaron_scale",
+      "weight": 45,
+      "count": 1
+    },
+    {
+      "itemId": "valgaron_fang",
+      "weight": 25,
+      "count": 1
+    },
+    {
+      "itemId": "valgaron_claw",
+      "weight": 18,
+      "count": 1
+    },
+    {
+      "itemId": "aether_shard",
+      "weight": 9,
+      "count": 1
+    },
+    {
+      "itemId": "aether_core",
+      "weight": 3,
+      "count": 1
+    }
+  ],
+  "partBreakRewards": [
+    {
+      "partId": "head",
+      "itemId": "valgaron_horn",
+      "count": 1,
+      "chance": 1.0
+    },
+    {
+      "partId": "head",
+      "itemId": "aether_shard",
+      "count": 1,
+      "chance": 0.4
+    },
+    {
+      "partId": "foreleg_l",
+      "itemId": "valgaron_claw",
+      "count": 1,
+      "chance": 0.9
+    },
+    {
+      "partId": "foreleg_r",
+      "itemId": "valgaron_claw",
+      "count": 1,
+      "chance": 0.9
+    },
+    {
+      "partId": "tail",
+      "itemId": "valgaron_tail",
+      "count": 1,
+      "chance": 1.0
+    },
+    {
+      "partId": "tail",
+      "itemId": "valgaron_scale",
+      "count": 2,
+      "chance": 0.7
+    }
   ]
 }

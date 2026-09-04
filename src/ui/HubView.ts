@@ -1,20 +1,30 @@
 import type { QuestDefinition } from '@data/schemas/quest';
 
+export interface HubCraftOption {
+  recipeId: string;
+  name: string;
+  /** 「素材名 所持/必要」の行。 */
+  materialLines: { text: string; satisfied: boolean }[];
+  resultLine: string;
+  canCraft: boolean;
+}
+
 export interface HubModel {
   playerName: string;
   weaponName: string;
   weaponPower: number;
+  weaponLevel: number;
+  sharpnessLabel: string;
   maxHp: number;
   quests: QuestDefinition[];
-  /** 所持素材の表示用（T15 で埋める）。 */
   inventoryLines: string[];
-  /** クラフト候補の表示用（T16 で埋める）。 */
-  craftingLines: string[];
+  /** 次の強化候補。null なら最終段階。 */
+  craft: HubCraftOption | null;
 }
 
 /**
  * 拠点（調査ステーション）画面。
- * クエスト受注と装備確認を行う DOM パネル。3D は背景として残す。
+ * クエスト受注・装備確認・工房（強化）を行う DOM パネル。3D は背景として残す。
  */
 export class HubView {
   readonly root: HTMLElement;
@@ -23,6 +33,7 @@ export class HubView {
   private readonly inventory: HTMLElement;
   private readonly crafting: HTMLElement;
   onStartQuest: ((quest: QuestDefinition) => void) | null = null;
+  onCraft: ((recipeId: string) => void) | null = null;
 
   constructor(parent: HTMLElement) {
     this.root = document.createElement('div');
@@ -47,7 +58,7 @@ export class HubView {
           </section>
           <section class="pe-panel">
             <h2>工房</h2>
-            <div class="pe-hub-crafting pe-lines"></div>
+            <div class="pe-hub-crafting"></div>
           </section>
         </div>
       </div>
@@ -66,11 +77,42 @@ export class HubView {
   render(m: HubModel): void {
     this.status.innerHTML = `
       <div>${escapeHtml(m.playerName)}</div>
-      <div>武器: ${escapeHtml(m.weaponName)}（攻撃力 ${m.weaponPower}）</div>
+      <div>武器: ${escapeHtml(m.weaponName)}</div>
+      <div>攻撃力 ${m.weaponPower} / 強化 Lv.${m.weaponLevel} / ${escapeHtml(m.sharpnessLabel)}</div>
       <div>体力: ${m.maxHp}</div>
     `;
-    this.inventory.replaceChildren(...(m.inventoryLines.length ? m.inventoryLines : ['（なし）']).map(line));
-    this.crafting.replaceChildren(...(m.craftingLines.length ? m.craftingLines : ['（素材が足りない）']).map(line));
+    this.inventory.replaceChildren(...(m.inventoryLines.length ? m.inventoryLines : ['（なし）']).map((t) => line(t)));
+
+    this.crafting.replaceChildren();
+    if (!m.craft) {
+      this.crafting.appendChild(line('この武器は最終段階まで強化済み'));
+    } else {
+      const card = document.createElement('article');
+      card.className = 'pe-craft-card';
+      const title = document.createElement('h3');
+      title.textContent = m.craft.name;
+      card.appendChild(title);
+      const result = line(m.craft.resultLine);
+      result.className = 'pe-craft-result';
+      card.appendChild(result);
+      const list = document.createElement('ul');
+      list.className = 'pe-craft-materials';
+      for (const mat of m.craft.materialLines) {
+        const li = document.createElement('li');
+        li.textContent = mat.text;
+        li.classList.toggle('is-short', !mat.satisfied);
+        list.appendChild(li);
+      }
+      card.appendChild(list);
+      const button = document.createElement('button');
+      button.className = 'pe-button pe-button-primary';
+      button.textContent = '強化する';
+      button.disabled = !m.craft.canCraft;
+      const recipeId = m.craft.recipeId;
+      button.addEventListener('click', () => this.onCraft?.(recipeId));
+      card.appendChild(button);
+      this.crafting.appendChild(card);
+    }
 
     this.questList.replaceChildren(
       ...m.quests.map((quest) => {

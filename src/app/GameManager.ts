@@ -1,9 +1,17 @@
 import { GameLoop } from './GameLoop';
 import { HitStop } from './HitStop';
 import { buildPlayerIntent } from './intentBuilder';
-import { loadBalance, loadCreatures, loadQuests, loadTitanBlade, loadValgaron, loadVerdantTempest } from '@data/DataRegistry';
+import { assertItemReferences, loadBalance, loadCreatures, loadItems, loadQuests, loadRecipes, loadTitanBlade, loadValgaron, loadVerdantTempest } from '@data/DataRegistry';
 import type { BalanceData } from '@data/schemas/balance';
 import type { QuestDefinition } from '@data/schemas/quest';
+import type { ItemDefinition } from '@data/schemas/item';
+import type { CreatureDefinition } from '@data/schemas/creature';
+import { Inventory } from '@core/inventory/Inventory';
+import { CarveController } from '@core/inventory/CarveController';
+import { mergeDrops, rollPartBreakRewards, rollQuestRewards, type LootDrop } from '@core/inventory/LootTable';
+import { CraftingManager } from '@core/crafting/CraftingManager';
+import type { WeaponDefinition } from '@data/schemas/weapon';
+import type { WeaponUpgradeRecipe } from '@data/schemas/recipe';
 import { Field } from '@core/world/Field';
 import { Player } from '@core/player/Player';
 import { createEmptyIntent, type PlayerIntent } from '@core/player/PlayerIntent';
@@ -68,6 +76,18 @@ export class GameManager {
   readonly ecosystem: EcosystemManager;
   readonly quests: QuestDefinition[];
   quest: QuestManager | null = null;
+  readonly items: Map<string, ItemDefinition>;
+  readonly inventory = new Inventory();
+  readonly carve: CarveController;
+  readonly crafting: CraftingManager;
+  readonly recipes: WeaponUpgradeRecipe[];
+  /** 強化前の基準となる武器定義。強化はこれに性能を上書きして適用する。 */
+  private readonly baseWeapon: WeaponDefinition;
+  private readonly creatureDefs: Map<string, CreatureDefinition>;
+  private readonly rng: Random;
+  /** 今回のクエスト中に得た素材（リザルト表示用）。 */
+  private questLoot: LootDrop[] = [];
+  private readonly notices: { text: string; remaining: number }[] = [];
   private readonly combatResolver: CombatResolver;
   private readonly aiContext: MonsterAIContext;
   private readonly ecosystemContext: EcosystemUpdateContext;
@@ -98,7 +118,19 @@ export class GameManager {
     const weapon = loadTitanBlade();
     const valgaronDef = loadValgaron();
     this.quests = loadQuests();
+    this.items = loadItems();
+    this.creatureDefs = loadCreatures();
+    this.recipes = loadRecipes();
+    this.baseWeapon = weapon;
+    for (const r of this.recipes) assertItemReferences(this.items, r.materials.map((m) => m.itemId), `recipes/${r.id}`);
+    this.crafting = new CraftingManager(this.recipes, this.inventory);
+    // 素材参照の整合性は起動時に落とす（typo をプレイ中の「何も出ない」で気付かないため）
+    assertItemReferences(this.items, valgaronDef.carves.map((c) => c.itemId), `monsters/${valgaronDef.id}.carves`);
+    assertItemReferences(this.items, valgaronDef.partBreakRewards.map((r) => r.itemId), `monsters/${valgaronDef.id}.partBreakRewards`);
+    for (const c of this.creatureDefs.values()) assertItemReferences(this.items, c.carves.map((x) => x.itemId), `creatures/${c.id}.carves`);
+    for (const q of this.quests) assertItemReferences(this.items, q.rewards.map((r) => r.itemId), `quests/${q.id}.rewards`);
     const rng = new Random(0xc0ffee);
+    this.rng = rng;
 
     this.renderer = new SceneRenderer(canvas);
     this.input = new KeyboardMouseInput(canvas);
@@ -144,6 +176,15 @@ export class GameManager {
     this.ecosystemView = new EcosystemView(this.ecosystem);
     this.renderer.scene.add(this.ecosystemView.object);
 
+    this.carve = new CarveController(
+      this.player.controller,
+      this.inventory,
+      rng,
+      (sourceId) => (sourceId === valgaronDef.id ? valgaronDef.carves : (this.creatureDefs.get(sourceId)?.carves ?? null)),
+      this.balance.carve.durationSeconds,
+      this.balance.carve.rangeMeters,
+    );
+
     this.monsterAI = new MonsterAI(this.monster, rng);
     this.aiContext = { field: this.field, subject: { position: this.player.controller.position, isNoisy: false }, prey: this.ecosystem };
     this.ecosystemContext = { player: this.aiContext.subject, monsters: [this.monster] };
@@ -156,6 +197,7 @@ export class GameManager {
     this.hubView = new HubView(uiRoot);
     this.resultView = new ResultView(uiRoot);
     this.hubView.onStartQuest = (quest) => this.startQuest(quest);
+    this.hubView.onCraft = (recipeId) => this.craftWeapon(recipeId);
     this.resultView.onReturn = () => this.enterHub();
 
     const debugEnabled = DebugOverlay.isEnabled();
@@ -190,19 +232,50 @@ export class GameManager {
   enterHub(): void {
     this.setScene('hub');
     this.quest = null;
+    this.renderHub();
+  }
+
+  private renderHub(): void {
+    const weapon = this.player.combat.weapon;
+    const next = this.crafting.nextRecipe(weapon.id);
     this.hubView.render({
       playerName: 'レンジャー',
-      weaponName: this.player.combat.weapon.name,
-      weaponPower: this.player.combat.weapon.weaponPower,
+      weaponName: weapon.name,
+      weaponPower: weapon.weaponPower,
+      weaponLevel: this.crafting.weaponLevel(weapon.id),
+      sharpnessLabel: SHARPNESS_LABELS[weapon.sharpness],
       maxHp: this.player.stats.maxHp,
       quests: this.quests,
-      inventoryLines: [],
-      craftingLines: [],
+      inventoryLines: this.inventory.entries().map(([id, n]) => `${this.itemName(id)} ×${n}`),
+      craft: next
+        ? {
+            recipeId: next.id,
+            name: next.displayName,
+            resultLine: `攻撃力 ${weapon.weaponPower} → ${next.result.weaponPower} / ${SHARPNESS_LABELS[next.result.sharpness]} / 会心 ${Math.round(next.result.critRate * 100)}%`,
+            materialLines: this.crafting.materialStatus(next).map((s) => ({
+              text: `${this.itemName(s.itemId)}  ${s.owned}/${s.required}`,
+              satisfied: s.owned >= s.required,
+            })),
+            canCraft: this.crafting.canCraft(next),
+          }
+        : null,
     });
+  }
+
+  private craftWeapon(recipeId: string): void {
+    const recipe = this.recipes.find((r) => r.id === recipeId);
+    if (!recipe) return;
+    const upgraded = this.crafting.craft(recipe, this.baseWeapon);
+    if (!upgraded) return;
+    this.player.equipWeapon(this.crafting.weaponAtCurrentLevel(this.baseWeapon));
+    this.events.emit('weaponCrafted', { recipeId, weaponName: this.player.combat.weapon.name });
+    this.renderHub();
   }
 
   startQuest(def: QuestDefinition): void {
     this.resetWorldForQuest();
+    this.questLoot = [];
+    this.notices.length = 0;
     this.quest = new QuestManager(def, this.balance.quest);
     this.quest.start();
     this.setScene('field');
@@ -213,8 +286,19 @@ export class GameManager {
     const quest = this.quest;
     if (!quest) return;
     const success = quest.state === 'completed';
-    if (success) this.events.emit('questCompleted', { questId: quest.def.id, clearTimeSeconds: quest.clearTimeSeconds });
-    else this.events.emit('questFailed', { questId: quest.def.id, reason: quest.failReason ?? 'none' });
+    if (success) {
+      // クリア報酬 + 部位破壊報酬。剥ぎ取り分は既に questLoot に入っている。
+      const drops = [...rollQuestRewards(quest.def.rewards, this.rng), ...rollPartBreakRewards(this.monster.def.partBreakRewards, quest.brokenPartIds, this.rng)];
+      for (const drop of drops) {
+        this.inventory.add(drop.itemId, drop.count);
+        this.questLoot.push(drop);
+        this.events.emit('itemObtained', { itemId: drop.itemId, count: drop.count, source: 'reward' });
+      }
+      this.events.emit('questCompleted', { questId: quest.def.id, clearTimeSeconds: quest.clearTimeSeconds });
+    } else {
+      this.events.emit('questFailed', { questId: quest.def.id, reason: quest.failReason ?? 'none' });
+    }
+    this.carve.cancel();
 
     this.resultView.render({
       success,
@@ -223,9 +307,18 @@ export class GameManager {
       clearTimeSeconds: quest.clearTimeSeconds,
       downs: quest.downs,
       brokenParts: quest.brokenPartIds.map((id) => this.monster.getPart(id).def.name),
-      rewardLines: [],
+      rewardLines: mergeDrops(this.questLoot).map((d) => `${this.itemName(d.itemId)} ×${d.count}`),
     });
     this.setScene('result');
+  }
+
+  private itemName(itemId: string): string {
+    return this.items.get(itemId)?.name ?? itemId;
+  }
+
+  private pushNotice(text: string): void {
+    this.notices.push({ text, remaining: 3.5 });
+    if (this.notices.length > 4) this.notices.shift();
   }
 
   private setScene(scene: GameScene): void {
@@ -377,6 +470,7 @@ export class GameManager {
       const summary = [...counts.entries()].map(([k, v]) => `${k}x${v}`).join(' ');
       return `eco ${summary}  carcasses ${this.ecosystem.carcasses.length}`;
     });
+    d.addLine(() => `inventory ${this.inventory.entries().map(([id, n]) => `${id}x${n}`).join(' ') || '-'}`);
     d.addLine(() => `last: ${this.lastHitSummary}`);
     d.addLine(() => `pointerLock ${this.input.isPointerLocked ? 'on' : 'off (click canvas)'}  WASD/Shift/Space  J light  K heavy(hold)  Tab lock  F1 heal F2 inf.stamina F3 kill F4 reset F5 AI pause F6 enrage F7 warp F9 abandon`);
   }
@@ -428,6 +522,23 @@ export class GameManager {
 
     this.player.update(this.intent, dt);
     this.field.terrain.clampToBounds(this.player.controller.position);
+
+    const carved = this.carve.update(dt, input.interactPressed, this.ecosystem.carcasses);
+    if (carved) {
+      if (carved.drop) {
+        this.questLoot.push(carved.drop);
+        this.events.emit('itemObtained', { itemId: carved.drop.itemId, count: carved.drop.count, source: 'carve' });
+        this.pushNotice(`${this.itemName(carved.drop.itemId)} ×${carved.drop.count} を入手`);
+        this.lastHitSummary = `carved ${carved.drop.itemId}`;
+      } else {
+        this.pushNotice('何も得られなかった');
+      }
+    }
+    for (let i = this.notices.length - 1; i >= 0; i--) {
+      const n = this.notices[i] as { text: string; remaining: number };
+      n.remaining -= dt;
+      if (n.remaining <= 0) this.notices.splice(i, 1);
+    }
 
     const controller = this.player.controller;
     this.aiContext.subject.isNoisy = controller.state === 'dash' || this.player.combat.isBusy;
@@ -530,6 +641,18 @@ export class GameManager {
     m.maxDowns = quest?.def.maxDowns ?? 0;
     m.respawnCountdown = quest?.respawnRemaining ?? 0;
     m.lockOn = this.cameraRig.isLockedOn;
+    const carve = this.carve.prompt;
+    if (this.carve.isCarving) {
+      m.prompt = '剥ぎ取り中…';
+      m.promptProgress = controller.interactProgress;
+    } else if (carve.available) {
+      m.prompt = `E: 剥ぎ取る（残り ${carve.carvesRemaining}）`;
+      m.promptProgress = 0;
+    } else {
+      m.prompt = '';
+      m.promptProgress = 0;
+    }
+    m.notices = this.notices.map((n) => n.text);
     // 対象の情報は「見つけている / 見つけられている」ときだけ出す（観察を促す）
     const near = controller.position.horizontalDistanceTo(monster.position) <= this.balance.camera.lockOnMaxDistance;
     m.monsterVisible = monster.isAlive && (near || this.monsterAI.perception.detected);

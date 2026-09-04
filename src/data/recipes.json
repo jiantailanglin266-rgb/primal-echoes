@@ -1,0 +1,45 @@
+{
+  "recipes": [
+    {
+      "id": "titan_blade_lv1",
+      "kind": "weaponUpgrade",
+      "weaponId": "titan_blade",
+      "fromLevel": 0,
+      "toLevel": 1,
+      "displayName": "Titan Blade I — 岩鱗の刃",
+      "materials": [
+        { "itemId": "valgaron_scale", "count": 3 },
+        { "itemId": "valgaron_fang", "count": 1 }
+      ],
+      "result": { "weaponPower": 140, "sharpness": "sharp", "critRate": 0.05 }
+    },
+    {
+      "id": "titan_blade_lv2",
+      "kind": "weaponUpgrade",
+      "weaponId": "titan_blade",
+      "fromLevel": 1,
+      "toLevel": 2,
+      "displayName": "Titan Blade II — 大爪の刃",
+      "materials": [
+        { "itemId": "valgaron_scale", "count": 5 },
+        { "itemId": "valgaron_claw", "count": 2 },
+        { "itemId": "aether_shard", "count": 1 }
+      ],
+      "result": { "weaponPower": 165, "sharpness": "sharp", "critRate": 0.1 }
+    },
+    {
+      "id": "titan_blade_lv3",
+      "kind": "weaponUpgrade",
+      "weaponId": "titan_blade",
+      "fromLevel": 2,
+      "toLevel": 3,
+      "displayName": "Titan Blade III — 岩王の断刃",
+      "materials": [
+        { "itemId": "valgaron_horn", "count": 1 },
+        { "itemId": "valgaron_tail", "count": 1 },
+        { "itemId": "aether_core", "count": 1 }
+      ],
+      "result": { "weaponPower": 195, "sharpness": "keen", "critRate": 0.15 }
+    }
+  ]
+}

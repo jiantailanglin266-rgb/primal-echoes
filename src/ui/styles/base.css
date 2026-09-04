@@ -1,9 +1,18 @@
 :root {
   color-scheme: dark;
   --pe-ui-font: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+  --pe-display-font: 'Bahnschrift', 'Segoe UI', 'Noto Sans JP', system-ui, sans-serif;
   --pe-mono-font: 'Cascadia Mono', 'Consolas', 'Menlo', monospace;
   --pe-hud-fg: #e8e4d8;
+  --pe-hud-dim: #a39d8f;
   --pe-hud-bg: rgba(10, 12, 14, 0.55);
+  --pe-panel-bg: rgba(16, 19, 22, 0.86);
+  --pe-line: rgba(232, 228, 216, 0.14);
+  --pe-accent: #d8b26a;
+  --pe-hp: #7fc98a;
+  --pe-hp-low: #ff6b4a;
+  --pe-stamina: #e8d27a;
+  --pe-monster: #c9614f;
   --pe-damage: #f4e9cf;
   --pe-damage-crit: #ffb347;
   --pe-damage-break: #ff6b4a;
@@ -46,6 +55,11 @@ body {
   overflow: hidden;
 }
 
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- Debug ---------- */
 .pe-debug-overlay {
   position: absolute;
   top: 8px;
@@ -61,6 +75,7 @@ body {
   pointer-events: none;
 }
 
+/* ---------- Damage numbers ---------- */
 .pe-damage-number {
   position: absolute;
   left: 0;
@@ -73,18 +88,132 @@ body {
   will-change: transform, opacity;
   pointer-events: none;
 }
+.pe-damage-number.is-critical { color: var(--pe-damage-crit); font-size: 20px; }
+.pe-damage-number.is-break { color: var(--pe-damage-break); font-size: 22px; }
+.pe-damage-number.is-player { color: #ff7a6b; font-size: 18px; }
 
-.pe-damage-number.is-critical {
-  color: var(--pe-damage-crit);
-  font-size: 20px;
+/* ---------- HUD ---------- */
+.pe-hud { position: absolute; inset: 0; pointer-events: none; font-size: 13px; }
+
+.pe-hud-player {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  width: min(34vw, 360px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pe-hud-weapon { color: var(--pe-hud-dim); letter-spacing: 0.06em; font-size: 12px; }
+.pe-hud-downs { color: var(--pe-hud-dim); font-size: 12px; }
+
+.pe-bar {
+  position: relative;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--pe-line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.pe-bar-fill { height: 100%; width: 100%; transition: width 80ms linear; }
+.pe-bar-hp { height: 14px; }
+.pe-bar-hp .pe-bar-fill { background: var(--pe-hp); }
+.pe-bar-hp .pe-bar-fill.is-low { background: var(--pe-hp-low); }
+.pe-bar-stamina { height: 7px; width: 85%; }
+.pe-bar-stamina .pe-bar-fill { background: var(--pe-stamina); }
+
+.pe-hud-quest {
+  position: absolute;
+  right: 24px;
+  top: 20px;
+  text-align: right;
+}
+.pe-hud-timer {
+  font-family: var(--pe-display-font);
+  font-size: 30px;
+  letter-spacing: 0.08em;
+  color: var(--pe-hud-fg);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.pe-hud-timer.is-warning { color: var(--pe-hp-low); }
+.pe-hud-objective { color: var(--pe-hud-dim); margin-top: 2px; }
+
+.pe-hud-monster {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  width: min(30vw, 300px);
+  text-align: right;
+}
+.pe-hud-monster-name { font-family: var(--pe-display-font); letter-spacing: 0.1em; margin-bottom: 4px; }
+.pe-bar-monster { height: 6px; }
+.pe-bar-monster .pe-bar-fill { background: var(--pe-monster); }
+.pe-hud-badges { margin-top: 6px; display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+.pe-badge {
+  padding: 2px 8px;
+  border: 1px solid var(--pe-line);
+  border-radius: 999px;
+  background: var(--pe-hud-bg);
+  font-size: 11px;
+  letter-spacing: 0.08em;
 }
 
-.pe-damage-number.is-break {
-  color: var(--pe-damage-break);
-  font-size: 22px;
+.pe-hud-respawn {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  padding: 10px 18px;
+  background: var(--pe-panel-bg);
+  border: 1px solid var(--pe-line);
+  border-radius: 4px;
+  font-size: 16px;
 }
 
-.pe-damage-number.is-player {
-  color: #ff7a6b;
-  font-size: 18px;
+/* ---------- Screens (Hub / Result) ---------- */
+.pe-screen {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  background: linear-gradient(180deg, rgba(8, 10, 12, 0.82), rgba(8, 10, 12, 0.94));
+  overflow: auto;
 }
+.pe-screen-inner { max-width: 1100px; margin: 0 auto; padding: 40px 32px 56px; }
+.pe-screen-header { margin-bottom: 24px; }
+.pe-eyebrow { font-family: var(--pe-display-font); letter-spacing: 0.3em; font-size: 12px; color: var(--pe-accent); }
+.pe-screen h1 { font-family: var(--pe-display-font); font-size: 36px; margin: 6px 0 4px; letter-spacing: 0.04em; }
+.pe-screen h2 { font-size: 13px; letter-spacing: 0.2em; color: var(--pe-hud-dim); margin: 18px 0 8px; text-transform: uppercase; }
+.pe-screen h3 { font-size: 20px; margin: 4px 0 8px; }
+.pe-lead { color: var(--pe-hud-dim); margin: 0; }
+.pe-hub-columns { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .pe-hub-columns { grid-template-columns: 1fr; } }
+.pe-panel { background: var(--pe-panel-bg); border: 1px solid var(--pe-line); border-radius: 6px; padding: 8px 18px 18px; }
+.pe-panel h2:first-child { margin-top: 8px; }
+.pe-lines { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.pe-hub-status { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.pe-quest-card { border: 1px solid var(--pe-line); border-radius: 6px; padding: 14px 16px; }
+.pe-quest-type { font-size: 11px; letter-spacing: 0.2em; color: var(--pe-accent); }
+.pe-quest-card p { color: var(--pe-hud-dim); font-size: 13px; line-height: 1.7; }
+.pe-quest-card dl, .pe-result-grid dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 8px 0 14px; font-size: 13px; }
+.pe-quest-card dt, .pe-result-grid dt { color: var(--pe-hud-dim); }
+.pe-quest-card dd, .pe-result-grid dd { margin: 0; }
+
+.pe-button {
+  font-family: var(--pe-display-font);
+  letter-spacing: 0.15em;
+  font-size: 14px;
+  padding: 10px 22px;
+  border-radius: 4px;
+  border: 1px solid var(--pe-accent);
+  background: transparent;
+  color: var(--pe-hud-fg);
+  cursor: pointer;
+}
+.pe-button:hover { background: rgba(216, 178, 106, 0.15); }
+.pe-button-primary { background: var(--pe-accent); color: #14120c; }
+.pe-button-primary:hover { background: #e6c47f; }
+
+.pe-result-inner { text-align: center; padding-top: 80px; }
+.pe-result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: left; margin: 28px 0; }
+.pe-result-grid section { background: var(--pe-panel-bg); border: 1px solid var(--pe-line); border-radius: 6px; padding: 8px 18px 14px; }
+.pe-result-grid ul { padding-left: 18px; margin: 0; font-size: 14px; line-height: 1.8; }

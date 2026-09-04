@@ -48,6 +48,13 @@ export class EcosystemManager implements PreyProvider {
     private readonly sink: EcosystemEventSink,
   ) {}
 
+  /** クエスト開始時に生物と死骸を初期状態へ戻す。 */
+  reset(): void {
+    this.creatures.length = 0;
+    this.carcasses.length = 0;
+    this.spawnAll();
+  }
+
   spawnAll(): void {
     let herdId = 0;
     for (const spawn of this.field.def.creatureSpawns) {

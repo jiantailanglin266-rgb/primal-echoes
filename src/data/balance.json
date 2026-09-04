@@ -50,5 +50,9 @@
     "flinchThresholdGrowth": 1.2,
     "minimumDamage": 1,
     "defenseConstant": 100
+  },
+  "quest": {
+    "respawnDelaySeconds": 5,
+    "timeWarningSeconds": 300
   }
 }

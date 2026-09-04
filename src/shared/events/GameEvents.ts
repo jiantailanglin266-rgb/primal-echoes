@@ -29,6 +29,11 @@ export type GameEvents = {
   monsterRecovered: { monsterId: string };
   playerHit: { damage: number; position: Vec3; attackId: string };
   playerDowned: { position: Vec3 };
+  questStarted: { questId: string };
+  questCompleted: { questId: string; clearTimeSeconds: number };
+  questFailed: { questId: string; reason: string };
+  playerRespawned: { position: Vec3 };
+  sceneChanged: { scene: string };
   creatureHit: { creatureId: string; position: Vec3; damage: number; died: boolean };
   creatureKilled: { creatureId: string; creatureDefId: string; position: Vec3; cause: 'monster' | 'player' };
   carcassSpawned: { carcassId: number; sourceId: string; position: Vec3 };

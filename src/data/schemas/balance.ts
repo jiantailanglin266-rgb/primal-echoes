@@ -69,10 +69,18 @@ export interface CombatBalance {
   defenseConstant: number;
 }
 
+export interface QuestBalance {
+  /** 戦闘不能からキャンプで復帰するまでの秒数。 */
+  respawnDelaySeconds: number;
+  /** 残り時間がこれを切ったら HUD で警告する。 */
+  timeWarningSeconds: number;
+}
+
 export interface BalanceData {
   player: PlayerBalance;
   camera: CameraBalance;
   combat: CombatBalance;
+  quest: QuestBalance;
 }
 
 const sharpnessModifierSchema = { physical: 'number', element: 'number' } as const satisfies Schema;
@@ -129,5 +137,9 @@ export const balanceSchema = {
     flinchThresholdGrowth: 'number',
     minimumDamage: 'number',
     defenseConstant: 'number',
+  },
+  quest: {
+    respawnDelaySeconds: 'number',
+    timeWarningSeconds: 'number',
   },
 } as const satisfies Schema;

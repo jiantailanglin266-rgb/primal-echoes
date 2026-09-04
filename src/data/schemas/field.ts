@@ -29,6 +29,13 @@ export interface MonsterSpawn {
   yaw: number;
 }
 
+export interface CreatureSpawn {
+  creatureId: string;
+  poiId: string;
+  /** 群れの数（群れの頭数は生物定義側）。 */
+  groups: number;
+}
+
 export interface FieldDefinition {
   id: string;
   name: string;
@@ -37,6 +44,7 @@ export interface FieldDefinition {
   areas: FieldArea[];
   pointsOfInterest: PointOfInterest[];
   monsterSpawns: MonsterSpawn[];
+  creatureSpawns: CreatureSpawn[];
 }
 
 const pointSchema = { x: 'number', z: 'number' } as const satisfies Schema;
@@ -49,6 +57,7 @@ export const fieldSchema = {
   areas: [{ id: 'string', name: 'string', center: pointSchema, radius: 'number' }],
   pointsOfInterest: [{ id: 'string', kind: oneOf(POI_KINDS), areaId: 'string', position: pointSchema }],
   monsterSpawns: [{ monsterId: 'string', poiId: 'string', yaw: 'number' }],
+  creatureSpawns: [{ creatureId: 'string', poiId: 'string', groups: 'number' }],
 } as const satisfies Schema;
 
 export function assertFieldConsistency(field: FieldDefinition): void {
@@ -61,6 +70,10 @@ export function assertFieldConsistency(field: FieldDefinition): void {
   }
   for (const spawn of field.monsterSpawns) {
     if (!poiIds.has(spawn.poiId)) throw new Error(`[field ${field.id}] monster spawn references unknown poi "${spawn.poiId}"`);
+  }
+  for (const spawn of field.creatureSpawns) {
+    if (!poiIds.has(spawn.poiId)) throw new Error(`[field ${field.id}] creature spawn references unknown poi "${spawn.poiId}"`);
+    if (spawn.groups <= 0) throw new Error(`[field ${field.id}] creature spawn ${spawn.creatureId} needs groups > 0`);
   }
   for (const kind of ['nest', 'water', 'feeding'] as const) {
     if (!field.pointsOfInterest.some((p) => p.kind === kind)) {

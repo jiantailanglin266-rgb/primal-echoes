@@ -59,7 +59,12 @@
     "investigateSeconds": 6,
     "patrolWaitMinSeconds": 4,
     "patrolWaitMaxSeconds": 9,
-    "arriveDistance": 3.5
+    "arriveDistance": 3.5,
+    "hunt": {
+      "range": 30,
+      "maxSeconds": 12,
+      "catchDistance": 3.5
+    }
   },
   "stats": {
     "maxHp": 3200,

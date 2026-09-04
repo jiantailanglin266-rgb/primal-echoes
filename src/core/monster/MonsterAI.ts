@@ -10,6 +10,7 @@ import { MonsterPerception, type PerceptionSubject } from './MonsterPerception';
 export type MonsterAIState =
   | 'idle'
   | 'travel'
+  | 'hunt'
   | 'eat'
   | 'drink'
   | 'sleep'
@@ -20,11 +21,23 @@ export type MonsterAIState =
   | 'dead';
 
 /** 生態系の状態（プレイヤーを意識していない）。 */
-const ECOLOGY_STATES: ReadonlySet<MonsterAIState> = new Set(['idle', 'travel', 'eat', 'drink', 'sleep']);
+const ECOLOGY_STATES: ReadonlySet<MonsterAIState> = new Set(['idle', 'travel', 'hunt', 'eat', 'drink', 'sleep']);
+
+/** 獲物（小型草食生物）。生態系側が実装する。 */
+export interface PreyTarget {
+  readonly position: Vec3;
+  readonly isAlive: boolean;
+}
+
+export interface PreyProvider {
+  findPrey(position: Vec3, range: number): PreyTarget | null;
+  kill(target: PreyTarget): void;
+}
 
 export interface MonsterAIContext {
   field: Field;
   subject: PerceptionSubject;
+  prey?: PreyProvider;
 }
 
 export interface MonsterAIStateChange {
@@ -35,7 +48,7 @@ export interface MonsterAIStateChange {
 /**
  * モンスター AI。生態層（欲求で動く）と戦闘層（プレイヤーへ反応する）の 2 層。
  *
- *   生態: idle -> travel(目的地) -> eat / drink / sleep -> idle ...
+ *   生態: idle -> travel(目的地) -> [hunt(獲物追跡)] -> eat / drink / sleep -> idle ...
  *   発見: (生態中) -> alert -> combat
  *   見失い: combat -> investigate(最後に見た場所) -> 生態へ戻る
  *   瀕死: combat -> flee(巣へ) -> sleep（回復）-> 起こされれば combat
@@ -60,6 +73,7 @@ export class MonsterAI {
   private restRemaining = 0;
   private hasFled = false;
   private wakeRequested = false;
+  private prey: PreyTarget | null = null;
   private intervalRemaining: number;
   private readonly candidates: MonsterAttackDefinition[] = [];
   private readonly stateChange: MonsterAIStateChange = { from: 'idle', to: 'idle' };
@@ -117,7 +131,10 @@ export class MonsterAI {
         this.updateIdle(dt, ctx);
         break;
       case 'travel':
-        this.updateTravel(dt, this.travelSpeed());
+        this.updateTravel(dt, ctx);
+        break;
+      case 'hunt':
+        this.updateHunt(dt, ctx);
         break;
       case 'eat':
       case 'drink':
@@ -151,6 +168,7 @@ export class MonsterAI {
     this.wakeRequested = false;
     this.waitRemaining = 0;
     this.restRemaining = 0;
+    this.prey = null;
   }
 
   // ---------------- ecology ----------------
@@ -188,25 +206,61 @@ export class MonsterAI {
     if (!poi) return false;
     this.setGoal(poi.position, poi.def.id, then);
     if (this.isAtGoal()) {
-      this.beginRest(then);
+      this.arriveAtGoal(ctx);
     } else {
       this.transition('travel');
     }
     return true;
   }
 
-  private updateTravel(dt: number, speed: number): void {
-    const m = this.monster;
+  private updateTravel(dt: number, ctx: MonsterAIContext): void {
     if (this.isAtGoal()) {
-      if (this.travelThen === 'idle') {
-        this.waitRemaining = this.rollPatrolWait();
-        this.transition('idle');
-      } else {
-        this.beginRest(this.travelThen);
-      }
+      this.arriveAtGoal(ctx);
       return;
     }
-    this.moveAlongGoal(dt, speed);
+    this.moveAlongGoal(dt, this.travelSpeed());
+  }
+
+  /** 目的地到着。餌場なら獲物を探し、いれば狩りへ。 */
+  private arriveAtGoal(ctx: MonsterAIContext): void {
+    if (this.travelThen === 'idle') {
+      this.waitRemaining = this.rollPatrolWait();
+      this.transition('idle');
+      return;
+    }
+    if (this.travelThen === 'eat' && ctx.prey) {
+      const prey = ctx.prey.findPrey(this.monster.position, this.monster.def.behavior.hunt.range);
+      if (prey) {
+        this.prey = prey;
+        this.goalLabel = 'prey';
+        this.transition('hunt');
+        return;
+      }
+    }
+    this.beginRest(this.travelThen);
+  }
+
+  private updateHunt(dt: number, ctx: MonsterAIContext): void {
+    const m = this.monster;
+    const hunt = m.def.behavior.hunt;
+    const prey = this.prey;
+    if (!prey || !prey.isAlive || !ctx.prey || this.stateElapsed > hunt.maxSeconds) {
+      // 逃げられた / 獲物がいない: その場の植生を食べる
+      this.prey = null;
+      this.beginRest('eat');
+      return;
+    }
+    this.goal.copy(prey.position);
+    if (m.position.horizontalDistanceTo(prey.position) <= hunt.catchDistance) {
+      ctx.prey.kill(prey);
+      this.prey = null;
+      this.beginRest('eat');
+      return;
+    }
+    m.turnTowards(prey.position, m.def.stats.turnSpeedRadPerSecond * 1.5 * dt);
+    if (m.combat.relativeAngleTo(prey.position) < 1.0) {
+      m.moveTowards(prey.position, m.def.stats.runSpeed * m.condition.speedMultiplier, dt);
+    }
   }
 
   private beginRest(kind: MonsterAIState): void {
@@ -353,6 +407,7 @@ export class MonsterAI {
       case 'combat':
       case 'alert':
       case 'flee':
+      case 'hunt':
         return 'combat';
       default:
         return 'normal';

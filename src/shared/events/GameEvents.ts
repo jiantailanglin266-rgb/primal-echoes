@@ -29,4 +29,7 @@ export type GameEvents = {
   monsterRecovered: { monsterId: string };
   playerHit: { damage: number; position: Vec3; attackId: string };
   playerDowned: { position: Vec3 };
+  creatureHit: { creatureId: string; position: Vec3; damage: number; died: boolean };
+  creatureKilled: { creatureId: string; creatureDefId: string; position: Vec3; cause: 'monster' | 'player' };
+  carcassSpawned: { carcassId: number; sourceId: string; position: Vec3 };
 };

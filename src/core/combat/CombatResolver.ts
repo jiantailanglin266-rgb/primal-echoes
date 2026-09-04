@@ -5,6 +5,11 @@ import type { Monster, MonsterHitOutcome } from '@core/monster/Monster';
 import type { MonsterHitbox } from '@core/monster/MonsterCombat';
 import type { MonsterPart } from '@core/monster/MonsterPart';
 import type { Projectile } from './Projectile';
+import type { EcosystemManager } from '@core/ecosystem/EcosystemManager';
+import type { HitZoneModifiers } from './elements';
+
+/** 小型生物用: 全種別 1.0 の肉質。倍率は hitZoneMultiplier で与える。 */
+const UNIFORM_HIT_ZONE: HitZoneModifiers = { slash: 1, impact: 1, projectile: 1, fire: 1, water: 1, thunder: 1, ice: 1, aether: 1 };
 import type { EventBus } from '@shared/events/EventBus';
 import type { GameEvents } from '@shared/events/GameEvents';
 import type { Random } from '@shared/rng/Random';
@@ -25,6 +30,7 @@ export class CombatResolver {
   private readonly monsterHitboxes: MonsterHitbox[] = [];
   private readonly candidate: HitCandidate = { part: null as unknown as MonsterPart, depth: 0, contact: new Vec3() };
   private readonly hurtboxCenter = new Vec3();
+  private readonly creatureCenter = new Vec3();
   private readonly awayDirection = new Vec3();
   private readonly damageInput: DamageInput = {
     weaponPower: 0,
@@ -70,6 +76,55 @@ export class CombatResolver {
         if (!hit) continue;
         hitbox.source.hitKeys.add(monster.id);
         this.applyPlayerHit(player, monster, hitbox, hit);
+        hits++;
+      }
+    }
+    return hits;
+  }
+
+  /**
+   * プレイヤーの攻撃が小型生物に当たったかを解決する。
+   * 小型生物は部位を持たないので、体の球 1 つとの重なりで判定し、肉質は定義の hitZone スカラー。
+   */
+  resolvePlayerAttacksOnCreatures(player: Player, ecosystem: EcosystemManager): number {
+    const { controller, combat } = player;
+    combat.getActiveHitboxes(controller.position, controller.yaw, this.playerHitboxes);
+    if (this.playerHitboxes.length === 0) return 0;
+    const weapon = combat.weapon;
+    const sharpness = this.balance.sharpnessModifiers[weapon.sharpness];
+    let hits = 0;
+
+    for (const creature of ecosystem.creatures) {
+      if (!creature.isAlive) continue;
+      creature.getBodyCenter(this.creatureCenter);
+      for (const hitbox of this.playerHitboxes) {
+        const key = `creature:${creature.id}`;
+        if (hitbox.source.hitKeys.has(key)) continue;
+        if (!spheresOverlap(hitbox.center, hitbox.radius, this.creatureCenter, creature.def.bodyRadius)) continue;
+        hitbox.source.hitKeys.add(key);
+        const attack = hitbox.source.attack;
+        const input = this.damageInput;
+        input.weaponPower = weapon.weaponPower;
+        input.motionValue = attack.motionValue;
+        input.motionValueMultiplier = hitbox.source.motionValueMultiplier;
+        input.damageType = attack.damageType;
+        input.elementType = weapon.element.type;
+        input.elementPower = weapon.element.power;
+        input.elementMotionValue = attack.elementMotionValue;
+        input.sharpnessPhysicalModifier = sharpness.physical;
+        input.sharpnessElementModifier = sharpness.element;
+        input.critRate = weapon.critRate;
+        input.critMultiplier = this.balance.critMultiplier;
+        input.hitZone = UNIFORM_HIT_ZONE;
+        input.hitZoneMultiplier = creature.def.hitZone;
+        input.partDamageMultiplier = 0;
+        input.stunDamage = 0;
+        input.stunMultiplier = 0;
+        input.flinchDamage = 0;
+        input.minimumDamage = this.balance.minimumDamage;
+        const result = computeDamage(input, this.rng.next(), createDamageResult());
+        const died = ecosystem.damageCreature(creature, result.total);
+        this.events.emit('creatureHit', { creatureId: creature.id, position: this.creatureCenter.clone(), damage: result.total, died });
         hits++;
       }
     }

@@ -28,5 +28,11 @@
     { "id": "patrol_ridge", "kind": "patrol", "areaId": "forest", "position": { "x": -60, "z": 70 } },
     { "id": "patrol_cave_mouth", "kind": "patrol", "areaId": "cave", "position": { "x": 10, "z": -48 } }
   ],
-  "monsterSpawns": [{ "monsterId": "valgaron", "poiId": "feeding_forest", "yaw": 2.4 }]
+  "monsterSpawns": [{ "monsterId": "valgaron", "poiId": "feeding_forest", "yaw": 2.4 }],
+  "creatureSpawns": [
+    { "creatureId": "grast", "poiId": "feeding_forest", "groups": 1 },
+    { "creatureId": "grast", "poiId": "patrol_ridge", "groups": 1 },
+    { "creatureId": "skarv", "poiId": "patrol_cave_mouth", "groups": 2 },
+    { "creatureId": "skarv", "poiId": "patrol_river_bank", "groups": 1 }
+  ]
 }

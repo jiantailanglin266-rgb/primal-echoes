@@ -1,7 +1,9 @@
 import { GameLoop } from './GameLoop';
 import { HitStop } from './HitStop';
 import { buildPlayerIntent } from './intentBuilder';
-import { loadBalance, loadTitanBlade, loadValgaron, loadVerdantTempest } from '@data/DataRegistry';
+import { loadBalance, loadCreatures, loadTitanBlade, loadValgaron, loadVerdantTempest } from '@data/DataRegistry';
+import { EcosystemManager, type EcosystemUpdateContext } from '@core/ecosystem/EcosystemManager';
+import { EcosystemView } from '@presentation/EcosystemView';
 import type { BalanceData } from '@data/schemas/balance';
 import { Field } from '@core/world/Field';
 import { Player } from '@core/player/Player';
@@ -48,8 +50,11 @@ export class GameManager {
   readonly monster: Monster;
   readonly monsterAI: MonsterAI;
   readonly projectiles: ProjectileManager;
+  readonly ecosystem: EcosystemManager;
   private readonly combatResolver: CombatResolver;
   private readonly aiContext: MonsterAIContext;
+  private readonly ecosystemContext: EcosystemUpdateContext;
+  private readonly ecosystemView: EcosystemView;
 
   private readonly playerView: PlayerView;
   private readonly monsterView: MonsterView;
@@ -108,8 +113,21 @@ export class GameManager {
       const poi = this.field.getPoi(monsterSpawn.poiId);
       this.monster.teleport(poi.position.x, poi.position.z, monsterSpawn.yaw);
     }
+    this.ecosystem = new EcosystemManager(this.field, loadCreatures(), rng, {
+      creatureKilled: (creature, cause) => {
+        this.events.emit('creatureKilled', { creatureId: creature.id, creatureDefId: creature.def.id, position: creature.position.clone(), cause });
+      },
+      carcassSpawned: (carcass) => {
+        this.events.emit('carcassSpawned', { carcassId: carcass.id, sourceId: carcass.sourceId, position: carcass.position.clone() });
+      },
+    });
+    this.ecosystem.spawnAll();
+    this.ecosystemView = new EcosystemView(this.ecosystem);
+    this.renderer.scene.add(this.ecosystemView.object);
+
     this.monsterAI = new MonsterAI(this.monster, rng);
-    this.aiContext = { field: this.field, subject: { position: this.player.controller.position, isNoisy: false } };
+    this.aiContext = { field: this.field, subject: { position: this.player.controller.position, isNoisy: false }, prey: this.ecosystem };
+    this.ecosystemContext = { player: this.aiContext.subject, monsters: [this.monster] };
     this.monsterView = new MonsterView(this.monster);
     this.renderer.scene.add(this.monsterView.object);
     this.projectileView = new ProjectileView();
@@ -163,6 +181,15 @@ export class GameManager {
     this.events.on('monsterDied', () => {
       this.cameraRig.setLockOnTarget(null);
       this.lastHitSummary = 'MONSTER DOWN';
+      // 討伐した大型の死骸は剥ぎ取り対象として残す（T15）。スカベンジャーも寄ってくる。
+      this.ecosystem.addCarcass(this.monster.def.id, this.monster.position, 240, 3, true);
+    });
+    this.events.on('creatureHit', (e) => {
+      this.damageNumbers.spawn(e.position, e.damage, {});
+      this.lastHitSummary = `creature ${e.creatureId} -${e.damage}${e.died ? ' (killed)' : ''}`;
+    });
+    this.events.on('creatureKilled', (e) => {
+      if (e.cause === 'monster') this.lastHitSummary = `${this.monster.def.name} hunted ${e.creatureDefId}`;
     });
     this.events.on('playerHit', (e) => {
       this.damageNumbers.spawn(e.position, e.damage, { player: true });
@@ -217,6 +244,15 @@ export class GameManager {
         .map((p) => `${p.id}:${p.def.breakable ? p.partHp.toFixed(0) : '-'}${p.state === 'broken' ? 'B' : p.state === 'severed' ? 'S' : ''}/f${p.flinchAccumulated.toFixed(0)}`)
         .join(' '),
     );
+    d.addLine(() => {
+      const counts = new Map<string, number>();
+      for (const c of this.ecosystem.creatures) {
+        const key = `${c.def.id}:${c.state}`;
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+      const summary = [...counts.entries()].map(([k, v]) => `${k}x${v}`).join(' ');
+      return `eco ${summary}  carcasses ${this.ecosystem.carcasses.length}`;
+    });
     d.addLine(() => `last: ${this.lastHitSummary}`);
     d.addLine(() => `pointerLock ${this.input.isPointerLocked ? 'on' : 'off (click canvas)'}  WASD/Shift/Space  J light  K heavy(hold)  Tab lock  F1 heal F2 inf.stamina F3 kill F4 reset F5 AI pause F6 enrage F7 warp to monster`);
   }
@@ -246,8 +282,10 @@ export class GameManager {
     if (condition.exhaustionEnded) this.events.emit('monsterRecovered', { monsterId: this.monster.id });
     this.field.terrain.clampToBounds(this.monster.position, this.monster.def.stats.bodyRadius);
     this.projectiles.update(dt);
+    this.ecosystem.update(dt, this.ecosystemContext);
 
     this.combatResolver.resolvePlayerAttacks(this.player, [this.monster]);
+    this.combatResolver.resolvePlayerAttacksOnCreatures(this.player, this.ecosystem);
     this.combatResolver.resolveMonsterAttacks([this.monster], this.projectiles.projectiles, this.player);
 
     if (this.cameraRig.isLockedOn) {
@@ -313,6 +351,7 @@ export class GameManager {
     this.monsterView.ecologyPose = aiState === 'sleep' || aiState === 'eat' || aiState === 'drink' ? aiState : 'none';
     this.monsterView.sync(alpha, frameDt);
     this.projectileView.sync(this.projectiles.projectiles, alpha);
+    this.ecosystemView.sync(alpha, frameDt);
     if (this.hitboxDebugView) {
       const { controller, combat } = this.player;
       combat.getActiveHitboxes(controller.position, controller.yaw, this.playerHitboxes);

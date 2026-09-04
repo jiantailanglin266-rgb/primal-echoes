@@ -174,6 +174,12 @@ export interface BehaviorConfig {
   patrolWaitMaxSeconds: number;
   /** 目的地に「着いた」とみなす距離。 */
   arriveDistance: number;
+  /** 餌場に着いたとき、この範囲の獲物を追う。 */
+  hunt: {
+    range: number;
+    maxSeconds: number;
+    catchDistance: number;
+  };
 }
 
 export interface MonsterDefinition {
@@ -302,6 +308,7 @@ export const monsterSchema = {
     patrolWaitMinSeconds: 'number',
     patrolWaitMaxSeconds: 'number',
     arriveDistance: 'number',
+    hunt: { range: 'number', maxSeconds: 'number', catchDistance: 'number' },
   },
   stats: {
     maxHp: 'number',

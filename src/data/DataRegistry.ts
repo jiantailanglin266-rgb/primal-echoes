@@ -2,7 +2,10 @@ import balanceJson from './balance.json';
 import verdantTempestJson from './fields/verdant_tempest.json';
 import titanBladeJson from './weapons/titan_blade.json';
 import valgaronJson from './monsters/valgaron.json';
+import grastJson from './creatures/grast.json';
+import skarvJson from './creatures/skarv.json';
 import { validate } from './validate';
+import { creatureSchema, type CreatureDefinition } from './schemas/creature';
 import { balanceSchema, type BalanceData } from './schemas/balance';
 import { assertFieldConsistency, fieldSchema, type FieldDefinition } from './schemas/field';
 import { assertWeaponConsistency, weaponSchema, type WeaponDefinition } from './schemas/weapon';
@@ -30,6 +33,20 @@ export function loadTitanBlade(): WeaponDefinition {
   const weapon = titanBladeJson as WeaponDefinition;
   assertWeaponConsistency(weapon);
   return weapon;
+}
+
+/** 小型生物定義を id -> 定義 の Map で返す。 */
+export function loadCreatures(): Map<string, CreatureDefinition> {
+  const map = new Map<string, CreatureDefinition>();
+  for (const [json, name] of [
+    [grastJson, 'creatures/grast'],
+    [skarvJson, 'creatures/skarv'],
+  ] as const) {
+    validate(json, creatureSchema, name);
+    const def = json as CreatureDefinition;
+    map.set(def.id, def);
+  }
+  return map;
 }
 
 export function loadValgaron(): MonsterDefinition {

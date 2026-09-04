@@ -39,7 +39,7 @@
 - [ ] 剥ぎ取りと素材付与、インベントリ
 - [ ] Titan Blade 強化レシピ 1 段階
 - [x] 縮小フィールド（BaseCamp / Forest / River / Cave）と Valgaron の移動経路（T12 完了。地形は手続き生成のプレースホルダー）
-- [ ] 小型生物 2 種（Grast: 逃走・群れ、Skarv: 死骸に集合）
+- [x] 小型生物 2 種（Grast: 逃走・群れ、Skarv: 死骸に集合）（T13 完了）
 - [ ] HUD（HP / Stamina / 斬れ味 / クエスト目標 / 大型の状態アイコン）
 - [x] Hit Stop / ダメージ数字（T06 完了）/ [ ] 最低限の Camera Shake
 - [ ] セーブ（インベントリ・装備・クエスト進行）
@@ -80,8 +80,8 @@ T09  [done] MonsterCondition（怒り: 被ダメ蓄積で発動/咆哮/攻撃力
 T10  [done] MonsterAI 生態層（欲求: 空腹/渇き/疲れ -> travel/eat/drink/sleep、巡回、知覚: 視覚扇形+聴覚、alert -> combat、見失い -> investigate、瀕死 -> flee -> 巣で睡眠、寝込みを襲うと起きる）
 T11  [done] 部位破壊効果（頭破壊: 突進/噛みつき威力↓、尾切断: 尾攻撃射程 -40%、前脚破壊: 転倒閾値 -30%、攻撃封印）+ 脚部怯み = 転倒（5 秒）
 T12  [done] フィールド定義（翠嵐峡谷: 4 エリア・巣/水場/餌場/巡回点 4・スポーン）+ Field クラス + 仮描画
-T13  小型生物（Grast/Skarv）+ EcosystemManager 簡易版   <- 次の実装対象
-T14  QuestManager（Hunt / 制限時間 / 力尽き）+ Result 画面
+T13  [done] 小型生物（Grast: 群れ/うろつき/逃走、Skarv: 死骸に集まり食べる）+ EcosystemManager + Valgaron の狩り（hunt）+ 死骸 + プレイヤー攻撃の小型生物ヒット
+T14  QuestManager（Hunt / 制限時間 / 力尽き）+ シーン遷移（Hub -> Field -> Result）   <- 次の実装対象
 T15  剥ぎ取り・素材・Inventory
 T16  CraftingManager と Titan Blade 強化
 T17  HUD / メニュー / DebugOverlay

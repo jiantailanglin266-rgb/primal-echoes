@@ -1,0 +1,22 @@
+{
+  "id": "skarv",
+  "name": "Skarv",
+  "kind": "scavenger",
+  "maxHp": 40,
+  "walkSpeed": 2.6,
+  "runSpeed": 7.5,
+  "bodyRadius": 0.5,
+  "height": 0.7,
+  "hitZone": 1.0,
+  "fleeRangePlayer": 6,
+  "fleeRangeMonster": 10,
+  "calmSeconds": 5,
+  "wanderRadius": 8,
+  "wanderIntervalMinSeconds": 2,
+  "wanderIntervalMaxSeconds": 5,
+  "herdSize": 1,
+  "herdSpacing": 2,
+  "scavengeAttractRange": 70,
+  "scavengeFeedSeconds": 25,
+  "carcassMeatSeconds": 30
+}

@@ -134,6 +134,20 @@
 
 検証ログ（2026-09-05, T10）: プレイヤーがキャンプ待機の 120 秒間、drink → idle → travel → eat → idle → travel → drink と自律行動。発見なし。
 
+## 小型生物（`src/data/creatures/*.json`）
+| 項目 | Grast（草食） | Skarv（腐肉食） | 根拠 |
+|---|---|---|---|
+| maxHp | 60 | 40 | Titan Blade の Cleave（120×0.34 ≒ 41）2 発 / 1 発 |
+| walk / run | 1.8 / 6.0 | 2.6 / 7.5 | Grast は Valgaron（9.5）に追いつかれ、プレイヤーのダッシュ（7.5）でも追える。Skarv はプレイヤーとほぼ同速で逃げ切る |
+| fleeRangePlayer（静か / 騒がしい） | 7 / 14 | 3 / 6 | 歩けば近づける。走ると逃げる |
+| fleeRangeMonster | 16 | 10 | Valgaron の hunt.range 30 より短く、狩りが成立する |
+| herdSize / spacing | 4 / 3m | 1 | 群れは先頭に追従し、先頭が逃げれば全員逃げる |
+| scavengeAttractRange / feedSeconds | - | 70m / 25s | 死骸が出ると川岸・洞窟口から集まる |
+| carcassMeatSeconds | 90 | 30 | Skarv 3 匹で Grast の死骸は約 30 秒で消える。Valgaron の死骸は消えない（剥ぎ取り猶予） |
+| Valgaron hunt（range / maxSeconds / catch） | 30m / 12s / 3.5m | | 速度差 3.5m/s × 12 秒 = 最大 42m 追える。逃げ切られることもある |
+
+検証ログ（2026-09-05, T13）: 空腹 100 で餌場へ → hunt → Grast を捕食 → 死骸 → eat。11 体中 1 体死亡、死骸 1。
+
 ## 変更履歴
 | 日付 | 項目 | 前 → 後 | 理由 |
 |---|---|---|---|

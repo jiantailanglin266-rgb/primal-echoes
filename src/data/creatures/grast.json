@@ -1,0 +1,22 @@
+{
+  "id": "grast",
+  "name": "Grast",
+  "kind": "herbivore",
+  "maxHp": 60,
+  "walkSpeed": 1.8,
+  "runSpeed": 6.0,
+  "bodyRadius": 0.65,
+  "height": 1.1,
+  "hitZone": 1.0,
+  "fleeRangePlayer": 14,
+  "fleeRangeMonster": 16,
+  "calmSeconds": 8,
+  "wanderRadius": 10,
+  "wanderIntervalMinSeconds": 3,
+  "wanderIntervalMaxSeconds": 7,
+  "herdSize": 4,
+  "herdSpacing": 3,
+  "scavengeAttractRange": 0,
+  "scavengeFeedSeconds": 0,
+  "carcassMeatSeconds": 90
+}

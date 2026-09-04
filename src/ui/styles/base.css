@@ -254,6 +254,14 @@ body {
 .pe-button-primary { background: var(--pe-accent); color: #14120c; }
 .pe-button-primary:hover { background: #e6c47f; }
 
+.pe-pause-inner { text-align: center; padding-top: 120px; max-width: 520px; }
+.pe-pause-row { margin: 24px 0; }
+.pe-pause-row input[type='range'] { width: 220px; vertical-align: middle; margin-left: 10px; accent-color: var(--pe-accent); }
+.pe-pause-actions { display: flex; gap: 12px; justify-content: center; margin-bottom: 18px; }
+.pe-hub-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.pe-button-small { padding: 6px 12px; font-size: 12px; }
+.pe-hub-saved { color: var(--pe-hud-dim); font-size: 12px; margin-top: 6px; }
+
 .pe-result-inner { text-align: center; padding-top: 80px; }
 .pe-result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: left; margin: 28px 0; }
 .pe-result-grid section { background: var(--pe-panel-bg); border: 1px solid var(--pe-line); border-radius: 6px; padding: 8px 18px 14px; }

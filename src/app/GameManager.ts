@@ -10,6 +10,9 @@ import { Inventory } from '@core/inventory/Inventory';
 import { CarveController } from '@core/inventory/CarveController';
 import { mergeDrops, rollPartBreakRewards, rollQuestRewards, type LootDrop } from '@core/inventory/LootTable';
 import { CraftingManager } from '@core/crafting/CraftingManager';
+import { LocalStorageSaveStorage, SaveManager, createEmptySave, type SaveData } from '@core/save/SaveManager';
+import { AudioManager } from '@presentation/AudioManager';
+import { PauseMenuView } from '@ui/PauseMenuView';
 import type { WeaponDefinition } from '@data/schemas/weapon';
 import type { WeaponUpgradeRecipe } from '@data/schemas/recipe';
 import { Field } from '@core/world/Field';
@@ -81,6 +84,12 @@ export class GameManager {
   readonly carve: CarveController;
   readonly crafting: CraftingManager;
   readonly recipes: WeaponUpgradeRecipe[];
+  readonly saveManager: SaveManager;
+  readonly audio = new AudioManager();
+  private readonly pauseMenu: PauseMenuView;
+  private paused = false;
+  private questClears: Record<string, number> = {};
+  private savedAt: string | null = null;
   /** 強化前の基準となる武器定義。強化はこれに性能を上書きして適用する。 */
   private readonly baseWeapon: WeaponDefinition;
   private readonly creatureDefs: Map<string, CreatureDefinition>;
@@ -196,9 +205,35 @@ export class GameManager {
     this.hud = new HudView(uiRoot);
     this.hubView = new HubView(uiRoot);
     this.resultView = new ResultView(uiRoot);
-    this.hubView.onStartQuest = (quest) => this.startQuest(quest);
+    this.pauseMenu = new PauseMenuView(uiRoot);
+    this.hubView.onStartQuest = (quest) => {
+      this.audio.unlock();
+      this.audio.play('uiClick');
+      this.startQuest(quest);
+    };
     this.hubView.onCraft = (recipeId) => this.craftWeapon(recipeId);
-    this.resultView.onReturn = () => this.enterHub();
+    this.hubView.onSave = () => {
+      this.saveGame();
+      this.audio.play('uiClick');
+      this.renderHub();
+    };
+    this.hubView.onDeleteSave = () => this.deleteSave();
+    this.resultView.onReturn = () => {
+      this.audio.play('uiClick');
+      this.enterHub();
+    };
+    this.pauseMenu.onResume = () => this.setPaused(false);
+    this.pauseMenu.onAbandon = () => {
+      this.setPaused(false);
+      this.quest?.abandon();
+    };
+    this.pauseMenu.onVolumeChange = (v) => this.audio.setMasterVolume(v);
+    // 音はユーザー操作後にしか鳴らせない。最初のクリック/キーで解錠する。
+    canvas.addEventListener('click', () => this.audio.unlock());
+    window.addEventListener('keydown', () => this.audio.unlock(), { once: true });
+
+    this.saveManager = new SaveManager(new LocalStorageSaveStorage());
+    this.applySave(this.saveManager.load());
 
     const debugEnabled = DebugOverlay.isEnabled();
     this.debug = debugEnabled ? new DebugOverlay(debugRoot) : null;
@@ -235,6 +270,49 @@ export class GameManager {
     this.renderHub();
   }
 
+  // ---------------- save ----------------
+
+  private applySave(save: SaveData | null): void {
+    if (!save) return;
+    this.inventory.loadSnapshot(save.inventory);
+    this.player.equipWeapon(this.crafting.restore(save.crafting, this.baseWeapon));
+    this.questClears = { ...save.questClears };
+    this.audio.setMasterVolume(save.settings.masterVolume);
+    this.pauseMenu.setVolume(save.settings.masterVolume);
+    this.savedAt = save.savedAt;
+  }
+
+  private buildSave(): SaveData {
+    const data = createEmptySave();
+    data.inventory = this.inventory.toSnapshot();
+    data.crafting = this.crafting.toProgress();
+    data.questClears = { ...this.questClears };
+    data.settings.masterVolume = this.audio.masterVolume;
+    return data;
+  }
+
+  saveGame(): void {
+    this.saveManager.save(this.buildSave());
+    this.savedAt = new Date().toISOString();
+  }
+
+  private deleteSave(): void {
+    this.saveManager.clear();
+    this.inventory.clear();
+    this.questClears = {};
+    this.savedAt = null;
+    this.player.equipWeapon(this.crafting.restore({ weaponLevels: {} }, this.baseWeapon));
+    this.renderHub();
+  }
+
+  private setPaused(paused: boolean): void {
+    if (this.scene !== 'field') return;
+    this.paused = paused;
+    this.pauseMenu.visible = paused;
+    this.pauseMenu.setVolume(this.audio.masterVolume);
+    if (paused && document.pointerLockElement) document.exitPointerLock();
+  }
+
   private renderHub(): void {
     const weapon = this.player.combat.weapon;
     const next = this.crafting.nextRecipe(weapon.id);
@@ -259,6 +337,8 @@ export class GameManager {
             canCraft: this.crafting.canCraft(next),
           }
         : null,
+      savedAtLabel: this.savedAt ? new Date(this.savedAt).toLocaleString('ja-JP') : '',
+      questClears: Object.values(this.questClears).reduce((a, b) => a + b, 0),
     });
   }
 
@@ -269,6 +349,8 @@ export class GameManager {
     if (!upgraded) return;
     this.player.equipWeapon(this.crafting.weaponAtCurrentLevel(this.baseWeapon));
     this.events.emit('weaponCrafted', { recipeId, weaponName: this.player.combat.weapon.name });
+    this.audio.play('itemGet');
+    this.saveGame();
     this.renderHub();
   }
 
@@ -279,6 +361,7 @@ export class GameManager {
     this.quest = new QuestManager(def, this.balance.quest);
     this.quest.start();
     this.setScene('field');
+    this.pushNotice(`任務開始: ${def.name}`);
     this.events.emit('questStarted', { questId: def.id });
   }
 
@@ -294,11 +377,17 @@ export class GameManager {
         this.questLoot.push(drop);
         this.events.emit('itemObtained', { itemId: drop.itemId, count: drop.count, source: 'reward' });
       }
+      this.questClears[quest.def.id] = (this.questClears[quest.def.id] ?? 0) + 1;
       this.events.emit('questCompleted', { questId: quest.def.id, clearTimeSeconds: quest.clearTimeSeconds });
+      this.audio.play('questClear');
     } else {
       this.events.emit('questFailed', { questId: quest.def.id, reason: quest.failReason ?? 'none' });
+      this.audio.play('questFail');
     }
     this.carve.cancel();
+    this.setPaused(false);
+    // 剥ぎ取った素材が失われないよう、クエスト終了時点で自動記録する
+    this.saveGame();
 
     this.resultView.render({
       success,
@@ -326,6 +415,8 @@ export class GameManager {
     this.hud.visible = scene === 'field';
     this.hubView.visible = scene === 'hub';
     this.resultView.visible = scene === 'result';
+    this.paused = false;
+    this.pauseMenu.visible = false;
     this.cameraRig.setLockOnTarget(null);
     this.loop.timeScale = 1;
     if (scene !== 'field' && document.pointerLockElement) document.exitPointerLock();
@@ -371,8 +462,11 @@ export class GameManager {
   // ---------------- events ----------------
 
   private subscribeEvents(): void {
+    const fb = this.balance.feedback;
     this.events.on('hit', (e) => {
       this.hitStop.trigger(e.hitStopSeconds);
+      this.cameraRig.shake(e.hitStopSeconds * fb.shakePerHitStopSecond, Math.min(fb.shakeMaxSeconds, e.hitStopSeconds * 1.5));
+      this.audio.play(e.hitStopSeconds >= fb.heavyHitStopThresholdSeconds ? 'hitHeavy' : 'hitLight');
       this.monsterView.flashPart(e.partId);
       this.damageNumbers.spawn(e.position, e.result.total, { critical: e.result.isCritical });
       this.lastHitSummary = `${e.partId} ${e.result.total}${e.result.isCritical ? ' CRIT' : ''} (part ${e.result.partDamage.toFixed(0)})`;
@@ -382,10 +476,24 @@ export class GameManager {
     this.events.on('partBroken', (e) => {
       this.lastHitSummary = `PART BROKEN: ${this.monster.getPart(e.partId).def.name}`;
       this.quest?.notifyPartBroken(e.partId);
+      this.cameraRig.shake(fb.shakeOnPartBreak, fb.shakeMaxSeconds);
+      this.audio.play('partBreak');
+      this.pushNotice(`${this.monster.getPart(e.partId).def.name} を破壊`);
     });
     this.events.on('partSevered', (e) => {
       this.lastHitSummary = `PART SEVERED: ${this.monster.getPart(e.partId).def.name}`;
       this.quest?.notifyPartBroken(e.partId);
+      this.cameraRig.shake(fb.shakeOnPartBreak, fb.shakeMaxSeconds);
+      this.audio.play('partBreak');
+      this.pushNotice(`${this.monster.getPart(e.partId).def.name} を切断`);
+    });
+    this.events.on('monsterAttackStarted', () => this.audio.play('telegraph'));
+    this.events.on('monsterEnraged', () => {
+      this.cameraRig.shake(fb.shakeOnRoar, 0.6);
+      this.audio.play('roar');
+    });
+    this.events.on('itemObtained', (e) => {
+      if (e.source === 'carve') this.audio.play('carve');
     });
     this.events.on('monsterDied', () => {
       this.cameraRig.setLockOnTarget(null);
@@ -397,10 +505,13 @@ export class GameManager {
     this.events.on('playerHit', (e) => {
       this.damageNumbers.spawn(e.position, e.damage, { player: true });
       this.lastHitSummary = `PLAYER HIT by ${e.attackId}: -${e.damage}`;
+      this.cameraRig.shake(fb.shakeOnPlayerHit, 0.35);
+      this.audio.play('playerHurt');
     });
     this.events.on('playerDowned', () => {
       this.lastHitSummary = 'PLAYER DOWNED';
       this.quest?.notifyPlayerDowned();
+      this.carve.cancel();
     });
     this.events.on('creatureHit', (e) => {
       this.damageNumbers.spawn(e.position, e.damage, {});
@@ -411,6 +522,8 @@ export class GameManager {
     });
     this.events.on('monsterToppled', (e) => (this.lastHitSummary = `TOPPLED via ${e.partId}`));
     this.events.on('monsterEnraged', () => (this.lastHitSummary = 'ENRAGED!'));
+    this.events.on('monsterStunned', () => this.pushNotice('気絶！'));
+    this.events.on('monsterToppled', () => this.pushNotice('転倒！'));
     this.events.on('monsterCalmed', () => (this.lastHitSummary = 'calmed down'));
     this.events.on('monsterExhausted', () => (this.lastHitSummary = 'EXHAUSTED'));
     this.events.on('monsterRecovered', () => (this.lastHitSummary = 'recovered'));
@@ -509,6 +622,8 @@ export class GameManager {
   private update(dt: number): void {
     const input = this.input.poll();
     if (this.scene !== 'field') return;
+    if (input.pausePressed) this.setPaused(!this.paused);
+    if (this.paused) return;
 
     // カメラ回転はシミュレーションではなく入力処理なので、timeScale=0 の Hit Stop 中でも動かす
     this.cameraRig.applyLook(input.lookDeltaX, input.lookDeltaY);

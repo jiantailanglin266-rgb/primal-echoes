@@ -20,6 +20,9 @@ export interface HubModel {
   inventoryLines: string[];
   /** 次の強化候補。null なら最終段階。 */
   craft: HubCraftOption | null;
+  /** 最終保存日時の表示（未保存なら空）。 */
+  savedAtLabel: string;
+  questClears: number;
 }
 
 /**
@@ -34,6 +37,9 @@ export class HubView {
   private readonly crafting: HTMLElement;
   onStartQuest: ((quest: QuestDefinition) => void) | null = null;
   onCraft: ((recipeId: string) => void) | null = null;
+  onSave: (() => void) | null = null;
+  onDeleteSave: (() => void) | null = null;
+  private readonly savedLabel: HTMLElement;
 
   constructor(parent: HTMLElement) {
     this.root = document.createElement('div');
@@ -51,6 +57,12 @@ export class HubView {
             <div class="pe-hub-status"></div>
             <h2>所持素材</h2>
             <div class="pe-hub-inventory pe-lines"></div>
+            <h2>記録</h2>
+            <div class="pe-hub-actions">
+              <button class="pe-button pe-button-small pe-hub-save">記録する</button>
+              <button class="pe-button pe-button-small pe-hub-delete">記録を消す</button>
+            </div>
+            <div class="pe-hub-saved"></div>
           </section>
           <section class="pe-panel">
             <h2>任務</h2>
@@ -68,6 +80,11 @@ export class HubView {
     this.status = q(this.root, '.pe-hub-status');
     this.inventory = q(this.root, '.pe-hub-inventory');
     this.crafting = q(this.root, '.pe-hub-crafting');
+    this.savedLabel = q(this.root, '.pe-hub-saved');
+    this.root.querySelector('.pe-hub-save')?.addEventListener('click', () => this.onSave?.());
+    this.root.querySelector('.pe-hub-delete')?.addEventListener('click', () => {
+      if (window.confirm('記録を消去しますか？ 素材と強化が失われます。')) this.onDeleteSave?.();
+    });
   }
 
   set visible(value: boolean) {
@@ -80,7 +97,9 @@ export class HubView {
       <div>武器: ${escapeHtml(m.weaponName)}</div>
       <div>攻撃力 ${m.weaponPower} / 強化 Lv.${m.weaponLevel} / ${escapeHtml(m.sharpnessLabel)}</div>
       <div>体力: ${m.maxHp}</div>
+      <div>討伐記録: ${m.questClears} 回</div>
     `;
+    this.savedLabel.textContent = m.savedAtLabel ? `最終記録: ${m.savedAtLabel}` : '記録なし（クエスト終了と強化で自動記録）';
     this.inventory.replaceChildren(...(m.inventoryLines.length ? m.inventoryLines : ['（なし）']).map((t) => line(t)));
 
     this.crafting.replaceChildren();

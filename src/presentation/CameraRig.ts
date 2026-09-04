@@ -23,6 +23,10 @@ export class CameraRig {
   private readonly desired = new Vec3();
   private readonly current = new Vec3();
   private initialized = false;
+  private shakeAmplitude = 0;
+  private shakeSeconds = 0;
+  private shakeTotalSeconds = 0;
+  private shakeSeed = 0;
 
   constructor(
     readonly camera: THREE.PerspectiveCamera,
@@ -38,6 +42,18 @@ export class CameraRig {
 
   setLockOnTarget(target: (() => Vec3) | null): void {
     this.lockOnTarget = target;
+  }
+
+  /**
+   * カメラを揺らす。amplitude はメートル。大きい方の揺れで上書きし、積算はしない
+   * （多段ヒットで画面が見えなくなるのを防ぐ）。
+   */
+  shake(amplitude: number, seconds: number): void {
+    if (amplitude <= this.shakeAmplitude * (this.shakeSeconds / Math.max(this.shakeTotalSeconds, 1e-6))) return;
+    this.shakeAmplitude = amplitude;
+    this.shakeSeconds = seconds;
+    this.shakeTotalSeconds = seconds;
+    this.shakeSeed = Math.random() * 1000;
   }
 
   /** マウス移動量（ピクセル）で向きを更新する。ロックオン中は無視する。 */
@@ -100,6 +116,21 @@ export class CameraRig {
 
     this.camera.position.set(this.current.x, this.current.y, this.current.z);
     this.camera.lookAt(this.target.x, this.target.y, this.target.z);
+    this.applyShake(frameDt);
+  }
+
+  /** 減衰する擬似ランダム振動を lookAt 後の位置へ加える（向きは変えない）。 */
+  private applyShake(frameDt: number): void {
+    if (this.shakeSeconds <= 0) return;
+    this.shakeSeconds = Math.max(0, this.shakeSeconds - frameDt);
+    const k = this.shakeSeconds / Math.max(this.shakeTotalSeconds, 1e-6);
+    const amp = this.shakeAmplitude * k * k;
+    const t = (this.shakeTotalSeconds - this.shakeSeconds) * 60 + this.shakeSeed;
+    const ox = Math.sin(t * 1.7) * Math.cos(t * 0.9) * amp;
+    const oy = Math.sin(t * 2.3 + 1.3) * amp;
+    this.camera.position.x += ox;
+    this.camera.position.y += oy;
+    if (this.shakeSeconds === 0) this.shakeAmplitude = 0;
   }
 
   /** ワールド座標をスクリーン座標（px）へ投影する。UI のダメージ数字などで使う。 */

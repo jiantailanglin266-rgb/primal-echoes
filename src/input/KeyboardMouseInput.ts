@@ -53,6 +53,7 @@ export class KeyboardMouseInput {
     state.lockOnPressed = this.wasPressed('lockOn');
     state.interactPressed = this.wasPressed('interact');
     state.abandonQuestPressed = this.wasPressed('abandonQuest');
+    state.pausePressed = this.wasPressed('pause');
     state.debugHealPlayerPressed = this.wasPressed('debugHealPlayer');
     state.debugToggleInfiniteStaminaPressed = this.wasPressed('debugToggleInfiniteStamina');
     state.debugKillMonsterPressed = this.wasPressed('debugKillMonster');
@@ -82,6 +83,9 @@ export class KeyboardMouseInput {
   }
 
   private readonly onKeyDown = (e: KeyboardEvent): void => {
+    // フォーム要素にフォーカスがあるとき（音量スライダー等）はゲーム入力を奪わない
+    const target = e.target as HTMLElement | null;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')) return;
     // Tab でフォーカスが飛ぶ / F キーでブラウザ機能が動くとゲーム入力が奪われるため抑止する
     if (e.code === 'Tab' || e.code === 'Space' || e.code.startsWith('F')) e.preventDefault();
     if (e.repeat) return;

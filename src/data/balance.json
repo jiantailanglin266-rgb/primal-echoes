@@ -58,5 +58,13 @@
   "carve": {
     "durationSeconds": 2.5,
     "rangeMeters": 3.0
+  },
+  "feedback": {
+    "shakePerHitStopSecond": 1.2,
+    "shakeMaxSeconds": 0.22,
+    "shakeOnPlayerHit": 0.28,
+    "shakeOnRoar": 0.18,
+    "shakeOnPartBreak": 0.2,
+    "heavyHitStopThresholdSeconds": 0.12
   }
 }

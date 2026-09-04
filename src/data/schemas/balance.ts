@@ -81,12 +81,24 @@ export interface CarveBalance {
   rangeMeters: number;
 }
 
+export interface FeedbackBalance {
+  /** 揺れ幅（m）= hitStop 秒 × この値。武器が重いほど Hit Stop が長く、揺れも大きくなる。 */
+  shakePerHitStopSecond: number;
+  shakeMaxSeconds: number;
+  shakeOnPlayerHit: number;
+  shakeOnRoar: number;
+  shakeOnPartBreak: number;
+  /** これ以上の Hit Stop は「重い一撃」として重い音を鳴らす。 */
+  heavyHitStopThresholdSeconds: number;
+}
+
 export interface BalanceData {
   player: PlayerBalance;
   camera: CameraBalance;
   combat: CombatBalance;
   quest: QuestBalance;
   carve: CarveBalance;
+  feedback: FeedbackBalance;
 }
 
 const sharpnessModifierSchema = { physical: 'number', element: 'number' } as const satisfies Schema;
@@ -151,5 +163,13 @@ export const balanceSchema = {
   carve: {
     durationSeconds: 'number',
     rangeMeters: 'number',
+  },
+  feedback: {
+    shakePerHitStopSecond: 'number',
+    shakeMaxSeconds: 'number',
+    shakeOnPlayerHit: 'number',
+    shakeOnRoar: 'number',
+    shakeOnPartBreak: 'number',
+    heavyHitStopThresholdSeconds: 'number',
   },
 } as const satisfies Schema;

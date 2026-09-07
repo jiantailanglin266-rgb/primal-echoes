@@ -103,6 +103,16 @@ export class Lighting {
     });
   }
 
+  /** 品質切替。マップを破棄すると次フレームで新しいサイズで作り直される。 */
+  setShadowMapSize(size: number): void {
+    for (const light of this.csm.lights) {
+      if (light.shadow.mapSize.x === size) continue;
+      light.shadow.mapSize.set(size, size);
+      light.shadow.map?.dispose();
+      light.shadow.map = null;
+    }
+  }
+
   /** 毎フレーム、カメラに合わせてカスケードを更新する。 */
   update(): void {
     this.csm.update();

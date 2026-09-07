@@ -47,6 +47,9 @@ export class PlayerView {
     return this.interpolated;
   }
 
+  /** モデル読み込み試行の完了（モデルが無ければ即解決）。ローディング画面が待つ。 */
+  readonly ready: Promise<void>;
+
   constructor(
     private readonly player: Player,
     loader: AssetLoader | null = null,
@@ -58,7 +61,7 @@ export class PlayerView {
     this.model.weaponPivot.clear();
     this.model.weaponPivot.add(createWeaponModel(player.combat.weapon.weight, weaponKind(this.weaponId)));
     this.applyPose(WEAPON_POSES.rest);
-    if (loader) void this.tryLoadModel(loader);
+    this.ready = loader ? this.tryLoadModel(loader) : Promise.resolve();
   }
 
   /** `assets/models/ranger.glb` があればプリミティブを隠して差し替える。無ければ何もしない。 */

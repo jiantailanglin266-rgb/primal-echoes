@@ -15,6 +15,22 @@
 TypeScript (strict) / Three.js / Vite / Vitest。
 シミュレーション層（`src/core`）は描画ライブラリに依存しない。詳細は [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。
 
+## 描画アーキテクチャ
+Phase 1〜6 の CG 強化（[docs/CG_UPGRADE.md](docs/CG_UPGRADE.md)）で入った構成。すべて `src/presentation/` 配下で、`src/core/` のロジックは触らない。
+
+| 層 | モジュール | 内容 |
+|---|---|---|
+| レンダラ | `render/Renderer.ts` | WebGL（WebGPU は CSM/コンポーザーと非互換のため不採用）、sRGB 出力 + ACES、品質プリセット low / mid / high（pixelRatio 上限・影解像度・カスケード数・草密度/描画距離） |
+| 光 | `render/Lighting.ts` | 太陽のカスケードシャドウマップ（3 段、practical 分割）+ 半球光。`refreshMaterials()` で後から増えたメッシュにも CSM を適用 |
+| 空・環境 | `render/Environment.ts` | 大気散乱の空 → PMREM で IBL を焼く（雨で再焼き）。HDRI があればそちらを使用。FogExp2 + シェーダ注入の高さフォグ。雨で空・霧・露出を連動 |
+| 地形・植生 | `render/ProceduralTextures.ts` / `TerrainMaterial.ts` / `Vegetation.ts` | fBm の草・土・岩テクスチャを高さと傾斜で 3 層ブレンド（確率的 UV でタイル目を消す）。草 14,000 本は 36m 格子のチャンク InstancedMesh（視錐台・距離カリング）、木・岩も InstancedMesh、風は頂点シェーダで共有 |
+| キャラクター | `render/AssetLoader.ts` / `CharacterRig.ts` | glTF + Draco + KTX2。`assets/models/*.glb` があればプリミティブと差し替え、クリップ名の対応表でアニメを駆動。無ければ手続きアニメのプリミティブ |
+| ポストプロセス | `render/PostFX.ts` | Render → GTAO → HDR Bloom → DoF（焦点はプレイヤー距離）→ Grade（ビネット・色収差・グレイン・色寄せ）→ SMAA → Output |
+| カメラ・手応え | `CameraRig.ts` / `fx/Juice.ts` | 肩越し + バネ追従 + ダッシュ FOV、Hit Stop / シェイク / スローモーション / 命中光 / 咆哮の色収差 |
+| 品質・配信 | `render/QualityManager.ts` / `ui/LoadingView.ts` | GPU 名・モバイル・解像度から初期品質を決め、3 秒平均 FPS が 55 未満なら 1 段階下げる（`?quality=low|mid|high` で固定）。起動時はローディング画面でアセット確認 → IBL 焼き込み → シェーダコンパイル → ウォームアップ描画。アセット URL にはビルド ID を付与 |
+
+調整は `?debug=1` の右上パネル（Tone / Sun / Ambient / Sky・Fog / PostFX / Camera / Wind）と左下の stats.js、オーバーレイの `quality` / `draw` 行で行う。
+
 ## セットアップ
 
 ```bash
@@ -40,7 +56,7 @@ npm run dev
 | 一時停止 | Esc |
 
 ### デバッグ
-- `?debug=1` でオーバーレイと当たり判定表示。F1 回復 / F2 無限スタミナ / F3 討伐 / F4 モンスター初期化 / F5 AI 停止 / F6 怒り / F7 モンスターの背後へワープ / F9 任務中断
+- `?debug=1` でオーバーレイ（FPS・品質・描画コール・メモリ）、stats.js、描画パネル、当たり判定表示。`?quality=low|mid|high` で品質を固定。F1 回復 / F2 無限スタミナ / F3 討伐 / F4 モンスター初期化 / F5 AI 停止 / F6 怒り / F7 モンスターの背後へワープ / F9 任務中断
 - `?bot=1` で通しプレイ検証ボット。コンソールから `__game.update(1/60)` を回すと早回しできる（検証手順は [docs/BALANCE.md](docs/BALANCE.md)）
 
 ## アセットの配置（任意）
@@ -52,7 +68,7 @@ npm run dev
 | `public/assets/textures/terrain/{grass,dirt,rock}_{albedo,normal}.jpg` | 地形テクスチャ 1K〜2K | 地形 3 層ブレンド（現状は手続き生成。差し替え対応は Phase 3 以降） |
 | `public/assets/models/*.glb` | glTF（Draco/KTX2 圧縮可） | プレイヤー/モンスター/植生（Phase 3 のパイプライン） |
 
-描画の調整は `?debug=1` の右上パネル（露出・太陽・影・空・フォグ・風）で行い、決まった値をコードへ書き戻します。
+描画の調整は `?debug=1` の右上パネルで行い、決まった値をコードへ書き戻します。
 
 ## 検証
 
@@ -60,7 +76,7 @@ npm run dev
 npm run check
 ```
 
-`typecheck`（tsc）と `test`（vitest、150 件）を順に実行する。各 Phase はこれが通った状態で完了とする。
+`typecheck`（tsc）と `test`（vitest、170 件）を順に実行する。各 Phase はこれが通った状態で完了とする。
 
 ## ドキュメント
 | ファイル | 内容 |

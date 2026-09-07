@@ -284,3 +284,57 @@ body {
   --number-color: #d8b26a;
   font-size: 11px;
 }
+
+/* ---- ローディング画面 ---- */
+.pe-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at 50% 60%, #16211c 0%, #0b0d10 70%);
+  transition: opacity 0.6s ease;
+}
+.pe-loading--done {
+  opacity: 0;
+  pointer-events: none;
+}
+.pe-loading__inner {
+  width: min(360px, 80vw);
+  text-align: center;
+}
+.pe-loading__title {
+  font-family: var(--pe-display-font);
+  font-size: 34px;
+  letter-spacing: 0.32em;
+  color: var(--pe-accent);
+}
+.pe-loading__sub {
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  color: var(--pe-hud-dim);
+}
+.pe-loading__track {
+  margin: 28px auto 10px;
+  height: 3px;
+  background: var(--pe-line);
+}
+.pe-loading__bar {
+  width: 0;
+  height: 100%;
+  background: var(--pe-accent);
+  transition: width 0.25s ease;
+}
+.pe-loading__label {
+  font-size: 11px;
+  color: var(--pe-hud-dim);
+  letter-spacing: 0.1em;
+}
+
+/* stats.js は inline style で左上固定なので、オーバーレイと重ならないよう左下へ */
+.pe-stats {
+  top: auto !important;
+  bottom: 8px !important;
+  left: 8px !important;
+}

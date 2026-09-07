@@ -29,6 +29,8 @@ export class SceneRenderer {
   ) {
     this.quality = quality;
     this.renderer = createRenderer(canvas, quality);
+    // three は render() の末尾で info を消すので、フレーム先頭で手動リセットしてデバッグ表示から読めるようにする
+    this.renderer.info.autoReset = false;
 
     this.scene = new THREE.Scene();
 
@@ -86,6 +88,7 @@ export class SceneRenderer {
   }
 
   render(frameDt = 0): void {
+    this.renderer.info.reset();
     this.shadowRefreshTimer += frameDt;
     if (this.shadowRefreshTimer >= SHADOW_REFRESH_INTERVAL_SECONDS) {
       this.shadowRefreshTimer = 0;

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { assetUrl } from './assetUrl';
 import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
@@ -23,7 +24,7 @@ export class AssetLoader {
 
   /** `public/assets/models/<name>.glb` を読む。存在しなければ null。 */
   loadModel(name: string): Promise<GLTF | null> {
-    const url = `${import.meta.env.BASE_URL}assets/models/${name}.glb`;
+    const url = assetUrl(`assets/models/${name}.glb`);
     let pending = this.cache.get(url);
     if (!pending) {
       pending = this.fetchIfExists(url);

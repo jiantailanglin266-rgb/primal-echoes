@@ -50,12 +50,15 @@ export class MonsterView {
   private rig: CharacterRig | null = null;
   private lastAttackInstance = -1;
 
+  /** モデル読み込み試行の完了（モデルが無ければ即解決）。ローディング画面が待つ。 */
+  readonly ready: Promise<void>;
+
   constructor(
     private readonly monster: Monster,
     loader: AssetLoader | null = null,
   ) {
     this.buildProcedural();
-    if (loader) void this.tryLoadModel(loader);
+    this.ready = loader ? this.tryLoadModel(loader) : Promise.resolve();
   }
 
   private async tryLoadModel(loader: AssetLoader): Promise<void> {

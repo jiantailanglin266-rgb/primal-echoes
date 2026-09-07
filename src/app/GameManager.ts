@@ -51,6 +51,8 @@ import { DebugPanel } from '@presentation/render/DebugPanel';
 import { Vegetation } from '@presentation/render/Vegetation';
 import { AssetLoader } from '@presentation/render/AssetLoader';
 import { Juice } from '@presentation/fx/Juice';
+import { QualityManager } from '@presentation/render/QualityManager';
+import Stats from 'three/addons/libs/stats.module.js';
 import { EventBus } from '@shared/events/EventBus';
 import type { GameEvents } from '@shared/events/GameEvents';
 import { Random } from '@shared/rng/Random';
@@ -90,6 +92,8 @@ export class GameManager {
   private readonly vegetation: Vegetation;
   readonly assets: AssetLoader;
   private readonly juice: Juice;
+  readonly quality: QualityManager;
+  private readonly stats: Stats | null;
   readonly player: Player;
   readonly monster: Monster;
   readonly monsterAI: MonsterAI;
@@ -177,7 +181,25 @@ export class GameManager {
     const rng = new Random(0xc0ffee);
     this.rng = rng;
 
-    this.renderer = new SceneRenderer(canvas);
+    // 端末判定 → 初期品質。レンダラの pixelRatio と CSM の分割数はこの時点で決まる
+    const detection = QualityManager.detect();
+    this.renderer = new SceneRenderer(canvas, detection.quality);
+    this.quality = new QualityManager(
+      {
+        setPixelRatio: (ratio) => {
+          this.renderer.renderer.setPixelRatio(ratio);
+          this.renderer.postfx.setPixelRatio(ratio);
+          this.renderer.resize();
+        },
+        setShadowMapSize: (size) => this.renderer.lighting.setShadowMapSize(size),
+        applyPostFxPreset: (q) => {
+          this.renderer.postfx.applyPreset(q);
+          this.juice.refreshBaseAperture();
+        },
+        setGrassDensity: (density, viewDistance) => this.vegetation.setGrass(density, viewDistance),
+      },
+      detection,
+    );
     this.input = new KeyboardMouseInput(canvas);
 
     this.field = new Field(loadVerdantTempest());
@@ -302,11 +324,18 @@ export class GameManager {
       this.bot = new PlaytestBot(this.player, this.monster);
     }
     this.hitboxDebugView = debugEnabled ? new HitboxDebugView() : null;
-    this.renderPanel = debugEnabled ? new DebugPanel(this.renderer.renderer, this.renderer.lighting, this.renderer.environment, this.renderer.postfx, this.balance.camera) : null;
+    this.renderPanel = debugEnabled ? new DebugPanel(this.renderer.renderer, this.renderer.lighting, this.renderer.environment, this.renderer.postfx, this.balance.camera, this.quality) : null;
+    this.stats = debugEnabled ? createStats(debugRoot) : null;
     // 全 View を追加し終えたので影・CSM を一括適用
     this.renderer.refreshShadows();
     if (this.hitboxDebugView) this.renderer.scene.add(this.hitboxDebugView.object);
     this.setupDebugLines();
+    this.debug?.addLine(() => `quality ${this.quality.current}${this.quality.locked ? ' (url lock)' : ''} avg ${this.quality.averageFps.toFixed(0)}fps  gpu ${this.quality.profile.gpu.slice(0, 56) || 'unknown'}${this.quality.profile.mobile ? ' mobile' : ''}`);
+    this.debug?.addLine(() => {
+      const info = this.renderer.renderer.info;
+      const mem = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
+      return `draw ${info.render.calls} tris ${(info.render.triangles / 1000).toFixed(0)}k geo ${info.memory.geometries} tex ${info.memory.textures} grass ${this.vegetation.grassInstanceCount} heap ${mem ? `${(mem.usedJSHeapSize / 1048576).toFixed(0)}MB` : 'n/a'}`;
+    });
 
     this.loop = new GameLoop({
       update: (dt) => this.update(dt),
@@ -314,10 +343,39 @@ export class GameManager {
     });
     this.hitStop = new HitStop(this.loop);
     this.juice = new Juice(this.loop, this.hitStop, this.renderer.postfx, this.renderer.scene, this.balance.feedback);
+    this.quality.apply(this.quality.current);
+    this.quality.onChange((q, reason) => {
+      if (reason === 'auto') this.pushNotice(`描画品質を ${q} に下げました（FPS ${this.quality.averageFps.toFixed(0)}）`);
+    });
     this.subscribeEvents();
 
     this.placeWorldForHub();
     this.enterHub();
+  }
+
+  /**
+   * 起動前の準備。モデル・HDRI の有無確認、環境光の焼き込み、シェーダのコンパイル、ウォームアップ描画。
+   * ローディング画面に進捗を流し、完了後に start() する。
+   */
+  async preload(onProgress?: (ratio: number, label: string) => void): Promise<{ seconds: number }> {
+    const t0 = performance.now();
+    const step = (ratio: number, label: string): void => onProgress?.(ratio, label);
+    step(0.08, 'アセットを確認');
+    await Promise.all([this.playerView.ready, this.monsterView.ready, this.renderer.environment.ready]);
+    step(0.35, '環境光を焼き込み');
+    await nextFrame();
+    this.renderer.environment.bakeNow();
+    this.renderer.refreshShadows();
+    step(0.5, 'シェーダをコンパイル');
+    await nextFrame();
+    await this.renderer.renderer.compileAsync(this.renderer.scene, this.renderer.camera);
+    step(0.85, '最初のフレーム');
+    await nextFrame();
+    // 影マップ・ポストプロセスのレンダーターゲットをここで確保しておく
+    this.render(1, 1 / 60);
+    this.render(1, 1 / 60);
+    step(1, '準備完了');
+    return { seconds: (performance.now() - t0) / 1000 };
   }
 
   start(): void {
@@ -873,13 +931,15 @@ export class GameManager {
     this.renderer.postfx.setFocusDistance(this.renderer.camera.position.distanceTo(this.playerView.object.position) + 0.4);
     this.weatherView.update(frameDt, this.renderer.camera.position);
     this.renderer.environment.setRain(this.weather.intensity);
-    this.vegetation.update(frameDt);
+    this.vegetation.update(frameDt, this.renderer.camera.position);
+    this.quality.update(frameDt);
     this.gimmickView.update(frameDt);
     this.hitSparks.update(frameDt);
     this.renderer.render(frameDt);
     this.damageNumbers.update(frameDt);
     if (this.scene === 'field') this.renderHud();
     this.debug?.update(frameDt);
+    this.stats?.update();
   }
 
   private renderHud(): void {
@@ -932,4 +992,23 @@ export class GameManager {
     }
     this.hud.render(m);
   }
+}
+
+/** 次の描画フレームまで待つ。非表示タブでは rAF が止まるので短いタイムアウトで先へ進む。 */
+export function nextFrame(): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = window.setTimeout(resolve, 250);
+    requestAnimationFrame(() => {
+      window.clearTimeout(timer);
+      resolve();
+    });
+  });
+}
+
+/** stats.js（three 同梱）。`?debug=1` のときだけ左下に出す。 */
+function createStats(root: HTMLElement): Stats {
+  const stats = new Stats();
+  stats.dom.classList.add('pe-stats');
+  root.appendChild(stats.dom);
+  return stats;
 }

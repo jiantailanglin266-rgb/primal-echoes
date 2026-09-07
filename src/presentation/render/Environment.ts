@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { assetUrl } from './assetUrl';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import type { Lighting } from './Lighting';
@@ -56,6 +57,8 @@ export class Environment {
   private hdriTexture: THREE.Texture | null = null;
   private envDirty = true;
   private rebakeTimer = 0;
+  /** HDRI の有無確認（と読み込み）の完了。ローディング画面が待つ。 */
+  readonly ready: Promise<void>;
   private rainIntensity = 0;
   private readonly skyScene = new THREE.Scene();
   private readonly sunPosition = new THREE.Vector3();
@@ -74,7 +77,7 @@ export class Environment {
     this.scene.fog = this.fog;
     this.scene.background = null;
     this.applySkySettings();
-    void this.tryLoadHdri();
+    this.ready = this.tryLoadHdri();
   }
 
   /** 雨の強さ 0〜1。空を曇らせ、フォグを濃くし、太陽を弱める。 */
@@ -134,6 +137,13 @@ export class Environment {
         );
     };
     material.needsUpdate = true;
+  }
+
+  /** 起動時に待たずに焼く（最初のフレームが暗いままにならないように）。 */
+  bakeNow(): void {
+    this.envDirty = false;
+    this.rebakeTimer = 0;
+    this.bakeEnvironment();
   }
 
   update(frameDt: number): void {
@@ -198,7 +208,7 @@ export class Environment {
 
   /** `assets/hdri/environment.hdr` があれば HDRI を IBL と背景に使う（無ければ何もしない）。 */
   private async tryLoadHdri(): Promise<void> {
-    const url = `${import.meta.env.BASE_URL}assets/hdri/environment.hdr`;
+    const url = assetUrl('assets/hdri/environment.hdr');
     try {
       const head = await fetch(url, { method: 'HEAD' });
       if (!head.ok || !(head.headers.get('content-type') ?? '').includes('octet')) return;

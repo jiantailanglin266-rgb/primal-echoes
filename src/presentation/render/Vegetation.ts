@@ -55,6 +55,17 @@ export interface VegetationOptions {
 
 const DEFAULT_OPTIONS: VegetationOptions = { grassCount: 14000, treeCount: 140, rockCount: 90 };
 
+/** 草はこの大きさの正方形チャンクに分け、視錐台外・遠方のチャンクを描かない。 */
+const GRASS_CHUNK_METERS = 36;
+
+interface GrassChunk {
+  mesh: THREE.InstancedMesh;
+  center: THREE.Vector3;
+  radius: number;
+  /** 密度 1.0 のときのインスタンス数。 */
+  full: number;
+}
+
 /**
  * 草・木・岩の散布。すべてプリミティブの InstancedMesh で、
  * 後で glTF に差し替える場合は `scatterInstances` に渡すジオメトリ/マテリアルを変えるだけでよい。
@@ -63,6 +74,8 @@ const DEFAULT_OPTIONS: VegetationOptions = { grassCount: 14000, treeCount: 140, 
 export class Vegetation {
   readonly object = new THREE.Group();
   private readonly rng = new Random(0x5eed);
+  private readonly grassChunks: GrassChunk[] = [];
+  private grassViewDistance = Infinity;
 
   constructor(
     private readonly field: Field,
@@ -70,13 +83,34 @@ export class Vegetation {
   ) {
     const opt = { ...DEFAULT_OPTIONS, ...options };
     this.object.name = 'vegetation';
-    this.object.add(this.createGrass(opt.grassCount));
+    for (const mesh of this.createGrass(opt.grassCount)) this.object.add(mesh);
     for (const mesh of this.createTrees(opt.treeCount)) this.object.add(mesh);
     this.object.add(this.createRocks(opt.rockCount));
   }
 
-  update(frameDt: number): void {
+  /** 風の時間を進め、カメラから遠い草チャンクを非表示にする（視錐台外は three が自動で省く）。 */
+  update(frameDt: number, cameraPosition?: THREE.Vector3): void {
     windUniforms.uTime.value += frameDt;
+    if (!cameraPosition || !Number.isFinite(this.grassViewDistance)) {
+      if (cameraPosition) for (const c of this.grassChunks) c.mesh.visible = true;
+      return;
+    }
+    for (const c of this.grassChunks) {
+      c.mesh.visible = c.center.distanceTo(cameraPosition) - c.radius < this.grassViewDistance;
+    }
+  }
+
+  /** 品質段階から呼ぶ。density は描くインスタンスの割合、viewDistance はチャンクを描く最大距離（m）。 */
+  setGrass(density: number, viewDistance: number): void {
+    const ratio = Math.max(0, Math.min(1, density));
+    for (const c of this.grassChunks) c.mesh.count = Math.round(c.full * ratio);
+    this.grassViewDistance = viewDistance;
+  }
+
+  get grassInstanceCount(): number {
+    let n = 0;
+    for (const c of this.grassChunks) n += c.mesh.count;
+    return n;
   }
 
   // ---- placement rules ----
@@ -99,7 +133,7 @@ export class Vegetation {
     return null;
   }
 
-  private createGrass(count: number): THREE.InstancedMesh {
+  private createGrass(count: number): THREE.InstancedMesh[] {
     // 先細りの 1 枚板を 2 枚交差させた草。
     const blade = new THREE.PlaneGeometry(0.16, 0.5, 1, 3);
     blade.translate(0, 0.25, 0);
@@ -115,30 +149,45 @@ export class Vegetation {
     for (let i = 0; i < normals.count; i++) normals.setXYZ(i, 0, 1, 0);
     const material = new THREE.MeshStandardMaterial({ color: 0x6f9a48, roughness: 0.9, side: THREE.DoubleSide });
     patchWind(material, 0.35);
-    const mesh = new THREE.InstancedMesh(geometry, material, count);
-    mesh.name = 'grass';
-    mesh.receiveShadow = true;
-    mesh.userData['noShadow'] = true; // 草は影を落とさない（コスト対効果）
+
+    // 配置を先に決め、チャンク（格子）ごとに InstancedMesh を作る。1 メッシュだと境界球が地形全体になり視錐台カリングが効かない
+    const half = this.field.terrain.halfSize;
+    const cells = Math.max(1, Math.ceil((half * 2) / GRASS_CHUNK_METERS));
+    const buckets = new Map<number, { matrices: THREE.Matrix4[]; colors: THREE.Color[] }>();
     const dummy = new THREE.Object3D();
-    const color = new THREE.Color();
-    let placed = 0;
     for (let i = 0; i < count; i++) {
       const p = this.pickGround(0.86, true, 0);
       if (!p) continue;
       dummy.position.copy(p);
       dummy.rotation.set(0, this.rng.range(0, Math.PI * 2), 0);
-      const s = this.rng.range(0.7, 1.5);
-      dummy.scale.set(s, s * this.rng.range(0.8, 1.4), s);
+      const sc = this.rng.range(0.7, 1.5);
+      dummy.scale.set(sc, sc * this.rng.range(0.8, 1.4), sc);
       dummy.updateMatrix();
-      mesh.setMatrixAt(placed, dummy.matrix);
-      color.setHSL(0.23 + this.rng.range(-0.03, 0.03), 0.5, 0.42 + this.rng.range(-0.08, 0.1));
-      mesh.setColorAt(placed, color);
-      placed++;
+      const ix = Math.min(cells - 1, Math.floor((p.x + half) / GRASS_CHUNK_METERS));
+      const iz = Math.min(cells - 1, Math.floor((p.z + half) / GRASS_CHUNK_METERS));
+      const key = ix + iz * cells;
+      let bucket = buckets.get(key);
+      if (!bucket) buckets.set(key, (bucket = { matrices: [], colors: [] }));
+      bucket.matrices.push(dummy.matrix.clone());
+      bucket.colors.push(new THREE.Color().setHSL(0.23 + this.rng.range(-0.03, 0.03), 0.5, 0.42 + this.rng.range(-0.08, 0.1)));
     }
-    mesh.count = placed;
-    mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-    return mesh;
+
+    const meshes: THREE.InstancedMesh[] = [];
+    for (const bucket of buckets.values()) {
+      const mesh = new THREE.InstancedMesh(geometry, material, bucket.matrices.length);
+      mesh.name = 'grass';
+      mesh.receiveShadow = true;
+      mesh.userData['noShadow'] = true; // 草は影を落とさない（コスト対効果）
+      bucket.matrices.forEach((m, i) => mesh.setMatrixAt(i, m));
+      bucket.colors.forEach((c, i) => mesh.setColorAt(i, c));
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      mesh.computeBoundingSphere();
+      const sphere = mesh.boundingSphere as THREE.Sphere;
+      this.grassChunks.push({ mesh, center: sphere.center.clone(), radius: sphere.radius, full: bucket.matrices.length });
+      meshes.push(mesh);
+    }
+    return meshes;
   }
 
   private createTrees(count: number): THREE.InstancedMesh[] {

@@ -3,10 +3,20 @@ import * as THREE from 'three';
 export type RenderQuality = 'low' | 'mid' | 'high';
 
 /** 品質段階ごとの描画パラメータ。Phase 6 で端末判定から自動選択する。 */
-export const QUALITY_PRESETS: Record<RenderQuality, { maxPixelRatio: number; shadowMapSize: number; cascades: number }> = {
-  low: { maxPixelRatio: 1, shadowMapSize: 1024, cascades: 2 },
-  mid: { maxPixelRatio: 1.5, shadowMapSize: 2048, cascades: 3 },
-  high: { maxPixelRatio: 2, shadowMapSize: 2048, cascades: 3 },
+export interface QualityPreset {
+  maxPixelRatio: number;
+  shadowMapSize: number;
+  /** CSM の分割数。ライト数が変わるとシェーダを作り直すので起動時にだけ効く。 */
+  cascades: number;
+  /** 草の描画割合（0〜1）と、草チャンクを描く最大距離（m）。 */
+  grassDensity: number;
+  grassViewDistance: number;
+}
+
+export const QUALITY_PRESETS: Record<RenderQuality, QualityPreset> = {
+  low: { maxPixelRatio: 1, shadowMapSize: 1024, cascades: 2, grassDensity: 0.45, grassViewDistance: 60 },
+  mid: { maxPixelRatio: 1.5, shadowMapSize: 2048, cascades: 3, grassDensity: 0.8, grassViewDistance: 95 },
+  high: { maxPixelRatio: 2, shadowMapSize: 2048, cascades: 3, grassDensity: 1, grassViewDistance: Infinity },
 };
 
 /**

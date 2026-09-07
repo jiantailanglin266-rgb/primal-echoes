@@ -6,6 +6,7 @@ import { getWindStrength, setWindStrength } from './Vegetation';
 import type { PostFX } from './PostFX';
 import type { RenderQuality } from './Renderer';
 import type { CameraBalance } from '@data/schemas/balance';
+import type { QualityManager } from './QualityManager';
 
 /**
  * 描画調整パネル（lil-gui、`?debug=1` のときだけ）。
@@ -14,7 +15,7 @@ import type { CameraBalance } from '@data/schemas/balance';
 export class DebugPanel {
   readonly gui: GUI;
 
-  constructor(_renderer: THREE.WebGLRenderer, lighting: Lighting, environment: Environment, postfx: PostFX, camera: CameraBalance | null = null) {
+  constructor(_renderer: THREE.WebGLRenderer, lighting: Lighting, environment: Environment, postfx: PostFX, camera: CameraBalance | null = null, quality: QualityManager | null = null) {
     this.gui = new GUI({ title: 'Render', width: 260 });
     this.gui.domElement.classList.add('pe-render-gui');
 
@@ -47,9 +48,11 @@ export class DebugPanel {
 
     const fx = this.gui.addFolder('PostFX');
     const fxApply = (): void => postfx.applySettings();
-    const preset = { quality: 'high' as RenderQuality };
-    fx.add(preset, 'quality', ['low', 'mid', 'high']).name('プリセット').onChange((q: RenderQuality) => {
-      postfx.applyPreset(q);
+    const preset = { quality: (quality?.current ?? 'high') as RenderQuality };
+    const presetController = fx.add(preset, 'quality', ['low', 'mid', 'high']).name('プリセット').onChange((q: RenderQuality) => {
+      // 品質マネージャ経由なら影解像度・草密度・pixelRatio も一緒に切り替わる
+      if (quality) quality.apply(q);
+      else postfx.applyPreset(q);
       fx.controllers.forEach((c) => c.updateDisplay());
     });
     fx.add(postfx.settings, 'enabled').name('有効');
@@ -81,6 +84,12 @@ export class DebugPanel {
       cam.add(camera, 'lookSpringStiffness', 10, 400, 1).name('注視バネ');
       cam.add(camera, 'lookSpringDamping', 2, 50, 0.5).name('注視減衰');
     }
+
+    quality?.onChange((q) => {
+      preset.quality = q;
+      presetController.updateDisplay();
+      fx.controllersRecursive().forEach((c) => c.updateDisplay());
+    });
 
     const wind = this.gui.addFolder('Wind');
     const windState = { strength: getWindStrength() };

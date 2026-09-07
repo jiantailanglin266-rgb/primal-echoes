@@ -173,3 +173,39 @@ FPS 影響（1280×720、開発機のブラウザペイン、ms/フレーム）:
 - ブラウザペインを隠したまま `loop.advance` で検証する場合、`render()` 内でダッシュ判定を毎フレーム上書きするので FOV の検証は CameraRig を直接回す
 
 FPS 影響: 点光源 3 灯常駐で標準マテリアルの照明計算がわずかに増えるが、1280×720 で計測ばらつき（±10 ms）の範囲内。スロー・FOV・バネは CPU 側の数演算で無視できる。
+
+## Phase 6 — 最適化と配信品質（完了 2026-09-07）
+
+| 変更ファイル | 内容 |
+|---|---|
+| `src/presentation/render/QualityManager.ts` | 新規。端末判定（`WEBGL_debug_renderer_info` の GPU 名、モバイル UA/タッチ、画面ピクセル数、コア数）→ 初期品質。優先順位は `?quality=`（固定）> localStorage（手動選択の記憶）> 判定。`FpsGovernor` が実時間 3 秒の平均 FPS を取り、55 未満なら 1 段階下げる（10 秒クールダウン、上げ戻しはしない、タブ切替の巨大 dt は捨てる）。適用先は pixelRatio・影解像度・PostFX プリセット・草密度/描画距離 |
+| `src/presentation/render/Renderer.ts` | プリセットに `grassDensity` / `grassViewDistance` を追加 |
+| `src/presentation/render/Lighting.ts` | `setShadowMapSize()`（マップを破棄して次フレームで作り直す） |
+| `src/presentation/render/Vegetation.ts` | 草を 36m 格子のチャンク InstancedMesh に分割（36 チャンク）。1 メッシュだと境界球が地形全体になり視錐台カリングが効かなかった。`update(dt, cameraPos)` で距離カリング、`setGrass(density, viewDistance)` で品質連動 |
+| `src/ui/LoadingView.ts` / `src/app/GameManager.ts` `preload()` / `src/main.ts` | ローディング画面。世界生成 → アセット確認（モデル・HDRI の HEAD）→ IBL 焼き込み → `compileAsync` でシェーダ事前コンパイル → ウォームアップ 2 フレーム（影マップ・RT 確保）→ フェードアウトして `start()`。非表示タブでは rAF が止まるので 250ms タイムアウトで先へ進む |
+| `src/presentation/render/assetUrl.ts` / `vite.config.ts` / `src/globals.d.ts` | 実行時に読むアセット URL に `?v=<git short SHA>` を付与（`define` で注入）。バンドル自体は Vite のハッシュ名 |
+| `src/presentation/PlayerView.ts` / `MonsterView.ts` / `Environment.ts` | `ready` Promise（ローディングが待つ）、`Environment.bakeNow()` |
+| `src/presentation/SceneRenderer.ts` | `renderer.info.autoReset = false` + フレーム先頭で手動リセット（three は render() 末尾で消すため、デバッグ行から読めなかった） |
+| `src/presentation/render/DebugPanel.ts` / `src/debug` | プリセット切替を QualityManager 経由に（影・草・pixelRatio も連動、自動降格時はドロップダウンを同期）。stats.js（three 同梱）を左下に、オーバーレイに `quality`（段階・平均 FPS・GPU 名）と `draw`（コール数・三角形・ジオメトリ/テクスチャ数・草本数・JS ヒープ）行 |
+| `tests/presentation/QualityManager.test.ts` | 判定表・URL/保存の優先順位・FPS 監視（降格・クールダウン・巨大 dt）・段階の下げ方 |
+
+見送り: インポスター（ビルボード化）と occlusion culling。木・岩はすでに InstancedMesh 各 1 ドローで、遠景の主なコストは草の頂点数なので密度と距離で十分と判断。地形 LOD も 220m 四方・1 メッシュで問題なし。
+
+### 実測（1280×720、AMD Radeon 内蔵 GPU、ブラウザペイン非表示のため実機の 60fps 表示より重め）
+| 品質 | ms/フレーム | 草（本 / 可視チャンク） | 影 | pixelRatio |
+|---|---|---|---|---|
+| low | 約 17 | 6,303 / 15 | 1024 | 1 |
+| mid | 約 26 | 11,200 / 22 | 2048 | 1 |
+| high | 約 25（±5） | 14,000 / 36 | 2048 | 1（DPR 1 の環境） |
+
+- ドローコール: mid で約 1,400 / フレーム、50 万三角形（3 カスケードの影 + 本描画 + GTAO の法線/深度 + DoF の深度で、約 230 オブジェクト × 6 パス）。次に効く最適化は静的メッシュの結合とパス数の削減
+- メモリ: JS ヒープ 46〜58 MB、ジオメトリ 188、テクスチャ 37、シェーダプログラム 59
+- 起動: preload 2.3〜2.6 秒（このうち `compileAsync` が大半。2 回目以降はブラウザのシェーダキャッシュで短くなる）。非表示タブでは rAF 待ちのタイムアウトが加わり約 4.7 秒
+- 本番バンドル: 1,096 KB（gzip 323 KB）。three + addons（CSM / postprocessing / GLTF / Draco / KTX2 ローダ）が大半
+- 判定結果（この機）: GPU "AMD Radeon (TM) Graphics" → 内蔵 GPU と判定して mid（当初「(TM)」で正規表現を外していたので修正）
+
+つまずいた点と学び:
+- 非表示タブでは `requestAnimationFrame` が止まるので、ローディングの「1 フレーム待ち」はタイムアウト付きにしないと起動しない
+- `renderer.info` は render() の末尾で自動リセットされ、描画後に読むと常に 0。autoReset を切ってフレーム先頭で手動リセットする
+- ブラウザペイン非表示では canvas が 1×1 になり、計測値が意味を持たない。計測時は viewport をエミュレートして 1280×720 に固定した
+- GL の "Feedback loop" 警告はコンソールの持ち越し分だった（`gl.getError()` を各パス構成で確認して 0）

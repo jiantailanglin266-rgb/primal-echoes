@@ -23,7 +23,7 @@ export class Lighting {
   readonly csm: CSM;
   readonly hemisphere: THREE.HemisphereLight;
   readonly sun: SunSettings = { ...DEFAULT_SUN };
-  private shadowIntensity = 0.7;
+  private shadowIntensity = 0.6;
   private readonly direction = new THREE.Vector3();
 
   constructor(
@@ -51,7 +51,7 @@ export class Lighting {
       light.shadow.intensity = this.shadowIntensity;
     }
 
-    this.hemisphere = new THREE.HemisphereLight(0xbcd0e6, 0x3a4a2c, 0.9);
+    this.hemisphere = new THREE.HemisphereLight(0xbcd0e6, 0x3a4a2c, 1.6);
     scene.add(this.hemisphere);
   }
 
@@ -88,7 +88,15 @@ export class Lighting {
       for (const material of materials) {
         const std = material as THREE.MeshStandardMaterial;
         if (!std.isMeshStandardMaterial || std.userData['csm']) continue;
+        // CSM.setupMaterial は onBeforeCompile を丸ごと置き換えるため、
+        // 先に付いていたフック（風・地形ブレンド・高さフォグ）を退避して CSM の後に連結する
+        const previous = std.onBeforeCompile;
         this.csm.setupMaterial(std);
+        const csmHook = std.onBeforeCompile;
+        std.onBeforeCompile = (shader, rendererRef) => {
+          csmHook.call(std, shader, rendererRef);
+          previous?.call(std, shader, rendererRef);
+        };
         std.userData['csm'] = true;
         std.needsUpdate = true;
       }

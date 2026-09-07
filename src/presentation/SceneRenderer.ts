@@ -67,14 +67,18 @@ export class SceneRenderer {
         mesh.castShadow = !flat;
         mesh.receiveShadow = true;
       }
+    });
+    // CSM（onBeforeCompile を置換するので最初）→ 高さフォグ（連結）の順
+    this.lighting.refreshMaterials();
+    this.scene.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
       for (const material of materials) {
-        if ((material as THREE.MeshStandardMaterial).isMeshStandardMaterial && (material as THREE.MeshStandardMaterial).fog !== false) {
-          this.environment.patchMaterial(material);
-        }
+        const std = material as THREE.MeshStandardMaterial;
+        if (std.isMeshStandardMaterial && std.fog !== false) this.environment.patchMaterial(std);
       }
     });
-    // CSM は高さフォグより先に注入されている必要があるため refreshMaterials → patch の順を保つ
-    this.lighting.refreshMaterials();
   }
 
   render(frameDt = 0): void {

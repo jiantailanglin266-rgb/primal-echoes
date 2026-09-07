@@ -28,8 +28,8 @@ const DEFAULTS: EnvironmentSettings = {
   fogDensity: 0.0052,
   heightFogDensity: 0.35,
   heightFogFalloff: 0.09,
-  envIntensity: 0.9,
-  exposure: 1.0,
+  envIntensity: 1.2,
+  exposure: 1.05,
 };
 
 /** 高さフォグのシェーダ注入で使う共有ユニフォーム。全マテリアルで同じ値を参照する。 */

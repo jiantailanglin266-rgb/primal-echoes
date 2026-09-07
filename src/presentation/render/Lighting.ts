@@ -11,7 +11,7 @@ export interface SunSettings {
   color: number;
 }
 
-const DEFAULT_SUN: SunSettings = { azimuthDeg: 35, elevationDeg: 42, intensity: 3.2, color: 0xfff1dc };
+const DEFAULT_SUN: SunSettings = { azimuthDeg: 35, elevationDeg: 52, intensity: 3.2, color: 0xfff1dc };
 
 /**
  * 太陽光（カスケードシャドウマップ）と環境光。
@@ -23,7 +23,7 @@ export class Lighting {
   readonly csm: CSM;
   readonly hemisphere: THREE.HemisphereLight;
   readonly sun: SunSettings = { ...DEFAULT_SUN };
-  private shadowIntensity = 0.6;
+  private shadowIntensity = 0.75;
   private readonly direction = new THREE.Vector3();
 
   constructor(
@@ -51,7 +51,7 @@ export class Lighting {
       light.shadow.intensity = this.shadowIntensity;
     }
 
-    this.hemisphere = new THREE.HemisphereLight(0xbcd0e6, 0x3a4a2c, 1.6);
+    this.hemisphere = new THREE.HemisphereLight(0xbcd0e6, 0x3a4a2c, 1.1);
     scene.add(this.hemisphere);
   }
 

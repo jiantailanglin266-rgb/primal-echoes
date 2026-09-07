@@ -300,7 +300,7 @@ export class GameManager {
       this.bot = new PlaytestBot(this.player, this.monster);
     }
     this.hitboxDebugView = debugEnabled ? new HitboxDebugView() : null;
-    this.renderPanel = debugEnabled ? new DebugPanel(this.renderer.renderer, this.renderer.lighting, this.renderer.environment) : null;
+    this.renderPanel = debugEnabled ? new DebugPanel(this.renderer.renderer, this.renderer.lighting, this.renderer.environment, this.renderer.postfx) : null;
     // 全 View を追加し終えたので影・CSM を一括適用
     this.renderer.refreshShadows();
     if (this.hitboxDebugView) this.renderer.scene.add(this.hitboxDebugView.object);
@@ -860,6 +860,8 @@ export class GameManager {
       this.hitboxDebugView.end();
     }
     this.cameraRig.update(this.playerView.renderPosition, frameDt);
+    // DoF の焦点はプレイヤー（カメラからの距離）に自動追従
+    this.renderer.postfx.setFocusDistance(this.renderer.camera.position.distanceTo(this.playerView.object.position) + 0.4);
     this.weatherView.update(frameDt, this.renderer.camera.position);
     this.renderer.environment.setRain(this.weather.intensity);
     this.vegetation.update(frameDt);

@@ -108,3 +108,30 @@ FPS 影響: 三角形 19 万 → 36 万、ドローコール +12（草・木・�
 3. `public/assets/models/ranger.glb`（プレイヤー）、`public/assets/models/valgaron.glb`（モンスター）として配置
 4. クリップ名は `CharacterRig.ts` の対応表に部分一致すればよい（例: "Walking", "mixamo.com|Roll"）。無い状態は `rig.missingStates` に溜まるので `?debug=1` で確認
 5. 複数の Mixamo モーション（同一スケルトン）は別 glb にして `rig.addClips(gltf.animations)` で合成
+
+## Phase 4 — ポストプロセス（完了 2026-09-05）
+
+| 変更ファイル | 内容 |
+|---|---|
+| `src/presentation/render/PostFX.ts` | three/addons EffectComposer。順序: Render → GTAO（サンプル数可変）→ UnrealBloom → Bokeh DoF（焦点はプレイヤー距離へ自動追従）→ Grade（ビネット・色収差・グレイン・彩度・影/ハイライトの色寄せを 1 パス）→ SMAA → Output。品質プリセット low / mid / high。`pulseChromatic()` で咆哮時の一瞬の強調（Phase 5 用） |
+| `src/presentation/SceneRenderer.ts` | postfx 有効時は composer で描画、無効時は直接描画。リサイズ伝播 |
+| `src/presentation/render/DebugPanel.ts` | PostFX フォルダ（プリセット切替・各パス ON/OFF・強度） |
+| `src/app/GameManager.ts` | DoF 焦点距離の毎フレーム更新 |
+| `Environment.ts` / `Lighting.ts` | コンポーザー前提で再調整（露出 0.85、フォグ 0.0022、高さフォグ 0.1、ミー 0.003、太陽高度 52°、影 0.75、環境光 1.1） |
+
+見送り: モーションブラー（速度バッファが無く、カメラ移動だけの疑似ブラーは残像感が強いため）、LUT ファイル読み込み（数式グレードで代替。`LUTPass` を Grade の前に挟めば対応可能）。
+
+つまずいた点と学び:
+- Bloom はトーンマッピング前の HDR 値に掛かる。大気散乱の空は輝度 3〜10 あるため、LDR 前提の閾値 0.9 だと画面全体が白飛びする。閾値 8.0 で太陽とエーテル発光だけが光る
+- フォグは three の直接描画では sRGB 変換の後に混ざるが、コンポーザーでは線形空間で混ざるため見た目が濃くなる。密度を約半分に再調整した
+- CSM の `setupMaterial` は `onBeforeCompile` を置き換えるので、風・地形ブレンド・高さフォグのフックは CSM の後に連結する（Phase 2 で修正）
+
+FPS 影響（1280×720、開発機のブラウザペイン、ms/フレーム）:
+| 構成 | ms |
+|---|---|
+| ポストプロセス無し | 3〜12（計測ばらつき） |
+| low（Grade + Bloom） | 約 10 |
+| mid（+ GTAO 6 サンプル + SMAA） | 約 21 |
+| high（+ GTAO 10 サンプル + DoF） | 約 37 |
+
+1080p / pixelRatio 2 で 60fps を切る場合は、GTAO → DoF → SMAA の順に落とす（GTAO が最も重い）。Phase 6 で端末判定と実測 FPS から自動選択する。

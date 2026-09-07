@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { createRenderer, type RenderQuality } from './render/Renderer';
 import { Lighting } from './render/Lighting';
 import { Environment } from './render/Environment';
+import { PostFX } from './render/PostFX';
 
 const SHADOW_REFRESH_INTERVAL_SECONDS = 1.5;
 
@@ -16,6 +17,7 @@ export class SceneRenderer {
   readonly camera: THREE.PerspectiveCamera;
   readonly lighting: Lighting;
   readonly environment: Environment;
+  readonly postfx: PostFX;
   readonly quality: RenderQuality;
 
   private readonly resizeObserver: ResizeObserver;
@@ -36,6 +38,7 @@ export class SceneRenderer {
 
     this.lighting = new Lighting(this.scene, this.camera, quality);
     this.environment = new Environment(this.renderer, this.scene, this.lighting);
+    this.postfx = new PostFX(this.renderer, this.scene, this.camera, quality);
 
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(canvas.parentElement ?? document.body);
@@ -50,6 +53,7 @@ export class SceneRenderer {
     this.camera.aspect = width / Math.max(height, 1);
     this.camera.updateProjectionMatrix();
     this.lighting.onCameraChanged();
+    this.postfx.setSize(width, height);
   }
 
   /**
@@ -89,11 +93,13 @@ export class SceneRenderer {
     }
     this.environment.update(frameDt);
     this.lighting.update();
-    this.renderer.render(this.scene, this.camera);
+    if (this.postfx.enabled) this.postfx.render(frameDt);
+    else this.renderer.render(this.scene, this.camera);
   }
 
   dispose(): void {
     this.resizeObserver.disconnect();
+    this.postfx.dispose();
     this.environment.dispose();
     this.lighting.dispose();
     this.renderer.dispose();

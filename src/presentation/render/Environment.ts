@@ -20,16 +20,17 @@ export interface EnvironmentSettings {
   exposure: number;
 }
 
+// ポストプロセス（OutputPass）でトーンマッピングする前提の値。フォグは線形空間で混ざるので薄めにする。
 const DEFAULTS: EnvironmentSettings = {
-  turbidity: 3.2,
-  rayleigh: 1.6,
-  mieCoefficient: 0.006,
-  mieDirectionalG: 0.82,
-  fogDensity: 0.0052,
-  heightFogDensity: 0.35,
+  turbidity: 3.0,
+  rayleigh: 1.2,
+  mieCoefficient: 0.003,
+  mieDirectionalG: 0.7,
+  fogDensity: 0.0022,
+  heightFogDensity: 0.1,
   heightFogFalloff: 0.09,
-  envIntensity: 1.2,
-  exposure: 1.05,
+  envIntensity: 1.0,
+  exposure: 0.85,
 };
 
 /** 高さフォグのシェーダ注入で使う共有ユニフォーム。全マテリアルで同じ値を参照する。 */
@@ -165,7 +166,7 @@ export class Environment {
 
     // フォグ色は地平線付近の空の色から近似（高度が低いほど暖色、雨は灰色）
     const elevation = Math.max(0, this.sunPosition.y);
-    this.horizonColor.setHSL(THREE.MathUtils.lerp(0.075, 0.58, Math.min(1, elevation * 1.8)), THREE.MathUtils.lerp(0.35, 0.08, rain), THREE.MathUtils.lerp(0.62, 0.3, rain));
+    this.horizonColor.setHSL(THREE.MathUtils.lerp(0.075, 0.58, Math.min(1, elevation * 1.8)), THREE.MathUtils.lerp(0.35, 0.08, rain), THREE.MathUtils.lerp(0.5, 0.28, rain));
     this.fog.color.copy(this.horizonColor);
     this.fog.density = THREE.MathUtils.lerp(s.fogDensity, s.fogDensity * 2.0, rain);
     heightFogUniforms.uHeightFogDensity.value = THREE.MathUtils.lerp(s.heightFogDensity, s.heightFogDensity * 2.2, rain);

@@ -3,6 +3,8 @@ import type * as THREE from 'three';
 import type { Lighting } from './Lighting';
 import type { Environment } from './Environment';
 import { getWindStrength, setWindStrength } from './Vegetation';
+import type { PostFX } from './PostFX';
+import type { RenderQuality } from './Renderer';
 
 /**
  * 描画調整パネル（lil-gui、`?debug=1` のときだけ）。
@@ -11,7 +13,7 @@ import { getWindStrength, setWindStrength } from './Vegetation';
 export class DebugPanel {
   readonly gui: GUI;
 
-  constructor(_renderer: THREE.WebGLRenderer, lighting: Lighting, environment: Environment) {
+  constructor(_renderer: THREE.WebGLRenderer, lighting: Lighting, environment: Environment, postfx: PostFX) {
     this.gui = new GUI({ title: 'Render', width: 260 });
     this.gui.domElement.classList.add('pe-render-gui');
 
@@ -41,6 +43,31 @@ export class DebugPanel {
     sky.add(environment.settings, 'fogDensity', 0, 0.02, 0.0002).name('フォグ濃度').onChange(apply);
     sky.add(environment.settings, 'heightFogDensity', 0, 2, 0.01).name('高さフォグ').onChange(apply);
     sky.add(environment.settings, 'heightFogFalloff', 0.01, 0.5, 0.005).name('高さ減衰').onChange(apply);
+
+    const fx = this.gui.addFolder('PostFX');
+    const fxApply = (): void => postfx.applySettings();
+    const preset = { quality: 'high' as RenderQuality };
+    fx.add(preset, 'quality', ['low', 'mid', 'high']).name('プリセット').onChange((q: RenderQuality) => {
+      postfx.applyPreset(q);
+      fx.controllers.forEach((c) => c.updateDisplay());
+    });
+    fx.add(postfx.settings, 'enabled').name('有効');
+    fx.add(postfx.settings, 'ao').name('AO').onChange(fxApply);
+    fx.add(postfx.settings, 'aoRadius', 0.1, 2, 0.05).name('AO 半径').onChange(fxApply);
+    fx.add(postfx.settings, 'aoIntensity', 0.2, 4, 0.1).name('AO 強度').onChange(fxApply);
+    fx.add(postfx.settings, 'aoSamples', 4, 32, 1).name('AO サンプル').onChange(fxApply);
+    fx.add(postfx.settings, 'bloom').name('Bloom').onChange(fxApply);
+    fx.add(postfx.settings, 'bloomThreshold', 0, 12, 0.1).name('Bloom 閾値').onChange(fxApply);
+    fx.add(postfx.settings, 'bloomIntensity', 0, 2, 0.01).name('Bloom 強度').onChange(fxApply);
+    fx.add(postfx.settings, 'dof').name('DoF').onChange(fxApply);
+    fx.add(postfx.settings, 'dofAperture', 0, 0.0005, 0.00001).name('DoF 絞り').onChange(fxApply);
+    fx.add(postfx.settings, 'dofMaxBlur', 0, 0.03, 0.001).name('DoF 最大ボケ').onChange(fxApply);
+    fx.add(postfx.settings, 'vignette', 0, 1, 0.01).name('ビネット').onChange(fxApply);
+    fx.add(postfx.settings, 'chromatic', 0, 0.01, 0.0001).name('色収差').onChange(fxApply);
+    fx.add(postfx.settings, 'grain', 0, 0.2, 0.005).name('グレイン').onChange(fxApply);
+    fx.add(postfx.settings, 'saturation', 0, 1.5, 0.01).name('彩度').onChange(fxApply);
+    fx.add(postfx.settings, 'gradeAmount', 0, 1, 0.01).name('グレード').onChange(fxApply);
+    fx.add(postfx.settings, 'smaa').name('SMAA').onChange(fxApply);
 
     const wind = this.gui.addFolder('Wind');
     const windState = { strength: getWindStrength() };

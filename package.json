@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm run test"
+    "check": "npm run typecheck && npm run test",
+    "predev": "node scripts/copy-decoders.mjs",
+    "prebuild": "node scripts/copy-decoders.mjs",
+    "postinstall": "node scripts/copy-decoders.mjs"
   },
   "license": "UNLICENSED",
   "type": "module",

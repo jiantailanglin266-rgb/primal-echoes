@@ -86,3 +86,25 @@ FPS 影響: ドローコール 250 → 614（影パスが 3 カスケード分�
 確認手順: `?debug=1` → 出発 → 右上パネル「Sky / Fog」「Wind」を操作。雨は F6 ではなく `__game.weather.force('rain')`（コンソール）で即時確認できる。
 
 FPS 影響: 三角形 19 万 → 36 万、ドローコール +12（草・木・岩は各 1 コール）。ペインで 60fps 維持。PMREM 焼き直しは 0.5 秒に 1 回で体感遅延なし。
+
+## Phase 3 — キャラクターとモンスターの glTF パイプライン（完了 2026-09-05）
+
+| 変更ファイル | 内容 |
+|---|---|
+| `scripts/copy-decoders.mjs` + package.json（predev/prebuild/postinstall） | three の Draco / Basis デコーダを `public/libs/` へコピー（git 管理外、常に three と同版） |
+| `src/presentation/render/AssetLoader.ts` | GLTFLoader + DRACOLoader + KTX2Loader。`loadModel(name)` は `assets/models/<name>.glb` を HEAD で確認してから読み、無ければ null。`parseModel(buffer)` でメモリ上の GLB も読める。`tuneMaterials`（envMapIntensity / roughness 一括、皮膚・鱗用に MeshPhysicalMaterial の sheen/clearcoat へ変換）、`fitToHeight` |
+| `src/presentation/render/CharacterRig.ts` | AnimationMixer ラッパー。状態 → クリップ名候補の対応表（PLAYER_CLIP_MAP / MONSTER_CLIP_MAP、Mixamo の命名揺れを部分一致で吸収）、0.12〜0.25 秒のクロスフェード、once クリップの再トリガー、複数ファイルのクリップ合成（addClips） |
+| `src/presentation/PlayerView.ts` / `MonsterView.ts` | glTF が読めたらプリミティブを隠して差し替え、ゲーム状態からクリップを駆動。当たり判定・移動ロジックは親 Object3D（core の位置/向き）に紐付いたまま。プレイヤーは右手ボーンがあれば武器をそこへ付け替え |
+| `tests/presentation/CharacterRig.test.ts` | クリップ解決・状態切替・合成のテスト |
+
+フォールバック: モデル未配置ではこれまでのプリミティブがそのまま動く（本番ページの挙動は不変）。
+
+### モデル差し替え手順
+1. リグ済み glTF を用意（Sketchfab / Fab は CC-BY 以上のライセンスを確認。Meshy / Tripo で生成 → Mixamo で自動リグ → Mixamo からモーション付き FBX を書き出し → Blender で glTF 出力）
+2. 圧縮:
+   ```bash
+   npx @gltf-transform/cli optimize ranger.glb ranger.opt.glb --compress draco --texture-compress ktx2
+   ```
+3. `public/assets/models/ranger.glb`（プレイヤー）、`public/assets/models/valgaron.glb`（モンスター）として配置
+4. クリップ名は `CharacterRig.ts` の対応表に部分一致すればよい（例: "Walking", "mixamo.com|Roll"）。無い状態は `rig.missingStates` に溜まるので `?debug=1` で確認
+5. 複数の Mixamo モーション（同一スケルトン）は別 glb にして `rig.addClips(gltf.animations)` で合成

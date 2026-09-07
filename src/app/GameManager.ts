@@ -49,6 +49,7 @@ import { DebugOverlay } from '@debug/DebugOverlay';
 import { PlaytestBot } from '@debug/PlaytestBot';
 import { DebugPanel } from '@presentation/render/DebugPanel';
 import { Vegetation } from '@presentation/render/Vegetation';
+import { AssetLoader } from '@presentation/render/AssetLoader';
 import { EventBus } from '@shared/events/EventBus';
 import type { GameEvents } from '@shared/events/GameEvents';
 import { Random } from '@shared/rng/Random';
@@ -86,6 +87,7 @@ export class GameManager {
   private readonly gimmickView: GimmickView;
   private readonly hitSparks = new HitSparkView();
   private readonly vegetation: Vegetation;
+  readonly assets: AssetLoader;
   readonly player: Player;
   readonly monster: Monster;
   readonly monsterAI: MonsterAI;
@@ -196,7 +198,8 @@ export class GameManager {
     this.renderer.scene.add(this.hitSparks.object);
 
     this.player = new Player(this.balance.player, weapon, terrain);
-    this.playerView = new PlayerView(this.player);
+    this.assets = new AssetLoader(this.renderer.renderer);
+    this.playerView = new PlayerView(this.player, this.assets);
     this.renderer.scene.add(this.playerView.object);
 
     this.projectiles = new ProjectileManager(terrain);
@@ -215,7 +218,7 @@ export class GameManager {
         this.events.emit('monsterAttackStarted', { monsterId: this.monster.id, attackId: attack.id, telegraphSeconds: attack.telegraphSeconds });
       },
     });
-    this.monsterView = new MonsterView(this.monster);
+    this.monsterView = new MonsterView(this.monster, this.assets);
     this.renderer.scene.add(this.monsterView.object);
     this.projectileView = new ProjectileView();
     this.renderer.scene.add(this.projectileView.object);

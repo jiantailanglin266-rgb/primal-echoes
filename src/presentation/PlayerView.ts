@@ -4,6 +4,8 @@ import type { PhaseInfo } from '@core/combat/AttackData';
 import { Vec3 } from '@shared/math/Vec3';
 import { lerp } from '@shared/math/scalar';
 import { createRangerModel, createWeaponModel, type RangerModel } from './RangerModel';
+import { CharacterRig, PLAYER_CLIP_MAP } from './render/CharacterRig';
+import { fitToHeight, tuneMaterials, type AssetLoader } from './render/AssetLoader';
 
 /**
  * 武器ピボットの姿勢（オイラー角）。本番アニメが来るまでの手続きアニメ用キーポーズ。
@@ -36,13 +38,19 @@ export class PlayerView {
   private weaponId: string;
   private walkPhase = 0;
   private elapsed = 0;
+  /** glTF が読めたときのアニメーション制御。null ならプリミティブの手続きアニメ。 */
+  private rig: CharacterRig | null = null;
+  private lastAttackInstance = -1;
 
   /** 描画に使った補間済み位置。カメラ追従などで再利用する。 */
   get renderPosition(): Vec3 {
     return this.interpolated;
   }
 
-  constructor(private readonly player: Player) {
+  constructor(
+    private readonly player: Player,
+    loader: AssetLoader | null = null,
+  ) {
     this.weaponId = player.combat.weapon.id;
     this.model = createRangerModel(player.combat.weapon.weight);
     this.object = new THREE.Group();
@@ -50,6 +58,35 @@ export class PlayerView {
     this.model.weaponPivot.clear();
     this.model.weaponPivot.add(createWeaponModel(player.combat.weapon.weight, weaponKind(this.weaponId)));
     this.applyPose(WEAPON_POSES.rest);
+    if (loader) void this.tryLoadModel(loader);
+  }
+
+  /** `assets/models/ranger.glb` があればプリミティブを隠して差し替える。無ければ何もしない。 */
+  private async tryLoadModel(loader: AssetLoader): Promise<void> {
+    const gltf = await loader.loadModel('ranger');
+    if (!gltf) return;
+    this.attachModel(gltf.scene, gltf.animations);
+  }
+
+  /** 読み込み済みモデルを組み込む（テストや差し替え UI からも使う）。 */
+  attachModel(root: THREE.Object3D, animations: readonly THREE.AnimationClip[]): void {
+    tuneMaterials(root, { envMapIntensity: 1.0 });
+    fitToHeight(root, 1.8);
+    this.rig = new CharacterRig(root, animations, PLAYER_CLIP_MAP);
+    this.model.group.visible = false;
+    this.object.add(root);
+    // 右手のボーンがあれば武器をそこへ、無ければ肩ピボットのまま
+    const hand = findBone(root, ['righthand', 'hand_r', 'hand.r']);
+    if (hand) {
+      hand.add(this.model.weaponPivot);
+      this.model.weaponPivot.position.set(0, 0, 0);
+      this.model.weaponPivot.visible = true;
+    }
+    this.rig.setState('idle');
+  }
+
+  get usesModel(): boolean {
+    return this.rig !== null;
   }
 
   /** 武器を持ち替えたらモデルの武器を差し替える。 */
@@ -72,8 +109,35 @@ export class PlayerView {
     this.object.rotation.y = controller.yaw;
 
     const speed = frameDt > 0 ? moved / frameDt : 0;
-    this.animateBody(speed, frameDt);
-    this.updateWeaponPose();
+    if (this.rig) {
+      this.driveRig(speed, frameDt);
+    } else {
+      this.animateBody(speed, frameDt);
+      this.updateWeaponPose();
+    }
+  }
+
+  /** ゲーム状態 → クリップ状態。once のものは新しい攻撃ごとに頭から再生する。 */
+  private driveRig(speed: number, frameDt: number): void {
+    const rig = this.rig as CharacterRig;
+    const c = this.player.controller;
+    const combat = this.player.combat;
+    if (c.state === 'downed') rig.setState('die', { once: true });
+    else if (c.state === 'hurt') rig.setState('hit', { once: true });
+    else if (c.state === 'dodge') rig.setState('dodge', { once: true, timeScale: 1.4 });
+    else if (c.state === 'interact') rig.setState('interact');
+    else if (combat.state === 'charging') rig.setState('charge');
+    else if (combat.state === 'attacking' && combat.current) {
+      const heavy = combat.current.attack.id.includes('heavy') || combat.current.attack.id.includes('charge');
+      const state = heavy ? 'attack_heavy' : 'attack_light';
+      if (combat.current.instanceId !== this.lastAttackInstance) {
+        this.lastAttackInstance = combat.current.instanceId;
+        rig.retrigger(state, { once: true });
+      } else rig.setState(state, { once: true });
+    } else if (c.state === 'dash') rig.setState('run');
+    else if (c.state === 'walk' && speed > 0.3) rig.setState('walk');
+    else rig.setState('idle');
+    rig.update(frameDt);
   }
 
   private animateBody(speed: number, frameDt: number): void {
@@ -153,6 +217,16 @@ export class PlayerView {
     // 攻撃中は右腕も武器と一緒に動かす
     this.model.parts.armR.rotation.x = pose.x * 0.6;
   }
+}
+
+function findBone(root: THREE.Object3D, names: readonly string[]): THREE.Object3D | null {
+  let found: THREE.Object3D | null = null;
+  root.traverse((obj) => {
+    if (found) return;
+    const n = obj.name.toLowerCase().replace(/[^a-z._]/g, '');
+    if (names.some((name) => n.includes(name))) found = obj;
+  });
+  return found;
 }
 
 function weaponKind(weaponId: string): 'blade' | 'hammer' {

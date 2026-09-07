@@ -4,6 +4,8 @@ import type { MonsterPart } from '@core/monster/MonsterPart';
 import type { ShapeData } from '@core/combat/shapes';
 import { Vec3 } from '@shared/math/Vec3';
 import { decorateValgaronPart, type PartDecoration } from './ValgaronDecor';
+import { CharacterRig, MONSTER_CLIP_MAP } from './render/CharacterRig';
+import { fitToHeight, tuneMaterials, type AssetLoader } from './render/AssetLoader';
 
 const PART_COLORS: Record<string, number> = {
   head: 0x7d6a52,
@@ -45,8 +47,42 @@ export class MonsterView {
   private walkPhase = 0;
   /** 生態 AI から渡される「眠っている / 食べている」等の仮ポーズ指示。 */
   ecologyPose: 'none' | 'sleep' | 'eat' | 'drink' = 'none';
+  private rig: CharacterRig | null = null;
+  private lastAttackInstance = -1;
 
-  constructor(private readonly monster: Monster) {
+  constructor(
+    private readonly monster: Monster,
+    loader: AssetLoader | null = null,
+  ) {
+    this.buildProcedural();
+    if (loader) void this.tryLoadModel(loader);
+  }
+
+  private async tryLoadModel(loader: AssetLoader): Promise<void> {
+    const gltf = await loader.loadModel(this.monster.def.id);
+    if (!gltf) return;
+    this.attachModel(gltf.scene, gltf.animations);
+  }
+
+  /** 読み込み済みモデルを組み込む。当たり判定（部位形状）はそのまま、描画だけ差し替える。 */
+  attachModel(root: THREE.Object3D, animations: readonly THREE.AnimationClip[]): void {
+    tuneMaterials(root, { envMapIntensity: 1.0, organic: { sheen: 0.25, sheenColor: 0x8a7a6a, clearcoat: 0.1 } });
+    // 頭頂の高さ（頭部球の上端）に合わせる
+    const head = this.monster.def.parts.find((p) => p.id === 'head');
+    const top = head && head.shape.type === 'sphere' ? head.shape.offset.y + head.shape.radius : this.monster.def.stats.bodyRadius * 2;
+    fitToHeight(root, top);
+    this.rig = new CharacterRig(root, animations, MONSTER_CLIP_MAP);
+    this.bodyGroup.visible = false;
+    this.object.add(root);
+    this.rig.setState('idle');
+  }
+
+  get usesModel(): boolean {
+    return this.rig !== null;
+  }
+
+  private buildProcedural(): void {
+    const monster = this.monster;
     this.object.name = `monster-${monster.id}`;
     this.object.add(this.bodyGroup);
     for (const part of monster.parts) {
@@ -67,6 +103,29 @@ export class MonsterView {
       this.bodyGroup.add(pivot);
       this.visuals.push({ part, pivot, mesh, material, decoration, flashRemaining: 0 });
     }
+  }
+
+  /** ゲーム状態 → クリップ状態（glTF 使用時）。 */
+  private driveRig(speed: number, frameDt: number): void {
+    const rig = this.rig as CharacterRig;
+    const m = this.monster;
+    const combat = m.combat;
+    if (!m.isAlive) rig.setState('die', { once: true });
+    else if (combat.state === 'roar') rig.setState('roar', { once: true });
+    else if (combat.state === 'flinch') rig.setState('flinch', { once: true });
+    else if (combat.state === 'stunned') rig.setState('stun');
+    else if (combat.state === 'toppled') rig.setState('topple', { once: true });
+    else if (combat.state === 'attacking' && combat.current) {
+      if (combat.current.instanceId !== this.lastAttackInstance) {
+        this.lastAttackInstance = combat.current.instanceId;
+        rig.retrigger('attack', { once: true, timeScale: m.condition.speedMultiplier });
+      } else rig.setState('attack', { once: true });
+    } else if (this.ecologyPose === 'sleep') rig.setState('sleep');
+    else if (this.ecologyPose === 'eat' || this.ecologyPose === 'drink') rig.setState('eat');
+    else if (speed > m.def.stats.walkSpeed * 1.5) rig.setState('run', { timeScale: m.condition.speedMultiplier });
+    else if (speed > 0.2) rig.setState('walk', { timeScale: m.condition.speedMultiplier });
+    else rig.setState('idle');
+    rig.update(frameDt);
   }
 
   get renderPosition(): Vec3 {
@@ -131,6 +190,10 @@ export class MonsterView {
     }
 
     const speed = frameDt > 0 ? moved / frameDt : 0;
+    if (this.rig) {
+      this.driveRig(speed, frameDt);
+      return;
+    }
     this.animateLimbs(speed, frameDt);
     this.applyBodyPose(frameDt);
   }

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PRIMAL ECHOES — Style Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:wght@500;600;700&family=Shippori+Mincho:wght@400;500;700&display=swap" />
+<link rel="stylesheet" href="../../src/ui/tokens.css" />
+<style>
+  html, body { margin: 0; background: var(--pe-bg); color: var(--pe-text); font: 400 var(--pe-fs-md)/var(--pe-lh-body) var(--pe-font-body); letter-spacing: var(--pe-ls-body); }
+  main { max-width: 1080px; margin: 0 auto; padding: 64px 32px 120px; }
+  section { margin-top: 72px; }
+  .pe-eyebrow { font: 600 var(--pe-fs-xs)/1 var(--pe-font-display); letter-spacing: var(--pe-ls-eyebrow); color: var(--pe-accent); text-transform: uppercase; }
+  .pe-heading { font: 500 var(--pe-fs-xl)/var(--pe-lh-tight) var(--pe-font-body); margin: 10px 0 0; }
+  .pe-heading::after { content: ''; display: block; width: 24px; height: 1px; margin-top: 10px; background: var(--pe-accent); }
+  .note { color: var(--pe-text-dim); font-size: var(--pe-fs-sm); margin-top: 8px; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 24px; }
+  .swatch { border: 1px solid var(--pe-line); border-radius: var(--pe-radius); overflow: hidden; }
+  .swatch i { display: block; height: 72px; }
+  .swatch b { display: block; padding: 8px 10px 2px; font-weight: 500; font-size: var(--pe-fs-sm); }
+  .swatch code { display: block; padding: 0 10px 8px; color: var(--pe-text-dim); font: 500 var(--pe-fs-xs)/1.6 var(--pe-font-mono); }
+  .logo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+  .logo-box { padding: 40px; border: 1px solid var(--pe-line); border-radius: var(--pe-radius); display: grid; place-items: center; background: var(--pe-bg-deep); }
+  .logo-box.light { background: #efe9dc; color: var(--pe-c-basalt); }
+  .logo-box img, .logo-box svg { max-width: 100%; }
+  .type-sample { margin-top: 24px; border-top: 1px solid var(--pe-line); padding-top: 24px; }
+  .t-display { font: 600 var(--pe-fs-display)/1.1 var(--pe-font-display); letter-spacing: var(--pe-ls-display); text-transform: uppercase; color: var(--pe-accent); }
+  .t-title { font: 500 var(--pe-fs-3xl)/1.2 var(--pe-font-body); margin-top: 16px; }
+  .t-body { max-width: 34em; margin-top: 16px; }
+  .t-num { font: 600 var(--pe-fs-2xl)/1 var(--pe-font-num); font-variant-numeric: lining-nums tabular-nums; color: var(--pe-text); margin-top: 16px; letter-spacing: 0.04em; }
+  .t-meta { display: flex; gap: 32px; color: var(--pe-text-dim); font-size: var(--pe-fs-sm); margin-top: 12px; }
+  .icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; margin-top: 24px; }
+  .icon { display: grid; place-items: center; gap: 8px; padding: 14px 8px; border: 1px solid var(--pe-line); border-radius: var(--pe-radius); font-size: var(--pe-fs-xs); color: var(--pe-text-dim); }
+  .icon svg { width: 28px; height: 28px; color: var(--pe-text); }
+  .pe-slab { position: relative; background: var(--pe-bg-panel); border: 1px solid var(--pe-line); border-radius: var(--pe-radius); padding: 24px 28px; }
+  .pe-slab::before, .pe-slab::after { content: ''; position: absolute; width: 6px; height: 6px; border: 1px solid var(--pe-accent-deep); }
+  .pe-slab::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+  .pe-slab::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+  .pe-button { font: 500 var(--pe-fs-md)/1 var(--pe-font-body); letter-spacing: var(--pe-ls-button); padding: 12px 22px; color: var(--pe-accent); background: transparent; border: 1px solid var(--pe-accent-deep); border-radius: var(--pe-radius); cursor: pointer; transition: color var(--pe-dur-fast) var(--pe-ease), border-color var(--pe-dur-fast) var(--pe-ease); }
+  .pe-button:hover { color: var(--pe-accent-hover); border-color: var(--pe-accent); }
+  .pe-button-primary { color: var(--pe-text-on-accent); background: var(--pe-accent); }
+  .components { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+  .bar { height: 6px; background: rgba(230,223,207,0.1); margin-top: 10px; position: relative; }
+  .bar i { position: absolute; inset: 0 auto 0 0; }
+  .rarity { display: flex; gap: 16px; margin-top: 12px; font-size: var(--pe-fs-sm); }
+  .rarity span::before { content: '◆ '; }
+  .dont { margin-top: 16px; color: var(--pe-text-dim); font-size: var(--pe-fs-sm); }
+  .dont li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main>
+  <div class="pe-eyebrow">Style Guide</div>
+  <h1 class="pe-heading">PRIMAL ECHOES — ビジュアルアイデンティティ</h1>
+  <p class="note">docs/brand/VISUAL_IDENTITY.md の見本。トークンは src/ui/tokens.css を直接読んでいる。</p>
+
+  <section>
+    <div class="pe-eyebrow">01 Logo</div>
+    <h2 class="pe-heading">ロゴ</h2>
+    <div class="logo-row">
+      <div class="logo-box"><img src="../../public/assets/brand/logo.svg" alt="PRIMAL ECHOES" style="width:420px" /></div>
+      <div class="logo-box"><img src="../../public/assets/brand/logo-vertical.svg" alt="" style="width:260px" /></div>
+      <div class="logo-box light"><img src="../../public/assets/brand/logo-mono.svg" alt="" style="width:420px; filter: brightness(0.12)" /></div>
+      <div class="logo-box"><img src="../../public/assets/brand/symbol-gold.svg" alt="" style="width:120px" /><img src="../../public/assets/brand/favicon.svg" alt="" style="width:32px; margin-top:24px" /></div>
+    </div>
+    <p class="note">シンボル「裂かれた残響」: 減衰する三重の環を三条の爪痕が断つ。最小サイズ 横組み 160px / シンボル 16px。変形・色変更・グロー禁止。</p>
+  </section>
+
+  <section>
+    <div class="pe-eyebrow">02 Color</div>
+    <h2 class="pe-heading">カラーシステム</h2>
+    <div class="swatches">
+      <div class="swatch"><i style="background:var(--pe-c-obsidian)"></i><b>obsidian</b><code>#0b0c0a</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-basalt)"></i><b>basalt</b><code>#15171a</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-slate)"></i><b>slate</b><code>#22252a</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-ash)"></i><b>ash</b><code>#3b3e42</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-bone)"></i><b>bone</b><code>#e6dfcf</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-bone-dim)"></i><b>bone-dim</b><code>#a39c8c</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-gold)"></i><b>gold（primary）</b><code>#c9a962</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-gold-deep)"></i><b>gold-deep</b><code>#8f7538</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-gold-pale)"></i><b>gold-pale</b><code>#e7d7a8</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-moss)"></i><b>moss（secondary）</b><code>#6f8a5a</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-verdigris)"></i><b>verdigris（echo）</b><code>#5f8a86</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-oxblood)"></i><b>oxblood</b><code>#8c3a2f</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-ember)"></i><b>ember</b><code>#d1663f</code></div>
+      <div class="swatch"><i style="background:var(--pe-c-sand)"></i><b>sand</b><code>#cdb883</code></div>
+    </div>
+    <div class="rarity">
+      <span style="color:var(--pe-rarity-common)">common</span>
+      <span style="color:var(--pe-rarity-uncommon)">uncommon</span>
+      <span style="color:var(--pe-rarity-rare)">rare</span>
+      <span style="color:var(--pe-rarity-epic)">epic</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="pe-eyebrow">03 Type</div>
+    <h2 class="pe-heading">タイポグラフィ</h2>
+    <div class="type-sample">
+      <div class="t-display">The first world<br>still echoes</div>
+      <div class="t-title">原初は、まだ鳴っている。</div>
+      <p class="t-body">ヴァルディアは、海図の外にある大陸である。この地の生物は「残響」と呼ばれる力を体内に宿している。狩りとは、原初がいまも鳴っているこの大陸で、その響きを最も近くで聴く行為である。</p>
+      <div class="t-num">12:47.08 &nbsp; 3,240 &nbsp; ×5</div>
+      <div class="t-meta"><span>Cinzel 600 — display</span><span>Shippori Mincho 400/500 — body</span><span>Cormorant Garamond 600 — numerals</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="pe-eyebrow">04 Icons</div>
+    <h2 class="pe-heading">アイコン</h2>
+    <div class="icons" id="icons"></div>
+    <p class="note">線幅 1.5、24×24、currentColor。public/assets/brand/icons.svg のスプライトから &lt;use&gt; で参照。</p>
+  </section>
+
+  <section>
+    <div class="pe-eyebrow">05 Components</div>
+    <h2 class="pe-heading">グラフィック言語</h2>
+    <div class="components">
+      <div class="pe-slab">
+        <div class="pe-eyebrow">Verdant Outpost</div>
+        <h3 class="pe-heading" style="font-size:var(--pe-fs-lg)">翠嵐前哨</h3>
+        <p class="t-body" style="font-size:var(--pe-fs-sm); color:var(--pe-text-dim)">石板パネル。面と 1px の罫線、四隅の金の刻み。角丸 2px。</p>
+        <div style="display:flex; gap:12px; margin-top:16px"><button class="pe-button pe-button-primary">狩りに出る</button><button class="pe-button">鍛える</button></div>
+      </div>
+      <div class="pe-slab">
+        <div class="pe-eyebrow">Hunter</div>
+        <div style="margin-top:12px; font-size:var(--pe-fs-sm)">体力</div>
+        <div class="bar"><i style="width:70%; background:var(--pe-hp)"></i><i style="width:78%; background:var(--pe-hp-ghost); z-index:-1"></i></div>
+        <div style="margin-top:12px; font-size:var(--pe-fs-sm)">気力</div>
+        <div class="bar" style="height:4px"><i style="width:45%; background:var(--pe-stamina)"></i></div>
+        <div style="margin-top:12px; font-size:var(--pe-fs-sm); color:var(--pe-beast)">ヴァルガロン</div>
+        <div class="bar"><i style="width:32%; background:var(--pe-beast)"></i></div>
+      </div>
+    </div>
+    <ul class="dont">
+      <li>やらない: ネオン、青白い発光、丸ゴシック、角丸 8px 以上、影の重ね、赤い点滅、金以外の 2 色目。</li>
+      <li>動き: 320ms、フェード＋4px の上昇のみ。点滅・バウンド・スライドインは使わない。</li>
+    </ul>
+  </section>
+</main>
+<script>
+  const ids = ['hp','stamina','blade','saber','hammer','bow','twin','lance','potion','material','core','trace','echo','hunt','forge','journal','map','compass','timer','rain','sun','cave','roar','break','sever','settings','sound','pause','close','check','gamepad','keyboard','mouse','photo','back'];
+  const grid = document.getElementById('icons');
+  fetch('../../public/assets/brand/icons.svg').then((r) => r.text()).then((svg) => {
+    const holder = document.createElement('div');
+    holder.innerHTML = svg;
+    document.body.prepend(holder.firstElementChild);
+    for (const id of ids) {
+      const el = document.createElement('div');
+      el.className = 'icon';
+      el.innerHTML = `<svg><use href="#pe-icon-${id}"/></svg><span>${id}</span>`;
+      grid.appendChild(el);
+    }
+  }).catch(() => { grid.textContent = 'icons.svg が見つかりません'; });
+</script>
+</body>
+</html>

@@ -1,21 +1,14 @@
 :root {
   color-scheme: dark;
-  --pe-ui-font: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
-  --pe-display-font: 'Bahnschrift', 'Segoe UI', 'Noto Sans JP', system-ui, sans-serif;
-  --pe-mono-font: 'Cascadia Mono', 'Consolas', 'Menlo', monospace;
-  --pe-hud-fg: #e8e4d8;
-  --pe-hud-dim: #a39d8f;
-  --pe-hud-bg: rgba(10, 12, 14, 0.55);
-  --pe-panel-bg: rgba(16, 19, 22, 0.86);
-  --pe-line: rgba(232, 228, 216, 0.14);
-  --pe-accent: #d8b26a;
-  --pe-hp: #7fc98a;
-  --pe-hp-low: #ff6b4a;
-  --pe-stamina: #e8d27a;
-  --pe-monster: #c9614f;
-  --pe-damage: #f4e9cf;
-  --pe-damage-crit: #ffb347;
-  --pe-damage-break: #ff6b4a;
+  /* 旧変数名は tokens.css の用途別トークンへの別名（段階的に置き換える） */
+  --pe-ui-font: var(--pe-font-body);
+  --pe-display-font: var(--pe-font-display);
+  --pe-mono-font: var(--pe-font-mono);
+  --pe-hud-fg: var(--pe-text);
+  --pe-hud-dim: var(--pe-text-dim);
+  --pe-hud-bg: var(--pe-bg-hud);
+  --pe-panel-bg: var(--pe-bg-panel);
+  --pe-monster: var(--pe-beast);
 }
 
 html,
@@ -25,8 +18,10 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #0b0d10;
+  background: var(--pe-bg);
   font-family: var(--pe-ui-font);
+  font-size: var(--pe-fs-md);
+  letter-spacing: var(--pe-ls-body);
   color: var(--pe-hud-fg);
 }
 

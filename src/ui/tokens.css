@@ -1,0 +1,93 @@
+/*
+ * PRIMAL ECHOES — デザイントークン（docs/brand/VISUAL_IDENTITY.md）
+ * UI の色・書体・間隔はすべてここから取る。直値の色をコンポーネント CSS に書かない。
+ */
+:root {
+  /* ---- パレット（素材の色: 黒曜石・玄武岩・骨・古金・苔・緑青・赤鉄） ---- */
+  --pe-c-obsidian: #0b0c0a;
+  --pe-c-basalt: #15171a;
+  --pe-c-slate: #22252a;
+  --pe-c-ash: #3b3e42;
+  --pe-c-bone: #e6dfcf;
+  --pe-c-bone-dim: #a39c8c;
+  --pe-c-bone-faint: #6f6a5f;
+  --pe-c-gold: #c9a962;
+  --pe-c-gold-deep: #8f7538;
+  --pe-c-gold-pale: #e7d7a8;
+  --pe-c-moss: #6f8a5a;
+  --pe-c-moss-deep: #3f5236;
+  --pe-c-verdigris: #5f8a86;
+  --pe-c-oxblood: #8c3a2f;
+  --pe-c-ember: #d1663f;
+  --pe-c-sand: #cdb883;
+
+  /* ---- 用途別トークン ---- */
+  --pe-bg: var(--pe-c-basalt);
+  --pe-bg-deep: var(--pe-c-obsidian);
+  --pe-bg-panel: rgba(21, 23, 26, 0.86);
+  --pe-bg-hud: rgba(11, 12, 10, 0.5);
+  --pe-bg-screen: linear-gradient(180deg, rgba(11, 12, 10, 0.84), rgba(11, 12, 10, 0.95));
+  --pe-line: rgba(230, 223, 207, 0.14);
+  --pe-line-strong: rgba(230, 223, 207, 0.32);
+  --pe-text: var(--pe-c-bone);
+  --pe-text-dim: var(--pe-c-bone-dim);
+  --pe-text-faint: var(--pe-c-bone-faint);
+  --pe-text-on-accent: #14120c;
+  --pe-accent: var(--pe-c-gold);
+  --pe-accent-hover: var(--pe-c-gold-pale);
+  --pe-accent-deep: var(--pe-c-gold-deep);
+  --pe-hp: var(--pe-c-moss);
+  --pe-hp-low: var(--pe-c-ember);
+  --pe-hp-ghost: rgba(230, 223, 207, 0.35);
+  --pe-stamina: var(--pe-c-sand);
+  --pe-danger: var(--pe-c-oxblood);
+  --pe-strike: var(--pe-c-ember);
+  --pe-echo: var(--pe-c-verdigris);
+  --pe-beast: #b0654f;
+  --pe-damage: #f1e9d6;
+  --pe-damage-crit: #e9a352;
+  --pe-damage-break: var(--pe-c-ember);
+  --pe-rarity-common: var(--pe-c-bone-dim);
+  --pe-rarity-uncommon: var(--pe-c-moss);
+  --pe-rarity-rare: var(--pe-c-verdigris);
+  --pe-rarity-epic: var(--pe-c-gold);
+
+  /* ---- 書体 ---- */
+  --pe-font-display: 'Cinzel', 'Times New Roman', 'Yu Mincho', serif;
+  --pe-font-body: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
+  --pe-font-num: 'Cormorant Garamond', 'Cinzel', 'Georgia', serif;
+  --pe-font-mono: 'Cascadia Mono', 'Consolas', 'Menlo', monospace;
+
+  /* ---- サイズスケール（1.25 倍） ---- */
+  --pe-fs-xs: 11px;
+  --pe-fs-sm: 13px;
+  --pe-fs-md: 15px;
+  --pe-fs-lg: 19px;
+  --pe-fs-xl: 24px;
+  --pe-fs-2xl: 30px;
+  --pe-fs-3xl: 38px;
+  --pe-fs-display: 56px;
+  --pe-ls-display: 0.28em;
+  --pe-ls-eyebrow: 0.34em;
+  --pe-ls-button: 0.18em;
+  --pe-ls-body: 0.04em;
+  --pe-lh-body: 1.8;
+  --pe-lh-tight: 1.2;
+
+  /* ---- 間隔（4px 基準） ---- */
+  --pe-sp-1: 4px;
+  --pe-sp-2: 8px;
+  --pe-sp-3: 12px;
+  --pe-sp-4: 16px;
+  --pe-sp-6: 24px;
+  --pe-sp-8: 32px;
+  --pe-sp-12: 48px;
+  --pe-sp-16: 64px;
+
+  /* ---- 形・動き ---- */
+  --pe-radius: 2px;
+  --pe-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --pe-dur-fast: 160ms;
+  --pe-dur: 320ms;
+  --pe-dur-slow: 900ms;
+}

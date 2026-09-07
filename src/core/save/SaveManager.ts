@@ -5,6 +5,8 @@ export const SAVE_VERSION = 1 as const;
 
 export interface SaveSettings {
   masterVolume: number;
+  musicVolume: number;
+  sfxVolume: number;
 }
 
 export interface SaveDataV1 {
@@ -73,7 +75,7 @@ export function createEmptySave(): SaveDataV1 {
     crafting: { weaponLevels: {} },
     questClears: {},
     equippedWeaponId: 'titan_blade',
-    settings: { masterVolume: 0.6 },
+    settings: { masterVolume: 0.6, musicVolume: 0.8, sfxVolume: 1 },
   };
 }
 
@@ -125,6 +127,8 @@ function migrate(parsed: unknown): SaveData | null {
     equippedWeaponId: typeof obj.equippedWeaponId === 'string' ? obj.equippedWeaponId : base.equippedWeaponId,
     settings: {
       masterVolume: typeof obj.settings?.masterVolume === 'number' ? clamp01(obj.settings.masterVolume) : base.settings.masterVolume,
+      musicVolume: typeof obj.settings?.musicVolume === 'number' ? clamp01(obj.settings.musicVolume) : base.settings.musicVolume,
+      sfxVolume: typeof obj.settings?.sfxVolume === 'number' ? clamp01(obj.settings.sfxVolume) : base.settings.sfxVolume,
     },
   };
 }

@@ -86,3 +86,24 @@
 言語切替: 設定 → 言語 で即時反映（メニュー・設定・前哨・HUD・討伐画面を確認済み）。`localStorage pe.lang` に保存。
 
 けん君が読むもの: `docs/brand/COPY_DECK.md` を通読し、直したい行を JSON に反映（キー名で検索できる）。特に 30 本の断片テキストと、討伐・帰還の一言 20 本は好みが出る箇所。
+
+## B6 サウンドアイデンティティ（2026-09-07）
+成果物:
+| ファイル | 内容 |
+|---|---|
+| `docs/brand/SOUND_DIRECTION.md` | 方向性（BGM は環境音主体・層の音量で遷移、SE は石・骨・革、サウンドロゴ 2 秒、無音でも成立）、実装、素材の置き場と入手手順 |
+| `src/audio/AudioEngine.ts` | AudioContext、バス（music / sfx / ambience → master）、初回操作で解錠、素材の読み込み（無ければ合成） |
+| `src/audio/synth.ts` | ノイズ層・正弦波層、風・ドローン・素材のループ、フェード |
+| `src/audio/Sfx.ts` | 効果音 17 種（矩形波を使わない合成レシピ、ピッチ揺らぎ ±3〜12%、間引き）。素材があれば差し替え |
+| `src/audio/Music.ts` | 4 層（bed / pulse / strings / drums）を場面と激しさで混ぜる。合成の太鼓は BPM 72 の 2 小節パターンを先読み予約 |
+| `src/audio/Ambience.ts` | エリア別の風・虫・水・洞・雨。雨は虫を黙らせる |
+| `src/audio/AudioManager.ts` | 窓口。`play` / `playLogo` / `setMusic` / `setAmbience` / 音量 3 系統 / `update` |
+| `src/app/GameManager.ts` | 場面→音（タイトル／探索／戦闘＋怒り／討伐）、エリアと雨→環境音、足音・回避・薬の音、最初の入力でサウンドロゴ |
+| `src/ui/screens/SettingsScreen.ts`, `src/core/save/SaveManager.ts` | 音量を 全体／音楽／効果音 の 3 つに。保存に持つ |
+| `tests/audio/mixers.test.ts` | 層の音量表・フェード秒・環境音表・ピッチ幅・矩形波禁止・音の長さ |
+
+削除: `src/presentation/AudioManager.ts`。
+
+制約: ブラウザはユーザー操作の前に音を出せないため、サウンドロゴは「タイトルで最初の鍵を押した瞬間」に鳴る（タイトル表示と同時には鳴らせない）。素材ファイルが無い状態でもすべて合成音で鳴り、無音でも視覚の手応え（Hit Stop・火花・バナー・色収差）で進行できる。
+
+けん君が決めること: 素材音源を入れるか（入れるなら `public/assets/audio/` の命名に従い、README の出典欄へ）。合成音のままでも成立するが、太鼓と咆哮は素材にすると質感が一段上がる。

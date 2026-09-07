@@ -11,7 +11,7 @@ import { CarveController } from '@core/inventory/CarveController';
 import { mergeDrops, rollPartBreakRewards, rollQuestRewards, type LootDrop } from '@core/inventory/LootTable';
 import { CraftingManager } from '@core/crafting/CraftingManager';
 import { LocalStorageSaveStorage, SaveManager, createEmptySave, type SaveData } from '@core/save/SaveManager';
-import { AudioManager } from '@presentation/AudioManager';
+import { AudioManager } from '@audio/AudioManager';
 import { ScreenManager } from '@ui/screens/ScreenManager';
 import { StudioScreen } from '@ui/screens/StudioScreen';
 import { TitleScreen } from '@ui/screens/TitleScreen';
@@ -136,6 +136,8 @@ export class GameManager {
   /** 直近にいたエリア（到達バナー用）。 */
   private lastAreaId: string | null = null;
   private lastFrameDt = 1 / 60;
+  private lastControllerState = '';
+  private footstepTimer = 0;
   private paused = false;
   /** `?bot=1` で有効。通しプレイの自動検証用。 */
   bot: PlaytestBot | null = null;
@@ -326,10 +328,12 @@ export class GameManager {
     this.codexScreen = new CodexScreen();
     this.codexScreen.onBack = () => this.enterMenu();
     this.settingsScreen = new SettingsScreen(
-      { quality: this.quality.current, volume: this.audio.masterVolume, language: getLanguage() },
+      { quality: this.quality.current, volume: this.audio.masterVolume, musicVolume: this.audio.musicVolume, sfxVolume: this.audio.sfxVolume, language: getLanguage() },
       {
         onQuality: (q) => this.quality.apply(q),
         onVolume: (v) => this.audio.setMasterVolume(v),
+        onMusicVolume: (v) => this.audio.setMusicVolume(v),
+        onSfxVolume: (v) => this.audio.setSfxVolume(v),
         onLanguage: (l) => setLanguage(l),
       },
     );
@@ -474,7 +478,9 @@ export class GameManager {
     this.player.equipWeapon(this.crafting.restore(save.crafting, this.baseWeapon));
     this.questClears = { ...save.questClears };
     this.audio.setMasterVolume(save.settings.masterVolume);
-    this.settingsScreen.set({ volume: save.settings.masterVolume });
+    this.audio.setMusicVolume(save.settings.musicVolume);
+    this.audio.setSfxVolume(save.settings.sfxVolume);
+    this.settingsScreen.set({ volume: save.settings.masterVolume, musicVolume: save.settings.musicVolume, sfxVolume: save.settings.sfxVolume });
     this.savedAt = save.savedAt;
   }
 
@@ -485,6 +491,8 @@ export class GameManager {
     data.questClears = { ...this.questClears };
     data.equippedWeaponId = this.equippedWeaponId;
     data.settings.masterVolume = this.audio.masterVolume;
+    data.settings.musicVolume = this.audio.musicVolume;
+    data.settings.sfxVolume = this.audio.sfxVolume;
     return data;
   }
 
@@ -516,7 +524,7 @@ export class GameManager {
 
   private openSettings(from: 'menu' | 'pause'): void {
     this.settingsReturn = from;
-    this.settingsScreen.set({ quality: this.quality.current, volume: this.audio.masterVolume });
+    this.settingsScreen.set({ quality: this.quality.current, volume: this.audio.masterVolume, musicVolume: this.audio.musicVolume, sfxVolume: this.audio.sfxVolume });
     if (from === 'pause') this.screens.showOverlay('settings');
     else void this.screens.show('settings');
   }
@@ -549,9 +557,11 @@ export class GameManager {
     await this.screens.show('studio', { instant: true });
     await this.studioScreen.play();
     await this.screens.show('title');
+    this.audio.setMusic('title');
     await this.titleScreen.waitForInput();
     this.audio.unlock();
-    this.audio.play('uiClick');
+    // ブラウザは操作前に音を出せないので、サウンドロゴは最初の入力の瞬間に鳴らす
+    this.audio.playLogo();
     this.enterMenu();
   }
 
@@ -559,6 +569,36 @@ export class GameManager {
     this.setScene('hub');
     this.quest = null;
     void this.screens.show('menu');
+  }
+
+  /** 場面と状態から BGM の層・環境音・足音を決める。ロジックは読むだけ。 */
+  private updateAudioScene(frameDt: number): void {
+    const audio = this.audio;
+    if (this.scene === 'field') {
+      const monster = this.monster;
+      const detected = monster.isAlive && (this.monsterAI.perception.detected || this.hudModel.monsterVisible);
+      if (this.quest?.state === 'returning' || this.quest?.state === 'completed') audio.setMusic('resolve');
+      else if (detected && !this.paused) audio.setMusic('combat', monster.condition.isEnraged ? 1 : 0.35);
+      else audio.setMusic('explore');
+      audio.setAmbience(this.field.areaAt(this.player.controller.position)?.id ?? null, this.weather.isRaining);
+      // 足音と回避
+      const c = this.player.controller;
+      const moving = (c.state === 'walk' || c.state === 'dash') && this.playerView.renderPosition.horizontalDistanceTo(c.previousPosition) > 0.001;
+      this.footstepTimer -= frameDt;
+      if (moving && this.footstepTimer <= 0) {
+        this.footstepTimer = c.state === 'dash' ? 0.28 : 0.42;
+        audio.play('footstep');
+      }
+      if (c.state === 'dodge' && this.lastControllerState !== 'dodge') audio.play('dodge');
+      this.lastControllerState = c.state;
+    } else if (this.scene === 'result') {
+      audio.setMusic(this.quest?.state === 'completed' ? 'resolve' : 'explore');
+      audio.silenceAmbience();
+    } else {
+      audio.setMusic(this.cinematic ? 'title' : 'explore');
+      audio.silenceAmbience();
+    }
+    audio.update(frameDt);
   }
 
   /** タイトルやメニューの背景で、カメラをゆっくり回す。 */
@@ -1044,6 +1084,7 @@ export class GameManager {
     if (!this.player.useConsumable(def.effect)) return;
     this.pouch.remove(id);
     this.audio.play('itemGet');
+    this.audio.play('drink');
     this.pushNotice(t('hud.notices.used', { name: this.itemName(id), n: this.pouch.count(id) }));
   }
 
@@ -1101,6 +1142,7 @@ export class GameManager {
       this.hitboxDebugView.end();
     }
     this.lastFrameDt = frameDt;
+    this.updateAudioScene(frameDt);
     this.cameraRig.setOrbit(this.cinematic);
     // タイトル・メニューの背景では狩人を映さない（風景だけを見せる）
     this.playerView.object.visible = !this.cinematic;

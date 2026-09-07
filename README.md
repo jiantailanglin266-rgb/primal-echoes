@@ -67,6 +67,9 @@ npm run dev
 | `public/assets/hdri/environment.hdr` | 等距円筒 HDRI（Poly Haven など、2K 推奨） | IBL と背景。無ければ大気散乱の手続き空 |
 | `public/assets/textures/terrain/{grass,dirt,rock}_{albedo,normal}.jpg` | 地形テクスチャ 1K〜2K | 地形 3 層ブレンド（現状は手続き生成。差し替え対応は Phase 3 以降） |
 | `public/assets/models/*.glb` | glTF（Draco/KTX2 圧縮可） | プレイヤー/モンスター/植生（Phase 3 のパイプライン） |
+| `public/assets/audio/bgm/{bed,pulse,strings,drums}.ogg` | 同テンポ（BPM 72）のループ 4 本 | BGM の層。無ければ合成のドローンと太鼓 |
+| `public/assets/audio/amb/{wind,insects,water,rain,cave}.ogg` | 環境音ループ | エリア別環境音。無ければ合成 |
+| `public/assets/audio/sfx/*.ogg` | `src/audio/Sfx.ts` の `sample` 名 | 効果音。無ければ合成（石・骨・革の質感）。入手先と整え方は [docs/brand/SOUND_DIRECTION.md](docs/brand/SOUND_DIRECTION.md) |
 
 描画の調整は `?debug=1` の右上パネルで行い、決まった値をコードへ書き戻します。
 

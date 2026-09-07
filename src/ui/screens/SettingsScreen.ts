@@ -8,15 +8,20 @@ export type { Language };
 export interface SettingsModel {
   quality: RenderQuality;
   volume: number;
+  musicVolume: number;
+  sfxVolume: number;
   language: Language;
 }
 
 export interface SettingsCallbacks {
   onQuality: (q: RenderQuality) => void;
   onVolume: (v: number) => void;
+  onMusicVolume: (v: number) => void;
+  onSfxVolume: (v: number) => void;
   onLanguage: (l: Language) => void;
 }
 
+type VolumeKey = 'volume' | 'musicVolume' | 'sfxVolume';
 const LANGUAGE_LABELS: Record<Language, string> = { ja: '日本語', en: 'English' };
 const ACTIONS: BindingAction[] = ['moveForward', 'moveBackward', 'moveLeft', 'moveRight', 'dash', 'dodge', 'lightAttack', 'heavyAttack', 'lockOn', 'interact', 'useItem', 'pause'];
 const KEY_LABELS: Record<string, string> = { KeyW: 'W', KeyA: 'A', KeyS: 'S', KeyD: 'D', KeyJ: 'J', KeyK: 'K', KeyL: 'L', KeyQ: 'Q', KeyE: 'E', KeyH: 'H', ShiftLeft: 'Shift', ShiftRight: 'Shift', Space: 'Space', Tab: 'Tab', Escape: 'Esc', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', F9: 'F9' };
@@ -38,7 +43,9 @@ export class SettingsScreen implements Screen {
         </header>
         <div class="pe-settings__rows">
           <div class="pe-settings__row"><span class="pe-settings__label" data-i18n="settings.quality"></span><div class="pe-seg pe-settings__quality"></div></div>
-          <div class="pe-settings__row"><span class="pe-settings__label" data-i18n="settings.volume"></span><div class="pe-settings__volume"><input type="range" min="0" max="1" step="0.05" class="pe-range pe-menu-item" aria-label="volume" /><span class="pe-settings__value"></span></div></div>
+          <div class="pe-settings__row"><span class="pe-settings__label" data-i18n="settings.volume"></span><div class="pe-settings__volume"><input type="range" min="0" max="1" step="0.05" class="pe-range pe-menu-item" data-volume="volume" aria-label="volume" /><span class="pe-settings__value" data-volume-value="volume"></span></div></div>
+          <div class="pe-settings__row"><span class="pe-settings__label" data-i18n="settings.music"></span><div class="pe-settings__volume"><input type="range" min="0" max="1" step="0.05" class="pe-range pe-menu-item" data-volume="musicVolume" aria-label="music" /><span class="pe-settings__value" data-volume-value="musicVolume"></span></div></div>
+          <div class="pe-settings__row"><span class="pe-settings__label" data-i18n="settings.effects"></span><div class="pe-settings__volume"><input type="range" min="0" max="1" step="0.05" class="pe-range pe-menu-item" data-volume="sfxVolume" aria-label="effects" /><span class="pe-settings__value" data-volume-value="sfxVolume"></span></div></div>
           <div class="pe-settings__row"><span class="pe-settings__label" data-i18n="settings.language"></span><div class="pe-seg pe-settings__language"></div></div>
         </div>
         <h2 class="pe-settings__sub" data-i18n="settings.controls"></h2>
@@ -55,12 +62,14 @@ export class SettingsScreen implements Screen {
       this.model.language = v;
       callbacks.onLanguage(v);
     });
-    const range = q<HTMLInputElement>(this.root, '.pe-range');
-    range.addEventListener('input', () => this.setVolume(Number(range.value), true));
-    range.addEventListener('pe-nav', (e) => {
-      const dir = (e as CustomEvent<string>).detail;
-      this.setVolume(this.model.volume + (dir === 'left' ? -0.05 : 0.05), true);
-    });
+    for (const range of this.root.querySelectorAll<HTMLInputElement>('.pe-range')) {
+      const key = range.dataset['volume'] as VolumeKey;
+      range.addEventListener('input', () => this.setVolume(key, Number(range.value), true));
+      range.addEventListener('pe-nav', (e) => {
+        const dir = (e as CustomEvent<string>).detail;
+        this.setVolume(key, this.model[key] + (dir === 'left' ? -0.05 : 0.05), true);
+      });
+    }
     this.renderKeys();
     this.sync();
   }
@@ -71,9 +80,14 @@ export class SettingsScreen implements Screen {
     this.sync();
   }
 
-  private setVolume(value: number, notify: boolean): void {
-    this.model.volume = Math.max(0, Math.min(1, Math.round(value * 20) / 20));
-    if (notify) this.callbacks.onVolume(this.model.volume);
+  private setVolume(key: VolumeKey, value: number, notify: boolean): void {
+    const v = Math.max(0, Math.min(1, Math.round(value * 20) / 20));
+    this.model[key] = v;
+    if (notify) {
+      if (key === 'volume') this.callbacks.onVolume(v);
+      else if (key === 'musicVolume') this.callbacks.onMusicVolume(v);
+      else this.callbacks.onSfxVolume(v);
+    }
     this.sync();
   }
 
@@ -112,7 +126,9 @@ export class SettingsScreen implements Screen {
   private sync(): void {
     this.root.querySelectorAll<HTMLElement>('.pe-settings__quality .pe-seg__item').forEach((b) => b.classList.toggle('is-active', b.dataset['value'] === this.model.quality));
     this.root.querySelectorAll<HTMLElement>('.pe-settings__language .pe-seg__item').forEach((b) => b.classList.toggle('is-active', b.dataset['value'] === this.model.language));
-    q<HTMLInputElement>(this.root, '.pe-range').value = String(this.model.volume);
-    q(this.root, '.pe-settings__value').textContent = `${Math.round(this.model.volume * 100)}`;
+    for (const key of ['volume', 'musicVolume', 'sfxVolume'] as const) {
+      q<HTMLInputElement>(this.root, `.pe-range[data-volume="${key}"]`).value = String(this.model[key]);
+      q(this.root, `.pe-settings__value[data-volume-value="${key}"]`).textContent = `${Math.round(this.model[key] * 100)}`;
+    }
   }
 }

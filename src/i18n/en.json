@@ -128,7 +128,9 @@
       "interact": "Carve / topple",
       "useItem": "Drink",
       "pause": "Still"
-    }
+    },
+    "music": "Music",
+    "effects": "Effects"
   },
   "codex": {
     "eyebrow": "Codex",
@@ -274,7 +276,9 @@
     }
   },
   "data": {
-    "fields": { "verdant_tempest": "Verdant Gorge" },
+    "fields": {
+      "verdant_tempest": "Verdant Gorge"
+    },
     "areas": {
       "base_camp": "The Outpost",
       "forest": "The Mossfloor",
@@ -293,11 +297,22 @@
       "river": "A white rapid that splits the gorge. The beast drinks here and grinds the bank stones as it rolls. Keep away on flood days. Something lives under the water, the old hunters say.",
       "cave": "A hollow opening at the cliff's root. The first power runs dense inside, and the wounded beast withdraws here. Rock ledges hang loose from the ceiling. A sleeping beast's shell has gone quiet."
     },
-    "gimmicks": { "rockfall_cave_mouth": "Loose ledge", "rockfall_forest_edge": "Loose ledge" },
-    "quests": { "vs01_hunt_valgaron": "The Gorge Sovereign" },
-    "questDesc": { "vs01_hunt_valgaron": "Valgaron, a primal beast in a shell of rock, holds the Mossfloor. By day it drives the grazing herds and drinks at the Whitewater; wounded, it withdraws to its den. Read the traces and face it." },
-    "monsters": { "valgaron": "Valgaron" },
-    "monsterTitles": { "valgaron": "The Gorge Sovereign" },
+    "gimmicks": {
+      "rockfall_cave_mouth": "Loose ledge",
+      "rockfall_forest_edge": "Loose ledge"
+    },
+    "quests": {
+      "vs01_hunt_valgaron": "The Gorge Sovereign"
+    },
+    "questDesc": {
+      "vs01_hunt_valgaron": "Valgaron, a primal beast in a shell of rock, holds the Mossfloor. By day it drives the grazing herds and drinks at the Whitewater; wounded, it withdraws to its den. Read the traces and face it."
+    },
+    "monsters": {
+      "valgaron": "Valgaron"
+    },
+    "monsterTitles": {
+      "valgaron": "The Gorge Sovereign"
+    },
     "parts": {
       "head": "Horn",
       "body": "Shell",
@@ -307,8 +322,16 @@
       "hindleg_r": "Right hindleg",
       "tail": "Tail"
     },
-    "creatures": { "grast": "Grast", "skarv": "Skarv" },
-    "weapons": { "titan_blade": "Titan Blade", "rift_saber": "Rift Saber", "break_hammer": "Break Hammer", "arc_bow": "Arc Bow" },
+    "creatures": {
+      "grast": "Grast",
+      "skarv": "Skarv"
+    },
+    "weapons": {
+      "titan_blade": "Titan Blade",
+      "rift_saber": "Rift Saber",
+      "break_hammer": "Break Hammer",
+      "arc_bow": "Arc Bow"
+    },
     "recipes": {
       "titan_blade_lv1": "Titan Blade I (Rockscale)",
       "titan_blade_lv2": "Titan Blade II (Great Claw)",

@@ -28,6 +28,7 @@ export default defineConfig({
       '@presentation': alias('presentation'),
       '@ui': alias('ui'),
       '@i18n': alias('i18n'),
+      '@audio': alias('audio'),
       '@shared': alias('shared'),
       '@debug': alias('debug'),
     },

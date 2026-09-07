@@ -128,7 +128,9 @@
       "interact": "剥ぐ・崩す",
       "useItem": "薬を飲む",
       "pause": "静止"
-    }
+    },
+    "music": "音楽",
+    "effects": "効果音"
   },
   "codex": {
     "eyebrow": "Codex",
@@ -274,7 +276,9 @@
     }
   },
   "data": {
-    "fields": { "verdant_tempest": "翠嵐峡谷" },
+    "fields": {
+      "verdant_tempest": "翠嵐峡谷"
+    },
     "areas": {
       "base_camp": "前哨",
       "forest": "苔の谷底",
@@ -293,11 +297,22 @@
       "river": "谷を割って流れる白い早瀬。獣はここで喉を潤し、岸辺の岩を寝返りで削る。増水の日は近づくな。水の下に何かがいる、と古い狩人は言う。",
       "cave": "崖の根元に口を開けた洞。奥は原初の力が濃く、獣は傷を負うとここへ退く。天井から岩棚が崩れかけている。眠る獣は、甲殻の残響が静まっている。"
     },
-    "gimmicks": { "rockfall_cave_mouth": "崩れ岩棚", "rockfall_forest_edge": "崩れ岩棚" },
-    "quests": { "vs01_hunt_valgaron": "峡谷の岩王" },
-    "questDesc": { "vs01_hunt_valgaron": "苔の谷底に、岩の甲殻をまとう原獣ヴァルガロンの縄張りがある。昼は谷底で草食の群れを追い、白瀬で水を飲む。深く傷つけば寝床へ退く。痕跡を読み、向き合え。" },
-    "monsters": { "valgaron": "ヴァルガロン" },
-    "monsterTitles": { "valgaron": "峡谷の岩王" },
+    "gimmicks": {
+      "rockfall_cave_mouth": "崩れ岩棚",
+      "rockfall_forest_edge": "崩れ岩棚"
+    },
+    "quests": {
+      "vs01_hunt_valgaron": "峡谷の岩王"
+    },
+    "questDesc": {
+      "vs01_hunt_valgaron": "苔の谷底に、岩の甲殻をまとう原獣ヴァルガロンの縄張りがある。昼は谷底で草食の群れを追い、白瀬で水を飲む。深く傷つけば寝床へ退く。痕跡を読み、向き合え。"
+    },
+    "monsters": {
+      "valgaron": "ヴァルガロン"
+    },
+    "monsterTitles": {
+      "valgaron": "峡谷の岩王"
+    },
     "parts": {
       "head": "角",
       "body": "甲殻",
@@ -307,8 +322,16 @@
       "hindleg_r": "右後脚",
       "tail": "尾"
     },
-    "creatures": { "grast": "グラスト", "skarv": "スカルヴ" },
-    "weapons": { "titan_blade": "巨断刀", "rift_saber": "裂空剣", "break_hammer": "砕岩槌", "arc_bow": "弧月弓" },
+    "creatures": {
+      "grast": "グラスト",
+      "skarv": "スカルヴ"
+    },
+    "weapons": {
+      "titan_blade": "巨断刀",
+      "rift_saber": "裂空剣",
+      "break_hammer": "砕岩槌",
+      "arc_bow": "弧月弓"
+    },
     "recipes": {
       "titan_blade_lv1": "巨断刀・壱（岩鱗）",
       "titan_blade_lv2": "巨断刀・弐（大爪）",

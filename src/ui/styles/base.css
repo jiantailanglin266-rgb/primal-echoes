@@ -270,3 +270,17 @@ body {
 .pe-result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: left; margin: 28px 0; }
 .pe-result-grid section { background: var(--pe-panel-bg); border: 1px solid var(--pe-line); border-radius: 6px; padding: 8px 18px 14px; }
 .pe-result-grid ul { padding-left: 18px; margin: 0; font-size: 14px; line-height: 1.8; }
+
+/* ---------- Render debug panel (lil-gui) ---------- */
+.lil-gui.pe-render-gui {
+  position: fixed;
+  top: 72px;
+  right: 8px;
+  z-index: 20;
+  --background-color: rgba(16, 19, 22, 0.9);
+  --title-background-color: rgba(30, 34, 38, 0.95);
+  --widget-color: rgba(255, 255, 255, 0.08);
+  --focus-color: rgba(216, 178, 106, 0.4);
+  --number-color: #d8b26a;
+  font-size: 11px;
+}

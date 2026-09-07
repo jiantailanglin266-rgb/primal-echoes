@@ -47,6 +47,7 @@ import { HubView } from '@ui/HubView';
 import { ResultView } from '@ui/ResultView';
 import { DebugOverlay } from '@debug/DebugOverlay';
 import { PlaytestBot } from '@debug/PlaytestBot';
+import { DebugPanel } from '@presentation/render/DebugPanel';
 import { EventBus } from '@shared/events/EventBus';
 import type { GameEvents } from '@shared/events/GameEvents';
 import { Random } from '@shared/rng/Random';
@@ -130,6 +131,7 @@ export class GameManager {
   private readonly projectileView: ProjectileView;
   private readonly ecosystemView: EcosystemView;
   private readonly hitboxDebugView: HitboxDebugView | null;
+  private readonly renderPanel: DebugPanel | null;
   private readonly cameraRig: CameraRig;
   private readonly damageNumbers: DamageNumberView;
   private readonly hud: HudView;
@@ -291,6 +293,9 @@ export class GameManager {
       this.bot = new PlaytestBot(this.player, this.monster);
     }
     this.hitboxDebugView = debugEnabled ? new HitboxDebugView() : null;
+    this.renderPanel = debugEnabled ? new DebugPanel(this.renderer.renderer, this.renderer.lighting) : null;
+    // 全 View を追加し終えたので影・CSM を一括適用
+    this.renderer.refreshShadows();
     if (this.hitboxDebugView) this.renderer.scene.add(this.hitboxDebugView.object);
     this.setupDebugLines();
 
@@ -517,6 +522,7 @@ export class GameManager {
     }
     this.projectiles.clear();
     this.ecosystem.reset();
+    this.renderer.refreshShadows();
     this.weather.reset();
     this.gimmicks.reset();
     this.lastHitSummary = 'quest start';
@@ -850,7 +856,7 @@ export class GameManager {
     this.weatherView.update(frameDt, this.renderer.camera.position);
     this.gimmickView.update(frameDt);
     this.hitSparks.update(frameDt);
-    this.renderer.render();
+    this.renderer.render(frameDt);
     this.damageNumbers.update(frameDt);
     if (this.scene === 'field') this.renderHud();
     this.debug?.update(frameDt);

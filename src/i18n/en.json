@@ -376,5 +376,63 @@
         "sighting": "The first hunter to write 'the rock moved' never came back. The second wrote down the depth of the tracks."
       }
     }
+  },
+  "landing": {
+    "oneLine": "Read the traces. Face the first beasts. A 3D hunting action game in your browser.",
+    "cta": "Hunt",
+    "heroNote": "Free, no install / WebGL 2 / keyboard and gamepad",
+    "conceptEyebrow": "Concept",
+    "conceptTitle": "Watching is the weapon",
+    "pillar1Title": "Read the traces",
+    "pillar1Text": "The depth of a print, grazed-down grass, the hush before rain. Every move a beast makes has a reason, and the world always leaves a clue.",
+    "pillar2Title": "Heavy and short",
+    "pillar2Text": "Every strike has wind-up, contact and recovery. The stronger the blow, the slower and heavier. When it lands, time stops.",
+    "pillar3Title": "Temper the echo",
+    "pillar3Text": "Carry home the echo-bearing shards you broke free, and move them into steel at the forge. Blades take the names of beasts.",
+    "worldEyebrow": "World",
+    "worldTitle": "Valdia",
+    "worldText": "A continent beyond the edge of every chart. Its creatures carry a power called the echo: the sound of the first age, when life first filled the world, still refusing to fade. From a small outpost on the coast, hunters walk into the gorge to read the traces, face the beasts, and bring back what they saw.",
+    "worldQuote": "To hunt is to listen to the first world from as close as anyone can.",
+    "beastsEyebrow": "Primal Beasts",
+    "beastsTitle": "The beasts",
+    "beasts": {
+      "valgaron": {
+        "name": "Valgaron",
+        "title": "The Gorge Sovereign",
+        "text": "A four-legged beast in a shell of rock. By day it drives the herds, drinks at the Whitewater, and withdraws to its den when wounded. When it rages, the cracks in its shell glow."
+      },
+      "yelmoth": {
+        "name": "Yelmoth",
+        "title": "The Mossfloor King",
+        "text": "A vast grazer with moss and saplings growing on its back. Gentle, until something enters its ground; then it uses its weight."
+      },
+      "zarghvane": {
+        "name": "Zarghvane",
+        "title": "Fang of the Whitewater",
+        "text": "An armoured beast lying under the riverbed. Rain wakes its echo, and only on flood days does it climb the bank."
+      }
+    },
+    "soon": "Soon",
+    "controlsEyebrow": "Controls",
+    "controlsTitle": "Controls",
+    "gamepad": "Standard gamepads are supported. Menus use the d-pad and A / B.",
+    "reqEyebrow": "Requirements",
+    "reqTitle": "Requirements",
+    "requirements": [
+      "A current browser with WebGL 2 (Chrome / Edge / Firefox / Safari)",
+      "Recommended: a discrete GPU or Apple M-series, 1080p",
+      "Integrated GPUs start at medium quality or lower automatically",
+      "Mobile starts at low quality (controls assume a keyboard)"
+    ],
+    "followEyebrow": "Follow",
+    "snsPlaceholder": "X (coming soon)",
+    "presskit": "Press kit",
+    "historyEyebrow": "Updates",
+    "history": [
+      "2026.09 — Brand overhaul: world, logo, screens, HUD, text, sound",
+      "2026.09 — Rendering: sky and light, terrain, post-processing, auto quality",
+      "2026.09 — VS0.2: Rift Saber and Break Hammer, weather, rockfalls, soft lock",
+      "2026.09 — VS0.1: the full loop (outpost, gorge, hunt, forge)"
+    ]
   }
 }

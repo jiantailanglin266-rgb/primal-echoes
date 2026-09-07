@@ -1,0 +1,76 @@
+/* ==========================================================================
+   ランディング（index.html の最初の画面）、写真モード、トレーラー
+   ========================================================================== */
+.pe-landing { position: absolute; inset: 0; z-index: 40; overflow-y: auto; overflow-x: hidden; pointer-events: auto; color: var(--pe-text); transition: opacity 600ms var(--pe-ease); scroll-behavior: smooth; }
+.pe-landing.is-leaving { opacity: 0; pointer-events: none; }
+.pe-landing__lang { position: fixed; right: 20px; top: 16px; display: flex; gap: 2px; z-index: 2; }
+.pe-landing__lang button { font: 500 var(--pe-fs-xs)/1 var(--pe-font-body); letter-spacing: 0.14em; padding: 6px 10px; color: var(--pe-text-dim); background: rgba(11, 12, 10, 0.5); border: 1px solid var(--pe-line); cursor: pointer; }
+.pe-landing__lang button.is-active { color: var(--pe-text-on-accent); background: var(--pe-accent); border-color: var(--pe-accent); }
+
+.pe-landing__hero { position: relative; min-height: 100vh; display: grid; place-items: center; align-content: center; gap: 14px; padding: 12vh 24px 10vh; text-align: center; background: linear-gradient(180deg, rgba(11, 12, 10, 0.15) 0%, rgba(11, 12, 10, 0.5) 55%, var(--pe-bg-deep) 100%); }
+.pe-landing__logo { width: min(48vw, 520px); filter: drop-shadow(0 0 28px rgba(201, 169, 98, 0.16)); animation: pe-logo-in 1800ms var(--pe-ease) both; }
+.pe-landing__tagline { margin: 8px 0 0; font-size: var(--pe-fs-lg); letter-spacing: 0.34em; padding-left: 0.34em; color: var(--pe-text); }
+.pe-landing__concept { margin: 0; font-size: var(--pe-fs-sm); letter-spacing: 0.16em; color: var(--pe-text-dim); max-width: 36em; line-height: var(--pe-lh-body); }
+.pe-landing__cta { margin-top: 22px; min-width: 260px; font: 500 var(--pe-fs-md)/1 var(--pe-font-body); letter-spacing: var(--pe-ls-button); padding: 16px 32px; color: var(--pe-text-on-accent); background: var(--pe-accent); border: 1px solid var(--pe-accent); border-radius: var(--pe-radius); cursor: pointer; transition: background var(--pe-dur-fast) var(--pe-ease), opacity var(--pe-dur) var(--pe-ease); }
+.pe-landing__cta:hover:not(:disabled) { background: var(--pe-accent-hover); }
+.pe-landing__cta:disabled { opacity: 0.55; cursor: wait; background: transparent; color: var(--pe-accent); }
+.pe-landing__requirements { font-size: var(--pe-fs-xs); letter-spacing: 0.12em; color: var(--pe-text-faint); }
+.pe-landing__scroll { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%) rotate(-90deg); background: none; border: 0; color: var(--pe-text-faint); cursor: pointer; animation: pe-breathe 3200ms ease-in-out infinite; }
+.pe-landing__scroll .pe-icon { width: 20px; height: 20px; }
+
+.pe-landing__section { position: relative; max-width: 1000px; margin: 0 auto; padding: 96px 32px; background: var(--pe-bg-deep); }
+.pe-landing__section::before { content: ''; position: absolute; left: -100vw; right: -100vw; top: 0; bottom: 0; background: var(--pe-bg-deep); z-index: -1; }
+.pe-landing__section--world { text-align: center; }
+.pe-landing__section--world .pe-heading { display: inline-block; text-align: left; }
+.pe-landing__section--two { display: grid; grid-template-columns: 1.2fr 1fr; gap: 64px; }
+.pe-landing__pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 36px; }
+.pe-landing__pillar { padding: 28px 24px; }
+.pe-landing__pillar .pe-icon { width: 24px; height: 24px; color: var(--pe-accent); }
+.pe-landing__pillar h3 { margin: 16px 0 8px; font: 500 var(--pe-fs-lg)/1.3 var(--pe-font-body); letter-spacing: 0.1em; }
+.pe-landing__pillar p { margin: 0; font-size: var(--pe-fs-sm); line-height: var(--pe-lh-body); color: var(--pe-text-dim); }
+.pe-landing__prose { max-width: 34em; margin: 36px auto 0; text-align: left; line-height: 2; }
+.pe-landing__quote { margin: 40px auto 0; font-size: var(--pe-fs-lg); letter-spacing: 0.3em; color: var(--pe-accent); }
+.pe-landing__beasts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 36px; }
+.pe-landing__beast { position: relative; padding: 28px 24px 32px; }
+.pe-landing__beast.is-soon { opacity: 0.6; }
+.pe-landing__beast-title { font-size: var(--pe-fs-xs); letter-spacing: 0.3em; color: var(--pe-accent); }
+.pe-landing__beast h3 { margin: 8px 0 12px; font: 500 var(--pe-fs-xl)/1.2 var(--pe-font-body); letter-spacing: 0.14em; }
+.pe-landing__beast p { margin: 0; font-size: var(--pe-fs-sm); line-height: var(--pe-lh-body); color: var(--pe-text-dim); }
+.pe-landing__soon { position: absolute; right: 16px; top: 16px; font: 600 10px/1 var(--pe-font-display); letter-spacing: 0.3em; color: var(--pe-text-faint); text-transform: uppercase; }
+.pe-landing__table { border-collapse: collapse; width: 100%; margin-top: 28px; font-size: var(--pe-fs-sm); }
+.pe-landing__table th { text-align: left; width: 34%; padding: 8px 0; border-bottom: 1px solid var(--pe-line); font: 600 var(--pe-fs-sm)/1.4 var(--pe-font-num); letter-spacing: 0.1em; color: var(--pe-text); }
+.pe-landing__table td { padding: 8px 0; border-bottom: 1px solid var(--pe-line); color: var(--pe-text-dim); }
+.pe-landing__list { list-style: none; margin: 28px 0 0; padding: 0; font-size: var(--pe-fs-sm); line-height: 2; color: var(--pe-text-dim); }
+.pe-landing__list li::before { content: '— '; color: var(--pe-accent-deep); }
+.pe-landing__list a { color: var(--pe-text); text-decoration: none; border-bottom: 1px solid var(--pe-line-strong); }
+.pe-landing__note { margin-top: 20px; font-size: var(--pe-fs-xs); letter-spacing: 0.08em; color: var(--pe-text-faint); line-height: 1.8; }
+.pe-landing__footer { position: relative; background: var(--pe-bg-deep); border-top: 1px solid var(--pe-line); padding: 72px 32px 56px; }
+.pe-landing__footer-grid { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 48px; font-size: var(--pe-fs-sm); color: var(--pe-text-dim); }
+.pe-landing__footer p { margin: 10px 0 0; }
+.pe-landing__history { margin-top: 12px; }
+.pe-landing__close { margin: 72px 0 0; text-align: center; font-size: var(--pe-fs-sm); letter-spacing: 0.34em; color: var(--pe-accent-deep); }
+@media (max-width: 800px) {
+  .pe-landing__pillars, .pe-landing__beasts, .pe-landing__section--two, .pe-landing__footer-grid { grid-template-columns: 1fr; }
+  .pe-landing__section { padding: 64px 20px; }
+}
+
+/* ---- 写真モードの道具箱 ---- */
+.pe-tool { position: absolute; right: 16px; bottom: 16px; display: grid; gap: 6px; padding: 12px; background: var(--pe-bg-panel); border: 1px solid var(--pe-line); pointer-events: auto; font-size: var(--pe-fs-xs); color: var(--pe-text-dim); z-index: 5; }
+.pe-tool__title { font: 600 10px/1 var(--pe-font-display); letter-spacing: 0.3em; color: var(--pe-accent); text-transform: uppercase; margin-bottom: 4px; }
+.pe-tool button { font: 500 var(--pe-fs-xs)/1 var(--pe-font-body); letter-spacing: 0.12em; padding: 8px 12px; color: var(--pe-accent); background: transparent; border: 1px solid var(--pe-accent-deep); cursor: pointer; }
+.pe-tool label { display: flex; align-items: center; gap: 8px; }
+.pe-tool input[type='range'] { width: 120px; accent-color: var(--pe-accent); }
+.pe-tool__hint { max-width: 220px; line-height: 1.6; color: var(--pe-text-faint); }
+.pe-tool__link { color: var(--pe-accent); }
+
+/* ---- トレーラー ---- */
+.pe-trailer { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
+.pe-trailer__bars::before, .pe-trailer__bars::after { content: ''; position: absolute; left: 0; right: 0; height: 9vh; background: var(--pe-bg-deep); }
+.pe-trailer__bars::before { top: 0; }
+.pe-trailer__bars::after { bottom: 0; }
+.pe-trailer__text { position: absolute; left: 50%; bottom: 14vh; transform: translateX(-50%); font-size: var(--pe-fs-xl); letter-spacing: 0.3em; padding-left: 0.3em; color: var(--pe-text); text-shadow: 0 1px 12px rgba(11, 12, 10, 0.9); opacity: 0; transition: opacity 900ms var(--pe-ease); white-space: nowrap; }
+.pe-trailer__text.is-on { opacity: 1; }
+.pe-trailer__fade { position: absolute; inset: 0; background: var(--pe-bg-deep); opacity: 1; }
+.pe-trailer__logo { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 24px; z-index: 2; }
+.pe-trailer__logo img { width: min(40vw, 460px); }
+.pe-trailer__tag { font-size: var(--pe-fs-md); letter-spacing: 0.34em; color: var(--pe-text-dim); }

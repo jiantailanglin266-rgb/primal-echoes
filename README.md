@@ -1,95 +1,88 @@
+<p align="center"><img src="public/assets/brand/key-visual.jpg" alt="PRIMAL ECHOES — 原初の残響" width="720" /></p>
+
 # PRIMAL ECHOES
 
-完全オリジナル IP の 3D ハンティングアクション RPG。
-「原初は、まだ鳴っている。」— 巨大生物の生態を理解することが、そのまま攻略になる。
+**原初は、まだ鳴っている。** — 痕跡を読み、原初の獣と向き合う、ブラウザの 3D 狩猟アクション。
 
-- ジャンル: 3D ハンティングアクション RPG
-- 舞台: ヴァルディア大陸 / 生体エネルギー「残響（エコー）」
-- プレイヤー: 狩人（痕跡を読み、原獣と向き合う者）
-- 現在の状態: **Vertical Slice 0.1 完了**（Titan Blade × Valgaron × 翠嵐峡谷 × Hunt クエスト 1 本、プレースホルダー表示）
+**▶ 遊ぶ: https://jiantailanglin266-rgb.github.io/primal-echoes/** （無料・インストール不要・日本語 / English）
 
-## 遊べること（VS0.1）
-拠点で任務を受注 → フィールドで生態を観察・追跡 → 戦闘（部位破壊・怒り・疲労・転倒・気絶・逃走）→ 討伐 → 剥ぎ取り → リザルト → 拠点で武器強化（3 段階）→ 再出発。素材と強化は自動保存される。
+海図の外の大陸ヴァルディア。生き物は体内に「残響（エコー）」を宿し、その残響を最も濃く宿す巨大な獣「原獣」がいる。狩人は前哨から谷へ出て、足跡と食い跡を読み、獣と向き合い、素材を持ち帰って刃を鍛える。完全オリジナル IP。既存作品からの流用はない。
 
-## 技術スタック
-TypeScript (strict) / Three.js / Vite / Vitest。
-シミュレーション層（`src/core`）は描画ライブラリに依存しない。詳細は [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。
+## 特徴
+- **観察が攻略になる**: 獣は空腹なら群れを追い、渇けば白瀬で水を飲み、疲れれば寝床で眠り、雨が来れば洞へ退く。深く傷つけば寝床へ帰る。全部、痕跡でわかる。
+- **重く、短い戦闘**: 攻撃には発生・判定・硬直がある。Hit Stop、討伐のスローモーション、部位破壊と切断、怒り・疲労・転倒・気絶。
+- **一つの概念でつながる世界**: 残響（エコー）がタイトル・獣・素材・鍛冶を貫く。UI・文章・音・ロゴまで同じ声で作られている（`docs/brand/`）。
+- **端末に合わせて動く**: GPU と実測 FPS から画質を自動で決める。ゲームパッド対応。
 
-## 描画アーキテクチャ
-Phase 1〜6 の CG 強化（[docs/CG_UPGRADE.md](docs/CG_UPGRADE.md)）で入った構成。すべて `src/presentation/` 配下で、`src/core/` のロジックは触らない。
+## 操作
+| キー | 動き |
+|---|---|
+| W A S D | 歩く |
+| Shift | 駆ける |
+| Space | 躱す |
+| J / K | 斬る / 振り下ろす（長押しで溜め） |
+| Tab | 獣を見据える |
+| E | 剥ぐ・崩す |
+| H | 薬を飲む |
+| Esc | 静止 |
 
-| 層 | モジュール | 内容 |
+ゲームパッドは標準配置。メニューは十字キーと A / B。
+
+## 動作環境
+- WebGL 2 が動くブラウザの最新版（Chrome / Edge / Firefox / Safari）
+- 推奨: 独立 GPU または Apple M 系、1080p。内蔵 GPU では画質「中」以下が自動で選ばれる
+- モバイルは画質「低」で起動する（操作系はキーボード前提のため、現状は閲覧向け）
+- URL パラメータ: `?quality=low|mid|high`（画質固定）、`?landing=0`（ランディングを飛ばしてタイトルへ）、`?skipIntro=1`、`?photo=1`（撮影）、`?trailer=1`（トレーラー）、`?hud=1`（HUD 確認）、`?debug=1`（開発）
+
+## 技術構成
+TypeScript (strict) / Three.js / Vite / Vitest / Web Audio。シミュレーション層（`src/core`）は描画ライブラリに依存しない。
+
+| 層 | 内容 | 詳細 |
 |---|---|---|
-| レンダラ | `render/Renderer.ts` | WebGL（WebGPU は CSM/コンポーザーと非互換のため不採用）、sRGB 出力 + ACES、品質プリセット low / mid / high（pixelRatio 上限・影解像度・カスケード数・草密度/描画距離） |
-| 光 | `render/Lighting.ts` | 太陽のカスケードシャドウマップ（3 段、practical 分割）+ 半球光。`refreshMaterials()` で後から増えたメッシュにも CSM を適用 |
-| 空・環境 | `render/Environment.ts` | 大気散乱の空 → PMREM で IBL を焼く（雨で再焼き）。HDRI があればそちらを使用。FogExp2 + シェーダ注入の高さフォグ。雨で空・霧・露出を連動 |
-| 地形・植生 | `render/ProceduralTextures.ts` / `TerrainMaterial.ts` / `Vegetation.ts` | fBm の草・土・岩テクスチャを高さと傾斜で 3 層ブレンド（確率的 UV でタイル目を消す）。草 14,000 本は 36m 格子のチャンク InstancedMesh（視錐台・距離カリング）、木・岩も InstancedMesh、風は頂点シェーダで共有 |
-| キャラクター | `render/AssetLoader.ts` / `CharacterRig.ts` | glTF + Draco + KTX2。`assets/models/*.glb` があればプリミティブと差し替え、クリップ名の対応表でアニメを駆動。無ければ手続きアニメのプリミティブ |
-| ポストプロセス | `render/PostFX.ts` | Render → GTAO → HDR Bloom → DoF（焦点はプレイヤー距離）→ Grade（ビネット・色収差・グレイン・色寄せ）→ SMAA → Output |
-| カメラ・手応え | `CameraRig.ts` / `fx/Juice.ts` | 肩越し + バネ追従 + ダッシュ FOV、Hit Stop / シェイク / スローモーション / 命中光 / 咆哮の色収差 |
-| 品質・配信 | `render/QualityManager.ts` / `ui/LoadingView.ts` | GPU 名・モバイル・解像度から初期品質を決め、3 秒平均 FPS が 55 未満なら 1 段階下げる（`?quality=low|mid|high` で固定）。起動時はローディング画面でアセット確認 → IBL 焼き込み → シェーダコンパイル → ウォームアップ描画。アセット URL にはビルド ID を付与 |
+| core | 戦闘（攻撃の三相、部位、怯み・転倒・気絶）、生態 AI（空腹・渇き・疲労・雨・負傷）、狩り、素材、鍛冶、保存 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| presentation | WebGL（CSM、大気散乱の空と IBL、地形ブレンド、植生、ポストプロセス、カメラと手応え、画質自動調整） | [docs/CG_UPGRADE.md](docs/CG_UPGRADE.md) |
+| ui | 画面遷移、HUD、ランディング、i18n（`src/i18n/ja.json` / `en.json`） | [docs/brand/](docs/brand/) |
+| audio | 合成音の効果音、層で遷移する BGM、エリア別環境音 | [docs/brand/SOUND_DIRECTION.md](docs/brand/SOUND_DIRECTION.md) |
+| tools | 撮影モード（`?photo=1`）、トレーラーのカメラパス（`?trailer=1`） | [docs/brand/TRAILER_STORYBOARD.md](docs/brand/TRAILER_STORYBOARD.md) |
 
-調整は `?debug=1` の右上パネル（Tone / Sun / Ambient / Sky・Fog / PostFX / Camera / Wind）と左下の stats.js、オーバーレイの `quality` / `draw` 行で行う。
-
-## セットアップ
-
+### 開発
 ```bash
 npm install
+npm run dev       # http://localhost:5173
+npm run check     # 型検査 + テスト
+npm run build     # dist/（GitHub Pages へは main への push で自動デプロイ）
 ```
 
-## 開発
+デバッグ: `?debug=1` でオーバーレイ（FPS・品質・描画コール・メモリ）、stats.js、描画パネル、当たり判定表示。F1 回復 / F2 無限気力 / F3 討伐 / F4 獣を戻す / F5 AI 停止 / F6 怒り / F7 獣の背後へ / F9 狩りを退く。`?bot=1` で通しプレイ検証ボット。テキストを直すときは `src/i18n/*.json` を編集し、`node scripts/copy-deck.mjs` で対訳表を更新する。
 
-```bash
-npm run dev
-```
+### アセットの配置（任意）
+外部アセットが無くても手続き生成と合成音で動く。置くと自動で差し替わる（すべて CC0 など再配布可能なものを使い、下の出典欄に記す）。
 
-ブラウザで `http://localhost:5173/` を開く。キャンバスをクリックするとマウスでカメラを回せる（ポインターロック）。
-
-| 操作 | キー |
+| 置く場所 | 内容 |
 |---|---|
-| 移動 / ダッシュ | WASD / Shift |
-| 回避 | Space |
-| 弱攻撃 / 強攻撃（長押しで溜め） | J / K |
-| ロックオン | Tab または Q |
-| 剥ぎ取り | E（死骸のそばで） |
-| 活性薬 | H |
-| 一時停止 | Esc |
-
-### デバッグ
-- `?debug=1` でオーバーレイ（FPS・品質・描画コール・メモリ）、stats.js、描画パネル、当たり判定表示。`?quality=low|mid|high` で品質を固定。F1 回復 / F2 無限スタミナ / F3 討伐 / F4 モンスター初期化 / F5 AI 停止 / F6 怒り / F7 モンスターの背後へワープ / F9 任務中断
-- `?bot=1` で通しプレイ検証ボット。コンソールから `__game.update(1/60)` を回すと早回しできる（検証手順は [docs/BALANCE.md](docs/BALANCE.md)）
-
-## アセットの配置（任意）
-外部アセットが無くても手続き生成で動きます。置くと自動で差し替わります（すべて CC0 など再配布可能なものを使うこと）。
-
-| 置く場所 | 内容 | 用途 |
-|---|---|---|
-| `public/assets/hdri/environment.hdr` | 等距円筒 HDRI（Poly Haven など、2K 推奨） | IBL と背景。無ければ大気散乱の手続き空 |
-| `public/assets/textures/terrain/{grass,dirt,rock}_{albedo,normal}.jpg` | 地形テクスチャ 1K〜2K | 地形 3 層ブレンド（現状は手続き生成。差し替え対応は Phase 3 以降） |
-| `public/assets/models/*.glb` | glTF（Draco/KTX2 圧縮可） | プレイヤー/モンスター/植生（Phase 3 のパイプライン） |
-| `public/assets/audio/bgm/{bed,pulse,strings,drums}.ogg` | 同テンポ（BPM 72）のループ 4 本 | BGM の層。無ければ合成のドローンと太鼓 |
-| `public/assets/audio/amb/{wind,insects,water,rain,cave}.ogg` | 環境音ループ | エリア別環境音。無ければ合成 |
-| `public/assets/audio/sfx/*.ogg` | `src/audio/Sfx.ts` の `sample` 名 | 効果音。無ければ合成（石・骨・革の質感）。入手先と整え方は [docs/brand/SOUND_DIRECTION.md](docs/brand/SOUND_DIRECTION.md) |
-
-描画の調整は `?debug=1` の右上パネルで行い、決まった値をコードへ書き戻します。
-
-## 検証
-
-```bash
-npm run check
-```
-
-`typecheck`（tsc）と `test`（vitest、170 件）を順に実行する。各 Phase はこれが通った状態で完了とする。
+| `public/assets/hdri/environment.hdr` | 等距円筒 HDRI（IBL と背景） |
+| `public/assets/models/{ranger,valgaron}.glb` | glTF（Draco / KTX2 可）。クリップ名は `CharacterRig.ts` の対応表 |
+| `public/assets/audio/bgm/{bed,pulse,strings,drums}.ogg` | 同テンポ（BPM 72）のループ 4 本 |
+| `public/assets/audio/amb/{wind,insects,water,rain,cave}.ogg` | 環境音ループ |
+| `public/assets/audio/sfx/*.ogg` | 効果音（`src/audio/Sfx.ts` の `sample` 名） |
 
 ## ドキュメント
 | ファイル | 内容 |
 |---|---|
-| [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) | ゲームデザイン（コンセプト・戦闘・モンスター・生態系・VS0.1 定義） |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | レイヤー構成・モジュール責務・データ駆動・ADR |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Phase / MoSCoW / 依存順タスクと進捗 |
-| [docs/ASSET_TODO.md](docs/ASSET_TODO.md) | 必要な外部アセット一覧 |
-| [docs/BALANCE.md](docs/BALANCE.md) | 調整値の記録と根拠、通しプレイ検証ログ |
+| [docs/brand/BRAND_BIBLE.md](docs/brand/BRAND_BIBLE.md) | 世界観・命名規約・トーン＆マナー・5 原則（すべての判断の拠り所） |
+| [docs/brand/VISUAL_IDENTITY.md](docs/brand/VISUAL_IDENTITY.md) / [styleguide.html](docs/brand/styleguide.html) | 色・書体・ロゴ・アイコン・グラフィック言語 |
+| [docs/brand/COPY_DECK.md](docs/brand/COPY_DECK.md) | ゲーム内全テキストの対訳 |
+| [docs/brand/SOUND_DIRECTION.md](docs/brand/SOUND_DIRECTION.md) | 音の方向性と素材の置き場 |
+| [docs/brand/TRAILER_STORYBOARD.md](docs/brand/TRAILER_STORYBOARD.md) | 60 秒トレーラーの絵コンテ |
+| [docs/brand/PROGRESS.md](docs/brand/PROGRESS.md) | ブランディングの各フェーズの成果物と判断事項 |
+| [docs/presskit/](docs/presskit/) | プレスキット |
+| [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) / [docs/ROADMAP.md](docs/ROADMAP.md) / [docs/BALANCE.md](docs/BALANCE.md) / [docs/ASSET_TODO.md](docs/ASSET_TODO.md) | 設計・計画・調整値・アセット一覧 |
 
-## オリジナリティ方針
-既存作品からはジャンルの抽象的な仕組み（狩猟ループ・重量感戦闘・素材クラフト・生態観察・部位戦術）のみを参考にし、
-固有のモンスター・キャラ・技・名称・UI・音・モデル・世界観は一切流用しない。音も外部素材を使わず合成している。
+## クレジット
+- 制作: Hollow Signal（仮） / 設計・実装: Kenta
+- 書体: Cinzel（Natanael Gama）、Shippori Mincho（FONTDASU）、Cormorant Garamond（Christian Thalmann）— SIL Open Font License
+- 技術: Three.js（MIT）ほか `package.json` 記載のライブラリ
+- 音: Web Audio の合成音。素材音源を使う場合はここに出典を記す
+
+## ライセンス
+コード: MIT。世界観・名称・ロゴ・文章・画像（`public/assets/brand/`、`docs/brand/`、`src/i18n/`）は © Hollow Signal / Kenta。無断転載不可。

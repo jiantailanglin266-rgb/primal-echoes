@@ -107,3 +107,33 @@
 制約: ブラウザはユーザー操作の前に音を出せないため、サウンドロゴは「タイトルで最初の鍵を押した瞬間」に鳴る（タイトル表示と同時には鳴らせない）。素材ファイルが無い状態でもすべて合成音で鳴り、無音でも視覚の手応え（Hit Stop・火花・バナー・色収差）で進行できる。
 
 けん君が決めること: 素材音源を入れるか（入れるなら `public/assets/audio/` の命名に従い、README の出典欄へ）。合成音のままでも成立するが、太鼓と咆哮は素材にすると質感が一段上がる。
+
+## B7 ローンチ資産（2026-09-07）
+成果物:
+| ファイル | 内容 |
+|---|---|
+| `src/ui/landing/LandingView.ts`, `src/ui/styles/landing.css` | `index.html` の最初の画面。ファーストビューは 3D の実シーン（回転カメラ）＋縦組みロゴ＋タグライン＋「狩りに出る」。下へ: コンセプト 3 柱、世界、原獣 3 体（1 体＋近日 2 体）、操作、動作環境、語り部・導線・更新履歴。日本語／English 切替。準備中はボタンが進捗ラベルになる |
+| `index.html` | OGP（og:title / description / image 1200×630 / url / locale）、Twitter Card（summary_large_image）、canonical、apple-touch-icon |
+| `public/assets/brand/og-image.png`, `key-visual.jpg`, `apple-touch-icon.png`, `icon-512.png` | PIL で生成（Cinzel / Shippori Mincho をアウトライン描画、シンボルを再現） |
+| `src/tools/FreeCamera.ts`, `src/tools/PhotoMode.ts` | `?photo=1`: HUD と画面を消し、自由カメラ（ドラッグ／W A S D／Q E／Shift）。道具箱: 撮る ×2 / ×4（PNG を新しいタブで開き、保存リンクも出す）、獣を呼ぶ（AI 停止）、雨、太陽の高さと方位、H で道具箱を隠す |
+| `src/tools/TrailerCam.ts`, `docs/brand/TRAILER_STORYBOARD.md` | 60 秒・9 カットの絵コンテと、それを再生するカメラパス（`?trailer=1`）。黒帯、一行の文字入れ、獣の配置、音楽の山（獣の登場で drums、山場で heat 1、寝床で resolve）、最後にロゴカード。Space 停止、R 最初から、数字でカットへ |
+| `README.md` | 全面刷新: キービジュアル、ワンライン、プレイ URL、特徴、操作、動作環境、技術構成、開発、アセット、ドキュメント、クレジット、ライセンス |
+| `docs/presskit/README.md` | 作品概要、ファクトシート、特徴、ロゴ一覧、スクリーンショットの置き場と撮り方、引用可能な一文、連絡先（`{{ 連絡先 }}`） |
+| `src/app/GameManager.ts` | `enterBackdrop()`（画面なし＋回転カメラ）、`enterToolMode()`、`captureScreenshot(scale)`（pixelRatio を一時的に上げて描き PNG に）、`world` の窓口 |
+
+起動の流れ（既定）: ランディング（裏で読み込み。ボタンが「狩りに出る」になる）→ スタジオ → メニュー。`?landing=0` で従来のローディング → スタジオ → タイトル → メニュー。
+
+### 公開前チェックリスト
+| 項目 | 状態 | 確認方法 |
+|---|---|---|
+| ランディングの表示崩れ（1280 / 800 / 縦） | 確認済み（狭幅は 1 列） | ブラウザ幅を変えて `/` を開く |
+| OGP の検証 | 未（デプロイ後） | https://cards-dev.twitter.com/validator 相当、または Slack / Discord に URL を貼る。`og:image` は絶対 URL |
+| favicon / apple-touch-icon | 確認済み | タブとホーム追加 |
+| モバイル動作 | 表示は確認済み、操作は未対応（キーボード前提） | iOS Safari / Android Chrome で `/` を開く。画質「低」で起動する |
+| 言語切替 | 確認済み | ランディング右上 |
+| `?photo=1` の保存 | ブラウザペインではダウンロードが無効。実ブラウザで確認 | 撮る ×2 → 新しいタブに PNG |
+| `?trailer=1` | カメラパスは確認。録画は OBS 等 | 1920×1080 で再生 |
+| 連絡先・SNS | 未（プレースホルダ） | `docs/presskit/README.md` の `{{ 連絡先 }}`、`landing.snsPlaceholder` |
+| スタジオ名 | 仮（Hollow Signal） | `src/i18n/*.json` の `brand.studio` |
+
+けん君が決めること: 連絡先、SNS の URL、スタジオ名、プレスキットのスクリーンショット 6 枚（`?photo=1` で撮る）、トレーラーの実プレイ差し替え（カット 6）。

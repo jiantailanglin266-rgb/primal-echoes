@@ -59,6 +59,7 @@ import { DebugPanel } from '@presentation/render/DebugPanel';
 import { Vegetation } from '@presentation/render/Vegetation';
 import { AssetLoader } from '@presentation/render/AssetLoader';
 import { Juice } from '@presentation/fx/Juice';
+import type { FreeCamera } from '@tools/FreeCamera';
 import { QualityManager } from '@presentation/render/QualityManager';
 import Stats from 'three/addons/libs/stats.module.js';
 import { EventBus } from '@shared/events/EventBus';
@@ -137,6 +138,8 @@ export class GameManager {
   private lastAreaId: string | null = null;
   private lastFrameDt = 1 / 60;
   private lastControllerState = '';
+  /** 撮影・トレーラー用の自由カメラ。描画直前に camera へ上書きする。 */
+  private toolCamera: FreeCamera | null = null;
   private footstepTimer = 0;
   private paused = false;
   /** `?bot=1` で有効。通しプレイの自動検証用。 */
@@ -549,13 +552,17 @@ export class GameManager {
   }
 
   /** 起動時の流れ: スタジオ → タイトル（入力待ち）→ メニュー。bot 検証では飛ばす。 */
-  async showOpening(options: { skip?: boolean } = {}): Promise<void> {
+  async showOpening(options: { skip?: boolean; skipTitle?: boolean } = {}): Promise<void> {
     if (options.skip) {
       this.enterHub();
       return;
     }
     await this.screens.show('studio', { instant: true });
     await this.studioScreen.play();
+    if (options.skipTitle) {
+      this.enterMenu();
+      return;
+    }
     await this.screens.show('title');
     this.audio.setMusic('title');
     await this.titleScreen.waitForInput();
@@ -563,6 +570,13 @@ export class GameManager {
     // ブラウザは操作前に音を出せないので、サウンドロゴは最初の入力の瞬間に鳴らす
     this.audio.playLogo();
     this.enterMenu();
+  }
+
+  /** ランディングの背景: 画面を出さず、回転カメラで風景だけを見せる。 */
+  enterBackdrop(): void {
+    this.setScene('hub');
+    this.quest = null;
+    void this.screens.show(null, { instant: true });
   }
 
   enterMenu(): void {
@@ -603,7 +617,51 @@ export class GameManager {
 
   /** タイトルやメニューの背景で、カメラをゆっくり回す。 */
   private get cinematic(): boolean {
-    return this.scene === 'hub' && this.screens.currentId !== 'hub';
+    return this.scene === 'hub' && this.screens.currentId !== 'hub' && !this.toolCamera;
+  }
+
+  /** 撮影・トレーラー: 画面と HUD を消し、自由カメラで描く。 */
+  enterToolMode(camera: FreeCamera): void {
+    this.setScene('hub');
+    this.quest = null;
+    void this.screens.show(null, { instant: true });
+    this.hud.visible = false;
+    this.toolCamera = camera;
+    this.playerView.object.visible = true;
+    this.monsterView.object.visible = false;
+    this.monsterAI.paused = true;
+  }
+
+  setBeastVisible(visible: boolean): void {
+    this.monsterView.object.visible = visible;
+  }
+
+  /** 撮影ツールが触る世界の窓口（読み書きは撮影の範囲に限る）。 */
+  get world() {
+    return {
+      field: this.field,
+      monster: this.monster,
+      monsterAI: this.monsterAI,
+      weather: this.weather,
+      player: this.player,
+      lighting: this.renderer.lighting,
+      environment: this.renderer.environment,
+    };
+  }
+
+  /** 現在の見た目を scale 倍の解像度で描いて PNG の data URL にする。 */
+  captureScreenshot(scale: number): string {
+    const r = this.renderer.renderer;
+    const ratio = r.getPixelRatio();
+    r.setPixelRatio(ratio * scale);
+    this.renderer.postfx.setPixelRatio(ratio * scale);
+    this.renderer.resize();
+    this.renderer.render(0);
+    const url = r.domElement.toDataURL('image/png');
+    r.setPixelRatio(ratio);
+    this.renderer.postfx.setPixelRatio(ratio);
+    this.renderer.resize();
+    return url;
   }
 
   private renderHub(): void {
@@ -1145,11 +1203,17 @@ export class GameManager {
     this.updateAudioScene(frameDt);
     this.cameraRig.setOrbit(this.cinematic);
     // タイトル・メニューの背景では狩人を映さない（風景だけを見せる）
-    this.playerView.object.visible = !this.cinematic;
-    this.monsterView.object.visible = !this.cinematic;
+    if (!this.toolCamera) {
+      this.playerView.object.visible = !this.cinematic;
+      this.monsterView.object.visible = !this.cinematic;
+    }
     this.screens.update(frameDt);
     this.cameraRig.setSpeedRatio(this.player.controller.state === 'dash' ? 1 : 0);
     this.cameraRig.update(this.playerView.renderPosition, frameDt);
+    if (this.toolCamera) {
+      this.toolCamera.update(frameDt);
+      this.toolCamera.apply(this.renderer.camera);
+    }
     this.juice.update(frameDt);
     // DoF の焦点はプレイヤー（カメラからの距離）に自動追従
     this.renderer.postfx.setFocusDistance(this.renderer.camera.position.distanceTo(this.playerView.object.position) + 0.4);

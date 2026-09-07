@@ -29,6 +29,7 @@ export default defineConfig({
       '@ui': alias('ui'),
       '@i18n': alias('i18n'),
       '@audio': alias('audio'),
+      '@tools': alias('tools'),
       '@shared': alias('shared'),
       '@debug': alias('debug'),
     },

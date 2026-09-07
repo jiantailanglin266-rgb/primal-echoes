@@ -23,6 +23,7 @@
       "@presentation/*": ["./src/presentation/*"],
       "@i18n/*": ["./src/i18n/*"],
       "@audio/*": ["./src/audio/*"],
+      "@tools/*": ["./src/tools/*"],
       "@ui/*": ["./src/ui/*"],
       "@shared/*": ["./src/shared/*"],
       "@debug/*": ["./src/debug/*"]

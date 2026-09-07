@@ -11,12 +11,12 @@ export class PauseScreen implements Screen {
   constructor() {
     this.root = createScreenRoot('pe-pause', `
       <div class="pe-pause__inner">
-        <div class="pe-eyebrow">Still</div>
-        <h1 class="pe-heading">静止</h1>
+        <div class="pe-eyebrow" data-i18n="pause.eyebrow"></div>
+        <h1 class="pe-heading" data-i18n="pause.title"></h1>
         <nav class="pe-pause__list">
-          <button class="pe-menu-item pe-menu__item is-default pe-pause__resume"><span class="pe-menu__eyebrow">Resume</span><span class="pe-menu__label">続ける</span></button>
-          <button class="pe-menu-item pe-menu__item pe-pause__settings"><span class="pe-menu__eyebrow">Settings</span><span class="pe-menu__label">設定</span></button>
-          <button class="pe-menu-item pe-menu__item pe-pause__abandon"><span class="pe-menu__eyebrow">Retreat</span><span class="pe-menu__label">狩りを退く</span></button>
+          <button class="pe-menu-item pe-menu__item is-default pe-pause__resume"><span class="pe-menu__eyebrow" data-i18n="pause.resumeEyebrow"></span><span class="pe-menu__label" data-i18n="pause.resume"></span></button>
+          <button class="pe-menu-item pe-menu__item pe-pause__settings"><span class="pe-menu__eyebrow" data-i18n="pause.settingsEyebrow"></span><span class="pe-menu__label" data-i18n="pause.settings"></span></button>
+          <button class="pe-menu-item pe-menu__item pe-pause__abandon"><span class="pe-menu__eyebrow" data-i18n="pause.retreatEyebrow"></span><span class="pe-menu__label" data-i18n="pause.retreat"></span></button>
         </nav>
       </div>`);
     q(this.root, '.pe-pause__resume').addEventListener('click', () => this.onResume?.());

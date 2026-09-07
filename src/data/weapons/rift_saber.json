@@ -1,8 +1,8 @@
 {
   "id": "rift_saber",
-  "name": "Rift Saber",
+  "name": "裂空剣",
   "weaponPower": 88,
-  "element": { "type": "aether", "power": 22 },
+  "element": { "type": "echo", "power": 22 },
   "critRate": 0.15,
   "sharpness": "sharp",
   "weight": "light",
@@ -14,7 +14,7 @@
   "attacks": [
     {
       "id": "rs_light_1",
-      "name": "Rift Cut",
+      "name": "裂・壱",
       "damageType": "slash",
       "motionValue": 0.16,
       "elementMotionValue": 0.5,
@@ -33,7 +33,7 @@
     },
     {
       "id": "rs_light_2",
-      "name": "Rift Cut II",
+      "name": "裂・弐",
       "damageType": "slash",
       "motionValue": 0.17,
       "elementMotionValue": 0.5,
@@ -52,7 +52,7 @@
     },
     {
       "id": "rs_light_3",
-      "name": "Rift Cut III",
+      "name": "裂・参",
       "damageType": "slash",
       "motionValue": 0.19,
       "elementMotionValue": 0.6,
@@ -71,7 +71,7 @@
     },
     {
       "id": "rs_light_4",
-      "name": "Rift Finisher",
+      "name": "裂空",
       "damageType": "slash",
       "motionValue": 0.3,
       "elementMotionValue": 0.9,
@@ -90,7 +90,7 @@
     },
     {
       "id": "rs_heavy",
-      "name": "Rift Spiral",
+      "name": "螺旋",
       "damageType": "slash",
       "motionValue": 0.34,
       "elementMotionValue": 1.1,
@@ -109,7 +109,7 @@
     },
     {
       "id": "rs_charge",
-      "name": "Rift Burst",
+      "name": "残響破",
       "damageType": "slash",
       "motionValue": 0.5,
       "elementMotionValue": 1.8,
@@ -128,7 +128,7 @@
     },
     {
       "id": "rs_dodge_slash",
-      "name": "Rift Step",
+      "name": "影歩",
       "damageType": "slash",
       "motionValue": 0.26,
       "elementMotionValue": 0.9,

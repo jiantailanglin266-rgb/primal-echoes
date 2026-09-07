@@ -6,7 +6,7 @@
       "weaponId": "titan_blade",
       "fromLevel": 0,
       "toLevel": 1,
-      "displayName": "Titan Blade I — 岩鱗の刃",
+      "displayName": "巨断刀・壱（岩鱗）",
       "materials": [
         {
           "itemId": "valgaron_scale",
@@ -29,7 +29,7 @@
       "weaponId": "titan_blade",
       "fromLevel": 1,
       "toLevel": 2,
-      "displayName": "Titan Blade II — 大爪の刃",
+      "displayName": "巨断刀・弐（大爪）",
       "materials": [
         {
           "itemId": "valgaron_scale",
@@ -40,7 +40,7 @@
           "count": 2
         },
         {
-          "itemId": "aether_shard",
+          "itemId": "echo_shard",
           "count": 1
         }
       ],
@@ -56,7 +56,7 @@
       "weaponId": "titan_blade",
       "fromLevel": 2,
       "toLevel": 3,
-      "displayName": "Titan Blade III — 岩王の断刃",
+      "displayName": "巨断刀・参（岩王）",
       "materials": [
         {
           "itemId": "valgaron_horn",
@@ -67,7 +67,7 @@
           "count": 1
         },
         {
-          "itemId": "aether_core",
+          "itemId": "echo_core",
           "count": 1
         }
       ],
@@ -83,14 +83,14 @@
       "weaponId": "rift_saber",
       "fromLevel": 0,
       "toLevel": 1,
-      "displayName": "Rift Saber I — 結晶片の閃",
+      "displayName": "裂空剣・壱（残響片）",
       "materials": [
         {
           "itemId": "valgaron_scale",
           "count": 2
         },
         {
-          "itemId": "aether_shard",
+          "itemId": "echo_shard",
           "count": 1
         }
       ],
@@ -106,14 +106,14 @@
       "weaponId": "rift_saber",
       "fromLevel": 1,
       "toLevel": 2,
-      "displayName": "Rift Saber II — 牙裂の閃",
+      "displayName": "裂空剣・弐（牙裂）",
       "materials": [
         {
           "itemId": "valgaron_fang",
           "count": 2
         },
         {
-          "itemId": "aether_shard",
+          "itemId": "echo_shard",
           "count": 2
         },
         {
@@ -133,7 +133,7 @@
       "weaponId": "break_hammer",
       "fromLevel": 0,
       "toLevel": 1,
-      "displayName": "Break Hammer I — 大爪の槌",
+      "displayName": "砕岩槌・壱（大爪）",
       "materials": [
         {
           "itemId": "valgaron_scale",
@@ -156,7 +156,7 @@
       "weaponId": "break_hammer",
       "fromLevel": 1,
       "toLevel": 2,
-      "displayName": "Break Hammer II — 角砕きの槌",
+      "displayName": "砕岩槌・弐（角砕）",
       "materials": [
         {
           "itemId": "valgaron_horn",

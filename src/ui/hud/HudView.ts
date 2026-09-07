@@ -1,4 +1,5 @@
 import { assetUrl } from '@presentation/render/assetUrl';
+import { t } from '@i18n/index';
 
 /**
  * 戦闘中 HUD（docs/brand/VISUAL_IDENTITY.md、BRAND_BIBLE §4）。
@@ -332,7 +333,7 @@ export class HudView {
     }
 
     this.respawn.hidden = m.respawnCountdown <= 0;
-    if (m.respawnCountdown > 0) setText(this.respawn, `膝をついた。${Math.ceil(m.respawnCountdown)} 秒ののち、前哨で目を覚ます`);
+    if (m.respawnCountdown > 0) setText(this.respawn, t('hud.respawn', { seconds: Math.ceil(m.respawnCountdown) }));
 
     this.prompt.hidden = m.prompt === '' || m.respawnCountdown > 0;
     if (m.prompt !== '') {
@@ -359,7 +360,7 @@ export class HudView {
     this.knees.dataset['key'] = key;
     this.knees.replaceChildren();
     if (maxDowns <= 0) return;
-    const label = el('span', 'pe-hud__knees-label', '膝');
+    const label = el('span', 'pe-hud__knees-label', t('hud.knees'));
     this.knees.appendChild(label);
     for (let i = 0; i < maxDowns; i++) this.knees.appendChild(el('i', `pe-hud__knee${i < maxDowns - downs ? ' is-left' : ''}`));
   }

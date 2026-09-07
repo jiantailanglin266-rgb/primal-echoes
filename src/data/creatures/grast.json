@@ -1,6 +1,6 @@
 {
   "id": "grast",
-  "name": "Grast",
+  "name": "グラスト",
   "kind": "herbivore",
   "maxHp": 60,
   "walkSpeed": 1.8,

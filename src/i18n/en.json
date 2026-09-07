@@ -1,0 +1,357 @@
+{
+  "brand": {
+    "title": "PRIMAL ECHOES",
+    "subtitle": "The First World, Still Echoing",
+    "tagline": "The first world still echoes.",
+    "studio": "Hollow Signal"
+  },
+  "title": {
+    "call": "Listen.",
+    "hint": "Press any key, or touch the screen"
+  },
+  "menu": {
+    "eyebrow": "Verdant Outpost",
+    "hunt": "Hunt",
+    "huntEyebrow": "Into the gorge",
+    "codex": "Codex",
+    "codexEyebrow": "Beasts",
+    "settings": "Settings",
+    "settingsEyebrow": "Options",
+    "credits": "Tellers",
+    "creditsEyebrow": "Credits"
+  },
+  "loading": {
+    "listening": "Listening",
+    "steps": {
+      "world": "Waking the continent",
+      "assets": "Following the traces",
+      "sky": "Reading the sky",
+      "shaders": "Whetting the blade",
+      "warm": "Letting the eyes adjust",
+      "done": "Listening"
+    },
+    "flavor": [
+      "Valdia lies beyond the edge of every chart.",
+      "Every living thing here carries an echo inside its body.",
+      "An echo, they say, is the sound of the first age, still refusing to fade.",
+      "Beneath the bedrock, the first power sleeps in layers.",
+      "The outpost pillars are beast bone. None has ever broken.",
+      "Tracks do not lie. Depth tells weight; spacing tells haste.",
+      "Grazed-down grass means the beast has only just fed.",
+      "In rain, beasts withdraw to the hollows. Hunt before it falls.",
+      "The Whitewater runs cold. The beast drinks there too.",
+      "A beast's shell cracks with light when the first power seeps to the surface.",
+      "Rage is the echo boiling over. The beast does not hate you.",
+      "A deeply wounded beast returns to its den. Only those who know the den go further.",
+      "The part that holds the most echo is the hardest. Break it, and it feeds the blade.",
+      "At the forge, the echo in a shard is woken with fire and moved into steel.",
+      "Lead shot cannot pierce an echoing shell. That is why hunters carry blades.",
+      "The first hunter to write 'the rock moved' never came back.",
+      "Skarv are cowards, but no one smells death sooner.",
+      "Watch which way the Grast herd runs. The beast is the other way.",
+      "A beast's name is the sound a hunter made after hearing its call.",
+      "The outpost keeps no map. Only the traces hunters carried home.",
+      "Deep in the gorge stands a ring of stones no human raised. No one goes near.",
+      "The bone walls buried in the strata are twice the size of any beast alive.",
+      "The old hunters say the continent is listening back.",
+      "In the silence after a roar, listen. You will hear the next step.",
+      "An echo never dies. It only thins. That, they say, is the nature of the first world.",
+      "A blade dulls as the echo drains from it. Whet it, and it returns.",
+      "Falling to your knees does not end the hunt. You only wake at the outpost.",
+      "When a beast sleeps, its echo stills. Its shell is never softer.",
+      "On mornings when the coastal fog lifts, a low sound reaches from the interior.",
+      "The first world still echoes."
+    ]
+  },
+  "hub": {
+    "eyebrow": "Verdant Outpost",
+    "title": "Verdant Outpost",
+    "lead": "Hunter. Choose the beast, check the blade, then go.",
+    "hunter": "Hunter",
+    "blade": "Blade",
+    "materials": "Materials",
+    "journal": "Journal",
+    "hunts": "Hunts",
+    "forge": "Forge",
+    "save": "Write it down",
+    "burn": "Burn the journal",
+    "burnConfirm": "Burn the journal. Materials and every tempered blade will be lost.",
+    "back": "Back",
+    "bladeLine": "Blade: {name}",
+    "statLine": "Attack {power} / Temper {level} / {sharpness}",
+    "hpLine": "Vitality {hp}",
+    "clearsLine": "Hunts concluded: {n}",
+    "savedAt": "Written on {date}",
+    "unsaved": "The journal is still blank. It writes itself at the end of a hunt and at the forge.",
+    "none": "None",
+    "weaponOption": "{name}  Atk {power} / Temper {level}",
+    "maxed": "This blade is tempered to its limit.",
+    "forgeButton": "Temper",
+    "forgeResult": "Attack {from} → {to} / {sharpness} / Crit {crit}%",
+    "materialLine": "{name}  {owned}/{required}",
+    "timeLimit": "Time",
+    "timeValue": "{minutes} min",
+    "knees": "Knees",
+    "kneesValue": "Retreat after {n}",
+    "start": "Hunt",
+    "questType": {
+      "hunt": "Hunt",
+      "capture": "Capture",
+      "investigation": "Survey",
+      "gathering": "Gather",
+      "survival": "Survive",
+      "multiHunt": "Twin hunt"
+    }
+  },
+  "settings": {
+    "eyebrow": "Settings",
+    "title": "Settings",
+    "quality": "Quality",
+    "low": "Low",
+    "mid": "Medium",
+    "high": "High",
+    "volume": "Volume",
+    "language": "Language",
+    "controls": "Controls",
+    "note": "Standard gamepads are supported. Menus use the d-pad and A / B.",
+    "back": "Back",
+    "actions": {
+      "moveForward": "Forward",
+      "moveBackward": "Back",
+      "moveLeft": "Left",
+      "moveRight": "Right",
+      "dash": "Run",
+      "dodge": "Evade",
+      "lightAttack": "Cut",
+      "heavyAttack": "Heavy cut (hold to charge)",
+      "lockOn": "Fix on the beast",
+      "interact": "Carve / topple",
+      "useItem": "Drink",
+      "pause": "Still"
+    }
+  },
+  "codex": {
+    "eyebrow": "Codex",
+    "title": "Codex",
+    "unknown": "No record",
+    "unknownEyebrow": "Unknown",
+    "unknownText": "No trace found yet. Go out and fill this page.",
+    "empty": "Nothing has been written yet.",
+    "habitat": "Range",
+    "ecology": "Ecology",
+    "hint": "What to watch for",
+    "sighting": "Sighting",
+    "back": "Back"
+  },
+  "credits": {
+    "eyebrow": "Credits",
+    "title": "Tellers",
+    "made": "Made by",
+    "design": "Design and code",
+    "designText": "Kenta",
+    "world": "World and beasts",
+    "worldText": "Everything was made new for this work. Nothing was borrowed from existing games.",
+    "tech": "Technology",
+    "techText": "TypeScript / Three.js / Vite / Web Audio",
+    "fonts": "Type",
+    "fontsText": "Cinzel (Natanael Gama), Shippori Mincho (FONTDASU), Cormorant Garamond (Christian Thalmann) — SIL Open Font License",
+    "sound": "Sound",
+    "soundText": "Synthesised with Web Audio. Any sampled sources are credited in the README.",
+    "thanks": "Thanks",
+    "thanksText": "To every hunter who stopped to listen to this continent.",
+    "close": "The first world still echoes.",
+    "back": "Back"
+  },
+  "pause": {
+    "eyebrow": "Still",
+    "title": "Still",
+    "resume": "Continue",
+    "resumeEyebrow": "Resume",
+    "settings": "Settings",
+    "settingsEyebrow": "Options",
+    "retreat": "Leave the hunt",
+    "retreatEyebrow": "Retreat"
+  },
+  "result": {
+    "concluded": "Hunt Concluded",
+    "returned": "Returned",
+    "time": "Time to the kill",
+    "damage": "Wounds dealt",
+    "hits": "Wounds taken",
+    "downs": "Knees",
+    "parts": "Parts broken",
+    "rewards": "Carried home",
+    "none": "None",
+    "again": "Once more",
+    "retry": "Go back in",
+    "outpost": "To the outpost",
+    "killLines": [
+      "The echo has stilled.",
+      "The gorge is quiet, for now.",
+      "The rock has stopped moving.",
+      "The blade answered. So did the beast.",
+      "Carry it home: the traces, the shards, and this silence."
+    ],
+    "returnLines": {
+      "timeLimit": [
+        "The hour has passed. The beast remains in the gorge.",
+        "Back to the outpost before night. The beast will not run.",
+        "You could not close the distance today. The tracks will still be there tomorrow.",
+        "The hour exists to keep hunters alive. Withdraw.",
+        "The gorge has gone dark. Next time, start at dawn."
+      ],
+      "downs": [
+        "Three times to your knees. That is enough for today.",
+        "The beast was strong. Knowing that is today's harvest.",
+        "Wounds heal at the outpost. The beast's habits stay in your head.",
+        "Remember where you fell. Next time, evade there.",
+        "Withdrawing is part of the hunt. Nothing is broken."
+      ],
+      "none": [
+        "You left the hunt. The beast is still in the gorge.",
+        "Back to the outpost. The traces will not fade.",
+        "Not today. That, too, is a decision.",
+        "Whet the blade again. The gorge will wait.",
+        "You withdrew. When you return, the beast will be drinking in the same place."
+      ]
+    }
+  },
+  "hud": {
+    "knees": "Knees",
+    "objectiveHunt": "Bring down {name}",
+    "objectiveReturn": "Done. {seconds}s to the outpost. Carve now",
+    "objectiveDone": "The hunt is over",
+    "objectiveFailed": "Return to the outpost",
+    "respawn": "You fell. You wake at the outpost in {seconds}s",
+    "carving": "Carving",
+    "carve": "E  Carve ({n} left)",
+    "topple": "E  Topple the {name}",
+    "itemKey": "H",
+    "tutorial": [
+      "W A S D  walk",
+      "Shift  run",
+      "Space  evade",
+      "J / K  cut / heavy cut",
+      "Tab  fix on the beast",
+      "H  drink"
+    ],
+    "tutorialVoice": "— from an elder's notes. \"Walk first. When you see the beast, fix on it. The blade comes after.\"",
+    "banners": {
+      "broke": "{part} broken",
+      "severed": "{part} severed",
+      "slain": "{name} brought down"
+    },
+    "notices": {
+      "stun": "Stunned",
+      "topple": "Toppled",
+      "rainStart": "Rain begins",
+      "rainStop": "Rain lifts",
+      "rockHit": "The rockfall struck",
+      "rockMiss": "The rockfall missed",
+      "got": "{name} ×{n}",
+      "nothing": "Nothing gained",
+      "used": "Drank {name} ({n} left)"
+    },
+    "sharpness": {
+      "dull": "Edge: dull",
+      "normal": "Edge: fair",
+      "sharp": "Edge: keen",
+      "keen": "Edge: bright"
+    },
+    "failReason": {
+      "timeLimit": "The hour passed",
+      "downs": "Three times to your knees",
+      "none": "You left the hunt"
+    },
+    "badges": {
+      "enraged": "Enraged",
+      "exhausted": "Exhausted",
+      "dying": "Dying",
+      "sleeping": "Asleep",
+      "eating": "Feeding",
+      "broken": "{part} broken",
+      "severed": "{part} severed"
+    }
+  },
+  "data": {
+    "fields": { "verdant_tempest": "Verdant Gorge" },
+    "areas": {
+      "base_camp": "The Outpost",
+      "forest": "The Mossfloor",
+      "river": "The Whitewater",
+      "cave": "The Hollow"
+    },
+    "areaCatch": {
+      "base_camp": "Whet the blade beneath the bone pillars",
+      "forest": "Moss swallows sound. Only the tracks remain",
+      "river": "Beyond the water's noise, the beast",
+      "cave": "Here the beast sleeps. Here it is softest"
+    },
+    "areaIntro": {
+      "base_camp": "A small outpost on the coast: pillars of beast bone and a stone forge. Hunters temper blades here, write down the traces, and set out for the gorge. The only place on the continent where a fire burns at night.",
+      "forest": "Moss lies thick on the valley floor and swallows footsteps. Grast herds graze in the shade of fallen trunks, and beyond them there is always a larger print. When rain falls the moss glows faintly, showing how dense the echo runs.",
+      "river": "A white rapid that splits the gorge. The beast drinks here and grinds the bank stones as it rolls. Keep away on flood days. Something lives under the water, the old hunters say.",
+      "cave": "A hollow opening at the cliff's root. The first power runs dense inside, and the wounded beast withdraws here. Rock ledges hang loose from the ceiling. A sleeping beast's shell has gone quiet."
+    },
+    "gimmicks": { "rockfall_cave_mouth": "Loose ledge", "rockfall_forest_edge": "Loose ledge" },
+    "quests": { "vs01_hunt_valgaron": "The Gorge Sovereign" },
+    "questDesc": { "vs01_hunt_valgaron": "Valgaron, a primal beast in a shell of rock, holds the Mossfloor. By day it drives the grazing herds and drinks at the Whitewater; wounded, it withdraws to its den. Read the traces and face it." },
+    "monsters": { "valgaron": "Valgaron" },
+    "monsterTitles": { "valgaron": "The Gorge Sovereign" },
+    "parts": {
+      "head": "Horn",
+      "body": "Shell",
+      "foreleg_l": "Left foreleg",
+      "foreleg_r": "Right foreleg",
+      "hindleg_l": "Left hindleg",
+      "hindleg_r": "Right hindleg",
+      "tail": "Tail"
+    },
+    "creatures": { "grast": "Grast", "skarv": "Skarv" },
+    "weapons": { "titan_blade": "Titan Blade", "rift_saber": "Rift Saber", "break_hammer": "Break Hammer", "arc_bow": "Arc Bow" },
+    "recipes": {
+      "titan_blade_lv1": "Titan Blade I (Rockscale)",
+      "titan_blade_lv2": "Titan Blade II (Great Claw)",
+      "titan_blade_lv3": "Titan Blade III (Sovereign)",
+      "rift_saber_lv1": "Rift Saber I (Echo Shard)",
+      "rift_saber_lv2": "Rift Saber II (Fang)",
+      "break_hammer_lv1": "Break Hammer I (Great Claw)",
+      "break_hammer_lv2": "Break Hammer II (Hornbreaker)"
+    },
+    "items": {
+      "valgaron_scale": "Valgaron rockscale",
+      "valgaron_fang": "Valgaron fang",
+      "valgaron_claw": "Valgaron great claw",
+      "valgaron_horn": "Valgaron horn",
+      "valgaron_tail": "Valgaron tail plate",
+      "echo_core": "Echo core",
+      "echo_shard": "Echo shard",
+      "grast_hide": "Grast hide",
+      "grast_meat": "Grast meat",
+      "skarv_talon": "Skarv talon",
+      "vital_tonic": "Restorative"
+    },
+    "itemDesc": {
+      "valgaron_scale": "A shard of rock-hard shell. Holds a faint echo.",
+      "valgaron_fang": "A fang from jaws that crush their prey.",
+      "valgaron_claw": "A great claw from the foreleg. Easier to take from a broken leg.",
+      "valgaron_horn": "The horn. It can only be taken once broken.",
+      "valgaron_tail": "An armour plate from a severed tail.",
+      "echo_core": "An echo condensed inside a primal beast. It becomes the heart of a blade.",
+      "echo_shard": "A fragment of crystallised echo.",
+      "grast_hide": "The thick hide of the grazing Grast.",
+      "grast_meat": "Raw meat. Skarv are fond of it.",
+      "skarv_talon": "The sharp talon of a carrion-eating Skarv.",
+      "vital_tonic": "A decoction of echo-bearing herbs. You are defenceless while drinking."
+    },
+    "beasts": {
+      "valgaron": {
+        "kind": "Four-legged primal beast",
+        "habitat": "Verdant Gorge — the Mossfloor, the Whitewater, the Hollow",
+        "ecology": "Wears a shell like rock. By day it drives the Grast herds across the valley floor, drinks at the Whitewater, and sleeps in its den when tired. Deeply wounded, it withdraws to the den; when rain comes, it enters the hollow. Its rage is not hatred but the echo inside it boiling over. That is when the cracks in its shell begin to glow.",
+        "hint": "When the cracks glow, power gathers in the horn and it runs hot. The tail is thin at its root. The legs break from the front. While it sleeps, the echo in the shell goes quiet.",
+        "sighting": "The first hunter to write 'the rock moved' never came back. The second wrote down the depth of the tracks."
+      }
+    }
+  }
+}

@@ -17,7 +17,8 @@ import { StudioScreen } from '@ui/screens/StudioScreen';
 import { TitleScreen } from '@ui/screens/TitleScreen';
 import { MenuScreen } from '@ui/screens/MenuScreen';
 import { CodexScreen } from '@ui/screens/CodexScreen';
-import { SettingsScreen, type Language } from '@ui/screens/SettingsScreen';
+import { SettingsScreen } from '@ui/screens/SettingsScreen';
+import { applyTranslations, dataName, getLanguage, onLanguageChange, setLanguage, t, tList, tPick } from '@i18n/index';
 import { CreditsScreen } from '@ui/screens/CreditsScreen';
 import { ResultScreen } from '@ui/screens/ResultScreen';
 import { PauseScreen } from '@ui/screens/PauseScreen';
@@ -67,16 +68,7 @@ import { Vec3 } from '@shared/math/Vec3';
 
 export type GameScene = 'hub' | 'field' | 'result';
 
-const SHARPNESS_LABELS = { dull: '斬れ味: 鈍', normal: '斬れ味: 並', sharp: '斬れ味: 鋭', keen: '斬れ味: 冴' } as const;
-/** 帰還の理由。「失敗」と言わず、世界の言葉で。 */
-const FAIL_REASON_LABELS = { timeLimit: '刻限が過ぎた', downs: '三度、膝をついた', none: '狩りを退いた' } as const;
-/** 獣の和名と二つ名（B5 でデータ／i18n へ移す）。 */
-const BEAST_NAMES: Record<string, { name: string; title: string }> = { valgaron: { name: 'ヴァルガロン', title: '峡谷の岩王' } };
-export const STUDIO_NAME = 'Hollow Signal';
-const LANGUAGE_KEY = 'pe.lang';
 const TUTORIAL_KEY = 'pe.tutorialSeen';
-/** 初回の狩りでだけ右下に小さく出す手引き（モーダルにしない）。 */
-const TUTORIAL_LINES = ['W A S D　歩く', 'Shift　駆ける', 'Space　躱す', 'J / K　斬る / 振り下ろす', 'Tab　獣を見据える', 'H　薬を飲む'];
 
 /**
  * ゲーム全体の起動・シーン遷移・各システムの接続を担当する。
@@ -319,7 +311,7 @@ export class GameManager {
     this.hud.onStaminaEmpty = () => this.audio.play('staminaOut');
     this.hubView = new HubView();
     this.screens = new ScreenManager(uiRoot);
-    this.studioScreen = new StudioScreen(STUDIO_NAME);
+    this.studioScreen = new StudioScreen(t('brand.studio'));
     this.titleScreen = new TitleScreen();
     this.menuScreen = new MenuScreen(
       {
@@ -334,11 +326,11 @@ export class GameManager {
     this.codexScreen = new CodexScreen();
     this.codexScreen.onBack = () => this.enterMenu();
     this.settingsScreen = new SettingsScreen(
-      { quality: this.quality.current, volume: this.audio.masterVolume, language: readLanguage() },
+      { quality: this.quality.current, volume: this.audio.masterVolume, language: getLanguage() },
       {
         onQuality: (q) => this.quality.apply(q),
         onVolume: (v) => this.audio.setMasterVolume(v),
-        onLanguage: (l) => writeLanguage(l),
+        onLanguage: (l) => setLanguage(l),
       },
     );
     this.settingsScreen.onBack = () => {
@@ -346,7 +338,7 @@ export class GameManager {
       else this.enterMenu();
     };
     this.quality.onChange((q) => this.settingsScreen.set({ quality: q }));
-    const creditsScreen = new CreditsScreen(STUDIO_NAME);
+    const creditsScreen = new CreditsScreen();
     creditsScreen.onBack = () => this.enterMenu();
     this.resultScreen = new ResultScreen();
     this.resultScreen.onReturn = () => {
@@ -365,6 +357,11 @@ export class GameManager {
       this.setPaused(false);
       this.quest?.abandon();
     };
+    onLanguageChange(() => {
+      this.settingsScreen.relabel();
+      if (this.scene === 'hub') this.renderHub();
+      if (this.screens.currentId === 'codex') this.openCodex();
+    });
     for (const screen of [this.studioScreen, this.titleScreen, this.menuScreen, this.hubView, this.codexScreen, this.settingsScreen, creditsScreen, this.resultScreen, this.pauseScreen]) this.screens.register(screen);
 
     this.hubView.onStartQuest = (quest) => {
@@ -381,6 +378,7 @@ export class GameManager {
     };
     this.hubView.onDeleteSave = () => this.deleteSave();
     this.hubView.onBack = () => this.enterMenu();
+    applyTranslations(uiRoot);
     // 音はユーザー操作後にしか鳴らせない。最初のクリック/キーで解錠する。
     canvas.addEventListener('click', () => this.audio.unlock());
     window.addEventListener('keydown', () => this.audio.unlock(), { once: true });
@@ -430,21 +428,21 @@ export class GameManager {
   async preload(onProgress?: (ratio: number, label: string) => void): Promise<{ seconds: number }> {
     const t0 = performance.now();
     const step = (ratio: number, label: string): void => onProgress?.(ratio, label);
-    step(0.08, '痕跡を辿る');
+    step(0.08, t('loading.steps.assets'));
     await Promise.all([this.playerView.ready, this.monsterView.ready, this.renderer.environment.ready]);
-    step(0.35, '空を写す');
+    step(0.35, t('loading.steps.sky'));
     await nextFrame();
     this.renderer.environment.bakeNow();
     this.renderer.refreshShadows();
-    step(0.5, '刃を研ぐ');
+    step(0.5, t('loading.steps.shaders'));
     await nextFrame();
     await this.renderer.renderer.compileAsync(this.renderer.scene, this.renderer.camera);
-    step(0.85, '目を慣らす');
+    step(0.85, t('loading.steps.warm'));
     await nextFrame();
     // 影マップ・ポストプロセスのレンダーターゲットをここで確保しておく
     this.render(1, 1 / 60);
     this.render(1, 1 / 60);
-    step(1, '耳を澄ませた');
+    step(1, t('loading.steps.done'));
     return { seconds: (performance.now() - t0) / 1000 };
   }
 
@@ -525,17 +523,17 @@ export class GameManager {
 
   private openCodex(): void {
     const attempted = this.lastQuestDef !== null || Object.values(this.questClears).some((n) => n > 0);
-    const beast = BEAST_NAMES[this.monster.def.id] ?? { name: this.monster.def.name, title: '' };
+    const id = this.monster.def.id;
     this.codexScreen.render([
       {
-        id: this.monster.def.id,
-        name: beast.name,
-        title: beast.title,
-        kind: '四足の原獣',
-        habitat: '翠嵐峡谷 — 苔の谷底、白瀬、獣の寝床',
-        ecology: '岩のような甲殻をまとい、日中は谷底で草食の群れを追い、白瀬で喉を潤す。深く傷つくと寝床へ退き、雨が来れば洞へ入る。',
-        hint: '甲殻の亀裂が光を帯びたとき、角に力が集まっている。尾は根元から、脚は前から。',
-        sighting: '「岩が動いた」と最初に書いた狩人は、帰ってこなかった。',
+        id,
+        name: dataName('monsters', id, this.monster.def.name),
+        title: t(`data.monsterTitles.${id}`),
+        kind: t(`data.beasts.${id}.kind`),
+        habitat: t(`data.beasts.${id}.habitat`),
+        ecology: t(`data.beasts.${id}.ecology`),
+        hint: t(`data.beasts.${id}.hint`),
+        sighting: t(`data.beasts.${id}.sighting`),
         seen: attempted,
       },
     ]);
@@ -572,30 +570,32 @@ export class GameManager {
     const weapon = this.player.combat.weapon;
     const next = this.crafting.nextRecipe(weapon.id);
     this.hubView.render({
-      playerName: '狩人',
+      playerName: t('hub.hunter'),
       weapons: [...this.weapons.values()].map((w) => {
         const leveled = this.crafting.weaponAtCurrentLevel(w);
-        return { id: w.id, name: leveled.name, weaponPower: leveled.weaponPower, level: this.crafting.weaponLevel(w.id), equipped: w.id === this.equippedWeaponId };
+        return { id: w.id, name: this.weaponDisplayName(w.id), weaponPower: leveled.weaponPower, level: this.crafting.weaponLevel(w.id), equipped: w.id === this.equippedWeaponId };
       }),
-      weaponName: weapon.name,
+      weaponName: this.weaponDisplayName(weapon.id),
       weaponPower: weapon.weaponPower,
       weaponLevel: this.crafting.weaponLevel(weapon.id),
-      sharpnessLabel: SHARPNESS_LABELS[weapon.sharpness],
+      sharpnessLabel: t(`hud.sharpness.${weapon.sharpness}`),
       maxHp: this.player.stats.maxHp,
       quests: this.quests,
       inventoryLines: this.inventory.entries().map(([id, n]) => `${this.itemName(id)} ×${n}`),
       craft: next
         ? {
             recipeId: next.id,
-            name: next.displayName,
-            resultLine: `攻撃力 ${weapon.weaponPower} → ${next.result.weaponPower} / ${SHARPNESS_LABELS[next.result.sharpness]} / 会心 ${Math.round(next.result.critRate * 100)}%`,
+            name: dataName('recipes', next.id, next.displayName),
+            resultLine: t('hub.forgeResult', { from: weapon.weaponPower, to: next.result.weaponPower, sharpness: t(`hud.sharpness.${next.result.sharpness}`), crit: Math.round(next.result.critRate * 100) }),
             materialLines: this.crafting.materialStatus(next).map((s) => ({
-              text: `${this.itemName(s.itemId)}  ${s.owned}/${s.required}`,
+              text: t('hub.materialLine', { name: this.itemName(s.itemId), owned: s.owned, required: s.required }),
               satisfied: s.owned >= s.required,
             })),
             canCraft: this.crafting.canCraft(next),
           }
         : null,
+      questNames: Object.fromEntries(this.quests.map((qd) => [qd.id, dataName('quests', qd.id, qd.name)])),
+      questDescriptions: Object.fromEntries(this.quests.map((qd) => [qd.id, t(`data.questDesc.${qd.id}`)])),
       savedAtLabel: this.savedAt ? new Date(this.savedAt).toLocaleString('ja-JP') : '',
       questClears: Object.values(this.questClears).reduce((a, b) => a + b, 0),
     });
@@ -635,11 +635,11 @@ export class GameManager {
     this.quest.start();
     this.setScene('field');
     this.hud.reset();
-    this.hud.banner(def.name, 'strong');
+    this.hud.banner(dataName('quests', def.id, def.name), 'strong');
     this.events.emit('questStarted', { questId: def.id });
     this.lastAreaId = this.field.areaAt(this.player.controller.position)?.id ?? null;
     if (!readFlag(TUTORIAL_KEY)) {
-      this.hud.showTutorial(TUTORIAL_LINES);
+      this.hud.showTutorial(tList('hud.tutorial'));
       writeFlag(TUTORIAL_KEY);
     }
   }
@@ -668,23 +668,56 @@ export class GameManager {
     // 剥ぎ取った素材が失われないよう、クエスト終了時点で自動記録する
     this.saveGame();
 
-    const beast = BEAST_NAMES[this.monster.def.id] ?? { name: this.monster.def.name, title: '' };
     this.resultScreen.render({
       success,
-      headline: success ? beast.name : quest.def.name,
-      subline: success ? beast.title : FAIL_REASON_LABELS[quest.failReason ?? 'none'],
+      headline: success ? this.beastName() : dataName('quests', quest.def.id, quest.def.name),
+      subline: success ? tPick('result.killLines') : tPick(`result.returnLines.${quest.failReason ?? 'none'}`),
       clearTimeSeconds: quest.clearTimeSeconds,
       damageDealt: this.questStats.damageDealt,
       hitsTaken: this.questStats.hitsTaken,
       downs: quest.downs,
-      brokenParts: quest.brokenPartIds.map((id) => this.monster.getPart(id).def.name),
+      brokenParts: quest.brokenPartIds.map((id) => this.partName(id)),
       rewardLines: mergeDrops(this.questLoot).map((d) => `${this.itemName(d.itemId)} ×${d.count}`),
     });
     this.setScene('result');
   }
 
   private itemName(itemId: string): string {
-    return this.items.get(itemId)?.name ?? itemId;
+    return dataName('items', itemId, this.items.get(itemId)?.name ?? itemId);
+  }
+
+  private partName(partId: string): string {
+    return dataName('parts', partId, this.monster.getPart(partId).def.name);
+  }
+
+  private beastName(): string {
+    return dataName('monsters', this.monster.def.id, this.monster.def.name);
+  }
+
+  /** 鍛えた段階があれば段階名（recipes）、無ければ系統名（weapons）。 */
+  private weaponDisplayName(weaponId: string): string {
+    const level = this.crafting.weaponLevel(weaponId);
+    const base = this.weapons.get(weaponId);
+    if (level > 0) return dataName('recipes', `${weaponId}_lv${level}`, this.crafting.weaponAtCurrentLevel(base ?? this.baseWeapon).name);
+    return dataName('weapons', weaponId, base?.name ?? weaponId);
+  }
+
+  /** HUD の目標行。core の文言（objectiveText）は使わず、状態から世界の言葉で組む。 */
+  private objectiveText(): string {
+    const quest = this.quest;
+    if (!quest) return '';
+    switch (quest.state) {
+      case 'active':
+        return t('hud.objectiveHunt', { name: this.beastName() });
+      case 'returning':
+        return t('hud.objectiveReturn', { seconds: Math.ceil(quest.returnRemaining) });
+      case 'completed':
+        return t('hud.objectiveDone');
+      case 'failed':
+        return t('hud.objectiveFailed');
+      default:
+        return '';
+    }
   }
 
   private pushNotice(text: string): void {
@@ -775,18 +808,18 @@ export class GameManager {
       this.quest?.notifyPartBroken(e.partId);
       this.cameraRig.shake(fb.shakeOnPartBreak, fb.shakeMaxSeconds);
       this.audio.play('partBreak');
-      this.hud.banner(`${this.monster.getPart(e.partId).def.name}を砕いた`);
+      this.hud.banner(t('hud.banners.broke', { part: this.partName(e.partId) }));
     });
     this.events.on('partSevered', (e) => {
       this.lastHitSummary = `PART SEVERED: ${this.monster.getPart(e.partId).def.name}`;
       this.quest?.notifyPartBroken(e.partId);
       this.cameraRig.shake(fb.shakeOnPartBreak, fb.shakeMaxSeconds);
       this.audio.play('partBreak');
-      this.hud.banner(`${this.monster.getPart(e.partId).def.name}を断った`);
+      this.hud.banner(t('hud.banners.severed', { part: this.partName(e.partId) }));
     });
     this.events.on('monsterAttackStarted', () => this.audio.play('telegraph'));
     this.events.on('weatherChanged', (e) => {
-      this.pushNotice(e.state === 'rain' ? '雨が降り始めた' : '雨が上がった');
+      this.pushNotice(e.state === 'rain' ? t('hud.notices.rainStart') : t('hud.notices.rainStop'));
       this.lastHitSummary = `weather ${e.state}`;
     });
     this.events.on('gimmickTriggered', (e) => {
@@ -797,7 +830,7 @@ export class GameManager {
       this.cameraRig.shake(fb.shakeOnPartBreak * 1.5, 0.5);
       this.audio.play('hitHeavy');
       this.hitSparks.burst(e.position, 40, 0xb9a48a, 9);
-      this.pushNotice(e.hitMonsterIds.length > 0 ? '落石が直撃！' : '落石は外れた');
+      this.pushNotice(e.hitMonsterIds.length > 0 ? t('hud.notices.rockHit') : t('hud.notices.rockMiss'));
       this.lastHitSummary = `gimmick impact hits=${e.hitMonsterIds.length}`;
     });
     this.events.on('monsterEnraged', () => {
@@ -809,7 +842,7 @@ export class GameManager {
       if (e.source === 'carve') this.audio.play('carve');
     });
     this.events.on('monsterDied', () => {
-      this.hud.banner(`${(BEAST_NAMES[this.monster.def.id] ?? { name: this.monster.def.name }).name}を討った`, 'strong');
+      this.hud.banner(t('hud.banners.slain', { name: this.beastName() }), 'strong');
       if (this.bot) this.bot.stats.killedAtSeconds = this.quest?.elapsed ?? null;
       this.juice.slowMotion(fb.slowMoOnKillScale, fb.slowMoOnKillSeconds);
       this.cameraRig.setLockOnTarget(null);
@@ -840,8 +873,8 @@ export class GameManager {
     });
     this.events.on('monsterToppled', (e) => (this.lastHitSummary = `TOPPLED via ${e.partId}`));
     this.events.on('monsterEnraged', () => (this.lastHitSummary = 'ENRAGED!'));
-    this.events.on('monsterStunned', () => this.pushNotice('気絶'));
-    this.events.on('monsterToppled', () => this.pushNotice('転倒'));
+    this.events.on('monsterStunned', () => this.pushNotice(t('hud.notices.stun')));
+    this.events.on('monsterToppled', () => this.pushNotice(t('hud.notices.topple')));
     this.events.on('monsterCalmed', () => (this.lastHitSummary = 'calmed down'));
     this.events.on('monsterExhausted', () => (this.lastHitSummary = 'EXHAUSTED'));
     this.events.on('monsterRecovered', () => (this.lastHitSummary = 'recovered'));
@@ -967,10 +1000,10 @@ export class GameManager {
       if (carved.drop) {
         this.questLoot.push(carved.drop);
         this.events.emit('itemObtained', { itemId: carved.drop.itemId, count: carved.drop.count, source: 'carve' });
-        this.pushNotice(`${this.itemName(carved.drop.itemId)} ×${carved.drop.count} を入手`);
+        this.pushNotice(t('hud.notices.got', { name: this.itemName(carved.drop.itemId), n: carved.drop.count }));
         this.lastHitSummary = `carved ${carved.drop.itemId}`;
       } else {
-        this.pushNotice('何も得られなかった');
+        this.pushNotice(t('hud.notices.nothing'));
       }
     }
     for (let i = this.notices.length - 1; i >= 0; i--) {
@@ -1011,7 +1044,7 @@ export class GameManager {
     if (!this.player.useConsumable(def.effect)) return;
     this.pouch.remove(id);
     this.audio.play('itemGet');
-    this.pushNotice(`${def.name} を使用（残り ${this.pouch.count(id)}）`);
+    this.pushNotice(t('hud.notices.used', { name: this.itemName(id), n: this.pouch.count(id) }));
   }
 
   private updateQuest(dt: number): void {
@@ -1098,9 +1131,9 @@ export class GameManager {
     const monster = this.monster;
     m.hpRatio = stats.hpRatio;
     m.staminaRatio = stats.staminaRatio;
-    m.weaponName = combat.weapon.name;
-    m.sharpnessLabel = SHARPNESS_LABELS[combat.weapon.sharpness];
-    m.objective = quest?.objectiveText ?? '';
+    m.weaponName = this.weaponDisplayName(combat.weapon.id);
+    m.sharpnessLabel = t(`hud.sharpness.${combat.weapon.sharpness}`);
+    m.objective = this.objectiveText();
     m.raining = this.weather.isRaining;
     m.weaponKind = combat.weapon.id.includes('hammer') ? 'hammer' : combat.weapon.id.includes('saber') ? 'saber' : combat.weapon.id.includes('bow') ? 'bow' : 'blade';
     m.timeRemaining = quest?.timeRemaining ?? 0;
@@ -1111,13 +1144,13 @@ export class GameManager {
     m.lockOn = this.cameraRig.isLockedOn;
     const carve = this.carve.prompt;
     if (this.carve.isCarving) {
-      m.prompt = '剥いでいる';
+      m.prompt = t('hud.carving');
       m.promptProgress = controller.interactProgress;
     } else if (this.gimmicks.prompt.available) {
-      m.prompt = `E　${this.gimmicks.prompt.name}を崩す`;
+      m.prompt = t('hud.topple', { name: dataName('gimmicks', this.gimmicks.prompt.gimmickId, this.gimmicks.prompt.name) });
       m.promptProgress = 0;
     } else if (carve.available) {
-      m.prompt = `E　剥ぐ（残り ${carve.carvesRemaining}）`;
+      m.prompt = t('hud.carve', { n: carve.carvesRemaining });
       m.promptProgress = 0;
     } else {
       m.prompt = '';
@@ -1127,14 +1160,13 @@ export class GameManager {
     const quickDef = this.items.get(GameManager.QUICK_ITEM_ID);
     m.itemName = quickDef?.name ?? '';
     m.itemCount = this.pouch.count(GameManager.QUICK_ITEM_ID);
-    m.itemKey = 'H';
+    m.itemKey = t('hud.itemKey');
     // 対象の情報は「見つけている / 見つけられている」ときだけ出す（観察を促す）
     const near = controller.position.horizontalDistanceTo(monster.position) <= this.balance.camera.lockOnMaxDistance;
     m.monsterVisible = monster.isAlive && (near || this.monsterAI.perception.detected);
-    const beastNames = BEAST_NAMES[monster.def.id] ?? { name: monster.def.name, title: '' };
-    m.monsterName = beastNames.name;
-    m.monsterTitle = beastNames.title;
-    if (m.monsterVisible) this.hud.beastIntro(beastNames.name, beastNames.title);
+    m.monsterName = this.beastName();
+    m.monsterTitle = t(`data.monsterTitles.${monster.def.id}`);
+    if (m.monsterVisible) this.hud.beastIntro(m.monsterName, m.monsterTitle);
     // 方位: 北 = +Z。獣は見えているときだけ
     m.headingRad = this.cameraRig.yaw;
     const dxm = monster.position.x - controller.position.x;
@@ -1146,18 +1178,18 @@ export class GameManager {
     const area = this.field.areaAt(controller.position);
     if (area && area.id !== this.lastAreaId) {
       this.lastAreaId = area.id;
-      if (quest) this.hud.banner(area.name, 'strong');
+      if (quest) this.hud.banner(dataName('areas', area.id, area.name), 'strong');
     }
     m.monsterHpRatio = monster.stats.hpRatio;
     m.monsterBadges.length = 0;
-    if (monster.condition.isEnraged) m.monsterBadges.push('怒り');
-    if (monster.condition.isExhausted) m.monsterBadges.push('疲労');
-    if (monster.stats.hpRatio <= monster.def.behavior.fleeHpRatio) m.monsterBadges.push('瀕死');
-    if (this.monsterAI.state === 'sleep') m.monsterBadges.push('睡眠');
-    if (this.monsterAI.state === 'eat') m.monsterBadges.push('捕食中');
+    if (monster.condition.isEnraged) m.monsterBadges.push(t('hud.badges.enraged'));
+    if (monster.condition.isExhausted) m.monsterBadges.push(t('hud.badges.exhausted'));
+    if (monster.stats.hpRatio <= monster.def.behavior.fleeHpRatio) m.monsterBadges.push(t('hud.badges.dying'));
+    if (this.monsterAI.state === 'sleep') m.monsterBadges.push(t('hud.badges.sleeping'));
+    if (this.monsterAI.state === 'eat') m.monsterBadges.push(t('hud.badges.eating'));
     for (const part of monster.parts) {
-      if (part.state === 'broken') m.monsterBadges.push(`${part.def.name} 破壊`);
-      if (part.state === 'severed') m.monsterBadges.push(`${part.def.name} 切断`);
+      if (part.state === 'broken') m.monsterBadges.push(t('hud.badges.broken', { part: this.partName(part.def.id) }));
+      if (part.state === 'severed') m.monsterBadges.push(t('hud.badges.severed', { part: this.partName(part.def.id) }));
     }
     this.hud.render(m, this.lastFrameDt);
   }
@@ -1182,21 +1214,6 @@ function createStats(root: HTMLElement): Stats {
   return stats;
 }
 
-function readLanguage(): Language {
-  try {
-    return window.localStorage.getItem(LANGUAGE_KEY) === 'en' ? 'en' : 'ja';
-  } catch {
-    return 'ja';
-  }
-}
-
-function writeLanguage(language: Language): void {
-  try {
-    window.localStorage.setItem(LANGUAGE_KEY, language);
-  } catch {
-    /* 保存できない環境では無視 */
-  }
-}
 
 function readFlag(key: string): boolean {
   try {

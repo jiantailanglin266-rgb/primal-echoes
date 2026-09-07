@@ -1,4 +1,5 @@
 import { createScreenRoot, escapeHtml, q, type Screen } from './Screen';
+import { t } from '@i18n/index';
 
 export interface ResultModel {
   success: boolean;
@@ -35,18 +36,18 @@ export class ResultScreen implements Screen {
         <h1 class="pe-result__headline"></h1>
         <div class="pe-result__subline"></div>
         <div class="pe-result__numbers">
-          <div class="pe-result__num"><span class="pe-result__value" data-key="time">0:00</span><span class="pe-result__key">討伐まで</span></div>
-          <div class="pe-result__num"><span class="pe-result__value" data-key="damage">0</span><span class="pe-result__key">与えた傷</span></div>
-          <div class="pe-result__num"><span class="pe-result__value" data-key="hits">0</span><span class="pe-result__key">受けた傷</span></div>
-          <div class="pe-result__num"><span class="pe-result__value" data-key="downs">0</span><span class="pe-result__key">膝をついた</span></div>
+          <div class="pe-result__num"><span class="pe-result__value" data-key="time">0:00</span><span class="pe-result__key" data-i18n="result.time"></span></div>
+          <div class="pe-result__num"><span class="pe-result__value" data-key="damage">0</span><span class="pe-result__key" data-i18n="result.damage"></span></div>
+          <div class="pe-result__num"><span class="pe-result__value" data-key="hits">0</span><span class="pe-result__key" data-i18n="result.hits"></span></div>
+          <div class="pe-result__num"><span class="pe-result__value" data-key="downs">0</span><span class="pe-result__key" data-i18n="result.downs"></span></div>
         </div>
         <div class="pe-result__columns">
-          <section><h2 class="pe-result__h">砕いた部位</h2><ul class="pe-result__parts"></ul></section>
-          <section><h2 class="pe-result__h">持ち帰った素材</h2><ul class="pe-result__rewards"></ul></section>
+          <section><h2 class="pe-result__h" data-i18n="result.parts"></h2><ul class="pe-result__parts"></ul></section>
+          <section><h2 class="pe-result__h" data-i18n="result.rewards"></h2><ul class="pe-result__rewards"></ul></section>
         </div>
         <div class="pe-result__actions">
-          <button class="pe-button pe-button-primary pe-menu-item pe-result__retry is-default">もう一度</button>
-          <button class="pe-button pe-menu-item pe-result__return">前哨へ</button>
+          <button class="pe-button pe-button-primary pe-menu-item pe-result__retry is-default"></button>
+          <button class="pe-button pe-menu-item pe-result__return" data-i18n="result.outpost"></button>
         </div>
       </div>`);
     q(this.root, '.pe-result__retry').addEventListener('click', () => this.onRetry?.());
@@ -61,13 +62,13 @@ export class ResultScreen implements Screen {
     this.model = m;
     this.elapsed = 0;
     this.root.classList.toggle('is-success', m.success);
-    q(this.root, '.pe-result__eyebrow').textContent = m.success ? 'Hunt Concluded' : 'Returned';
+    q(this.root, '.pe-result__eyebrow').textContent = m.success ? t('result.concluded') : t('result.returned');
     q(this.root, '.pe-result__headline').textContent = m.headline;
     q(this.root, '.pe-result__subline').textContent = m.subline;
     q(this.root, '[data-key="time"]').parentElement!.hidden = !m.success;
-    q(this.root, '.pe-result__parts').innerHTML = m.brokenParts.length ? m.brokenParts.map((p) => `<li>${escapeHtml(p)}</li>`).join('') : '<li class="pe-text-dim">なし</li>';
-    q(this.root, '.pe-result__rewards').innerHTML = m.rewardLines.length ? m.rewardLines.map((r) => `<li>${escapeHtml(r)}</li>`).join('') : '<li class="pe-text-dim">なし</li>';
-    q(this.root, '.pe-result__retry').textContent = m.success ? 'もう一度' : '再び向かう';
+    q(this.root, '.pe-result__parts').innerHTML = m.brokenParts.length ? m.brokenParts.map((p) => `<li>${escapeHtml(p)}</li>`).join('') : `<li class="pe-text-dim">${t('result.none')}</li>`;
+    q(this.root, '.pe-result__rewards').innerHTML = m.rewardLines.length ? m.rewardLines.map((r) => `<li>${escapeHtml(r)}</li>`).join('') : `<li class="pe-text-dim">${t('result.none')}</li>`;
+    q(this.root, '.pe-result__retry').textContent = m.success ? t('result.again') : t('result.retry');
     this.applyNumbers(0);
   }
 

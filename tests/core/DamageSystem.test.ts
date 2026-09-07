@@ -13,7 +13,7 @@ const baseInput = (): DamageInput => ({
   sharpnessElementModifier: 1,
   critRate: 0,
   critMultiplier: 1.25,
-  hitZone: { slash: 0.5, impact: 0.3, projectile: 0.4, fire: 0.2, water: 0.1, thunder: 0.15, ice: 0.1, aether: 0.3 },
+  hitZone: { slash: 0.5, impact: 0.3, projectile: 0.4, fire: 0.2, water: 0.1, thunder: 0.15, ice: 0.1, echo: 0.3 },
   hitZoneMultiplier: 1,
   partDamageMultiplier: 1,
   stunDamage: 0,

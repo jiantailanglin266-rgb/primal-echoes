@@ -19,7 +19,7 @@ export class PlayerStats {
     water: 0,
     thunder: 0,
     ice: 0,
-    aether: 0,
+    echo: 0,
   };
 
   /** 直近のスタミナ消費からの経過秒。回復開始の遅延判定に使う。 */

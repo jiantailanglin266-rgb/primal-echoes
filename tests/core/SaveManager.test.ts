@@ -42,3 +42,12 @@ describe('SaveManager', () => {
     expect(manager.load()).toBeNull();
   });
 });
+
+describe('legacy item ids', () => {
+  it('renames aether materials to echo materials and merges counts', () => {
+    const storage = new MemorySaveStorage();
+    storage.write('primal-echoes.save', JSON.stringify({ version: 1, inventory: { items: { aether_shard: 2, echo_shard: 1, aether_core: 1 } }, crafting: { weaponLevels: {} }, questClears: {}, equippedWeaponId: 'titan_blade', settings: { masterVolume: 0.5 }, savedAt: null }));
+    const loaded = new SaveManager(storage).load();
+    expect(loaded?.inventory.items).toEqual({ echo_shard: 3, echo_core: 1 });
+  });
+});

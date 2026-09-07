@@ -2,7 +2,7 @@
   "id": "vs01_hunt_valgaron",
   "type": "hunt",
   "name": "峡谷の岩王",
-  "description": "翠嵐峡谷の森林地帯に四足獣型タイタン「ヴァルガロン」の縄張りが確認された。生態を観察し、討伐せよ。日中は森で草食生物を捕食し、川で水を飲む。負傷すると洞窟の巣へ戻る。",
+  "description": "苔の谷底に、岩の甲殻をまとう原獣ヴァルガロンの縄張りがある。昼は谷底で草食の群れを追い、白瀬で水を飲む。深く傷つけば寝床へ退く。痕跡を読み、向き合え。",
   "fieldId": "verdant_tempest",
   "target": { "monsterId": "valgaron" },
   "timeLimitSeconds": 1800,
@@ -11,7 +11,7 @@
   "rewards": [
     { "itemId": "valgaron_scale", "count": 2, "chance": 1.0 },
     { "itemId": "valgaron_fang", "count": 1, "chance": 0.75 },
-    { "itemId": "aether_shard", "count": 1, "chance": 0.5 }
+    { "itemId": "echo_shard", "count": 1, "chance": 0.5 }
   ],
   "supplies": [{ "itemId": "vital_tonic", "count": 5 }]
 }

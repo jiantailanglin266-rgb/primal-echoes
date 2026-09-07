@@ -9,7 +9,7 @@ import type { EcosystemManager } from '@core/ecosystem/EcosystemManager';
 import type { HitZoneModifiers } from './elements';
 
 /** 小型生物用: 全種別 1.0 の肉質。倍率は hitZoneMultiplier で与える。 */
-const UNIFORM_HIT_ZONE: HitZoneModifiers = { slash: 1, impact: 1, projectile: 1, fire: 1, water: 1, thunder: 1, ice: 1, aether: 1 };
+const UNIFORM_HIT_ZONE: HitZoneModifiers = { slash: 1, impact: 1, projectile: 1, fire: 1, water: 1, thunder: 1, ice: 1, echo: 1 };
 import type { EventBus } from '@shared/events/EventBus';
 import type { GameEvents } from '@shared/events/GameEvents';
 import type { Random } from '@shared/rng/Random';
@@ -44,7 +44,7 @@ export class CombatResolver {
     sharpnessElementModifier: 1,
     critRate: 0,
     critMultiplier: 1,
-    hitZone: { slash: 1, impact: 1, projectile: 1, fire: 1, water: 1, thunder: 1, ice: 1, aether: 1 },
+    hitZone: { slash: 1, impact: 1, projectile: 1, fire: 1, water: 1, thunder: 1, ice: 1, echo: 1 },
     hitZoneMultiplier: 1,
     partDamageMultiplier: 1,
     stunDamage: 0,

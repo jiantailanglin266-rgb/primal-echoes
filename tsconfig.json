@@ -21,6 +21,7 @@
       "@data/*": ["./src/data/*"],
       "@input/*": ["./src/input/*"],
       "@presentation/*": ["./src/presentation/*"],
+      "@i18n/*": ["./src/i18n/*"],
       "@ui/*": ["./src/ui/*"],
       "@shared/*": ["./src/shared/*"],
       "@debug/*": ["./src/debug/*"]

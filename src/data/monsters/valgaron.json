@@ -1,6 +1,6 @@
 {
   "id": "valgaron",
-  "name": "Valgaron",
+  "name": "ヴァルガロン",
   "enrage": {
     "damageToTrigger": 550,
     "durationSeconds": 45,
@@ -88,7 +88,7 @@
   "parts": [
     {
       "id": "head",
-      "name": "頭部（角）",
+      "name": "角",
       "hitZone": {
         "slash": 0.55,
         "impact": 0.65,
@@ -97,7 +97,7 @@
         "water": 0.05,
         "thunder": 0.15,
         "ice": 0.1,
-        "aether": 0.3
+        "echo": 0.3
       },
       "partHp": 400,
       "breakable": true,
@@ -130,7 +130,7 @@
     },
     {
       "id": "body",
-      "name": "胴体（甲殻）",
+      "name": "甲殻",
       "hitZone": {
         "slash": 0.3,
         "impact": 0.3,
@@ -139,7 +139,7 @@
         "water": 0.1,
         "thunder": 0.05,
         "ice": 0.05,
-        "aether": 0.2
+        "echo": 0.2
       },
       "partHp": 0,
       "breakable": false,
@@ -175,7 +175,7 @@
         "water": 0.1,
         "thunder": 0.2,
         "ice": 0.1,
-        "aether": 0.25
+        "echo": 0.25
       },
       "partHp": 300,
       "breakable": true,
@@ -216,7 +216,7 @@
         "water": 0.1,
         "thunder": 0.2,
         "ice": 0.1,
-        "aether": 0.25
+        "echo": 0.25
       },
       "partHp": 300,
       "breakable": true,
@@ -257,7 +257,7 @@
         "water": 0.1,
         "thunder": 0.2,
         "ice": 0.1,
-        "aether": 0.2
+        "echo": 0.2
       },
       "partHp": 0,
       "breakable": false,
@@ -293,7 +293,7 @@
         "water": 0.1,
         "thunder": 0.2,
         "ice": 0.1,
-        "aether": 0.2
+        "echo": 0.2
       },
       "partHp": 0,
       "breakable": false,
@@ -329,7 +329,7 @@
         "water": 0.1,
         "thunder": 0.15,
         "ice": 0.15,
-        "aether": 0.25
+        "echo": 0.25
       },
       "partHp": 350,
       "breakable": true,
@@ -364,7 +364,7 @@
   "attacks": [
     {
       "id": "vg_bite",
-      "name": "Bite",
+      "name": "噛みつき",
       "damage": 18,
       "damageType": "impact",
       "element": {
@@ -406,7 +406,7 @@
     },
     {
       "id": "vg_claw",
-      "name": "Claw Swipe",
+      "name": "爪薙ぎ",
       "damage": 24,
       "damageType": "impact",
       "element": {
@@ -449,7 +449,7 @@
     },
     {
       "id": "vg_tail_sweep",
-      "name": "Tail Sweep",
+      "name": "尾払い",
       "damage": 20,
       "damageType": "impact",
       "element": {
@@ -516,7 +516,7 @@
     },
     {
       "id": "vg_charge",
-      "name": "Charge",
+      "name": "突進",
       "damage": 34,
       "damageType": "impact",
       "element": {
@@ -560,7 +560,7 @@
     },
     {
       "id": "vg_jump_slam",
-      "name": "Jump Slam",
+      "name": "跳び潰し",
       "damage": 38,
       "damageType": "impact",
       "element": {
@@ -603,7 +603,7 @@
     },
     {
       "id": "vg_rock_throw",
-      "name": "Rock Throw",
+      "name": "岩投げ",
       "damage": 26,
       "damageType": "projectile",
       "element": {
@@ -661,12 +661,12 @@
       "count": 1
     },
     {
-      "itemId": "aether_shard",
+      "itemId": "echo_shard",
       "weight": 9,
       "count": 1
     },
     {
-      "itemId": "aether_core",
+      "itemId": "echo_core",
       "weight": 3,
       "count": 1
     }
@@ -680,7 +680,7 @@
     },
     {
       "partId": "head",
-      "itemId": "aether_shard",
+      "itemId": "echo_shard",
       "count": 1,
       "chance": 0.4
     },

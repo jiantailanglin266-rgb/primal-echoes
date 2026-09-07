@@ -119,7 +119,7 @@ function migrate(parsed: unknown): SaveData | null {
   return {
     version: SAVE_VERSION,
     savedAt: typeof obj.savedAt === 'string' ? obj.savedAt : base.savedAt,
-    inventory: isRecordOfNumbers(obj.inventory?.items) ? { items: obj.inventory.items } : base.inventory,
+    inventory: isRecordOfNumbers(obj.inventory?.items) ? { items: migrateItemIds(obj.inventory.items) } : base.inventory,
     crafting: isRecordOfNumbers(obj.crafting?.weaponLevels) ? { weaponLevels: obj.crafting.weaponLevels } : base.crafting,
     questClears: isRecordOfNumbers(obj.questClears) ? obj.questClears : base.questClears,
     equippedWeaponId: typeof obj.equippedWeaponId === 'string' ? obj.equippedWeaponId : base.equippedWeaponId,
@@ -136,4 +136,16 @@ function isRecordOfNumbers(value: unknown): value is Record<string, number> {
 
 function clamp01(v: number): number {
   return Math.min(1, Math.max(0, v));
+}
+
+/** 改名前の素材 id（エーテル → 残響）を新 id に読み替える。同じ新 id があれば合算する。 */
+const LEGACY_ITEM_IDS: Record<string, string> = { aether_shard: 'echo_shard', aether_core: 'echo_core' };
+
+function migrateItemIds(items: Record<string, number>): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const [id, n] of Object.entries(items)) {
+    const next = LEGACY_ITEM_IDS[id] ?? id;
+    out[next] = (out[next] ?? 0) + n;
+  }
+  return out;
 }

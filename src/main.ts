@@ -1,5 +1,6 @@
 import { GameManager, nextFrame } from '@app/GameManager';
 import { LoadingScreen } from '@ui/screens/LoadingScreen';
+import { getLanguage, t } from '@i18n/index';
 
 function requireElement<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
@@ -13,6 +14,7 @@ const canvas = requireElement<HTMLCanvasElement>('game-canvas');
 const uiRoot = requireElement<HTMLDivElement>('ui-root');
 const debugRoot = requireElement<HTMLDivElement>('debug-root');
 const params = new URLSearchParams(window.location.search);
+document.documentElement.lang = getLanguage();
 
 if (params.get('hud') === '1') {
   // HUD の全状態を確認するモード（ゲームは起動しない）
@@ -28,7 +30,7 @@ function boot(): void {
 
   // ローディング画面を 1 フレーム描かせてから重い初期化に入る
   void nextFrame().then(() => {
-    loading.set(0.02, '大陸を起こす');
+    loading.set(0.02, t('loading.steps.world'));
     const game = new GameManager(canvas, uiRoot, debugRoot);
     // 開発中にコンソールから触れるように公開する（本番ビルドでは無効化予定）
     if (import.meta.env.DEV) {

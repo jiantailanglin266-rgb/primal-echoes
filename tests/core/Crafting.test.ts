@@ -66,7 +66,7 @@ describe('weapon catalog', () => {
     expect(weapons.get('break_hammer')!.attacks.every((a) => a.damageType === 'impact')).toBe(true);
     const saber = weapons.get('rift_saber')!;
     expect(saber.weight).toBe('light');
-    expect(saber.element.type).toBe('aether');
+    expect(saber.element.type).toBe('echo');
     const saberCrafting = new CraftingManager(recipes, new Inventory());
     expect(saberCrafting.nextRecipe('rift_saber')?.toLevel).toBe(1);
   });

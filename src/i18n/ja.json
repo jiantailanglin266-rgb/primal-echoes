@@ -1,0 +1,357 @@
+{
+  "brand": {
+    "title": "PRIMAL ECHOES",
+    "subtitle": "原初の残響",
+    "tagline": "原初は、まだ鳴っている。",
+    "studio": "Hollow Signal"
+  },
+  "title": {
+    "call": "耳を澄ませ",
+    "hint": "鍵を押す、または画面に触れる"
+  },
+  "menu": {
+    "eyebrow": "Verdant Outpost",
+    "hunt": "狩りに出る",
+    "huntEyebrow": "Hunt",
+    "codex": "図鑑",
+    "codexEyebrow": "Codex",
+    "settings": "設定",
+    "settingsEyebrow": "Settings",
+    "credits": "語り部",
+    "creditsEyebrow": "Credits"
+  },
+  "loading": {
+    "listening": "耳を澄ませている",
+    "steps": {
+      "world": "大陸を起こす",
+      "assets": "痕跡を辿る",
+      "sky": "空を写す",
+      "shaders": "刃を研ぐ",
+      "warm": "目を慣らす",
+      "done": "耳を澄ませた"
+    },
+    "flavor": [
+      "ヴァルディアは、海図の外にある大陸だ。",
+      "この地の生き物は、体の内に「残響」を宿している。",
+      "残響とは、世界が生まれた最初の時代の力の、消えずに残る反響だという。",
+      "大陸の岩盤には、原初の力が層をなして眠っている。",
+      "前哨の柱は獣の骨で組まれている。折れたことはない。",
+      "足跡は嘘をつかない。深さは重さを、間隔は急ぎを語る。",
+      "食い荒らされた草は、獣が腹を満たしたばかりだと教える。",
+      "雨の日、獣は洞へ退く。追うなら、その前に。",
+      "白瀬の水は冷たい。獣も、そこで喉を潤す。",
+      "獣の甲殻の亀裂が光るのは、原初の力が表面に滲むからだ。",
+      "怒りとは、残響が沸き立つことだ。獣は憎んでいない。",
+      "深く傷ついた獣は寝床へ戻る。寝床を知る者だけが、その先へ行ける。",
+      "残響の宿る部位ほど硬い。だから、砕けば刃の糧になる。",
+      "鍛冶場では、素材の残響を火で起こし、刃へ移す。",
+      "鉛の弾は残響の甲殻を貫かない。だから、狩人は刃を持つ。",
+      "「岩が動いた」と最初に書いた狩人は、帰ってこなかった。",
+      "スカルヴは臆病だが、死の匂いには誰より早い。",
+      "グラストの群れが逃げる方向を見ろ。獣はその反対にいる。",
+      "獣の名は、鳴き声を聞いた狩人が、それに似せてつけた。",
+      "前哨に地図はない。狩人が持ち帰った痕跡だけがある。",
+      "谷の奥に、人のものではない環状の石列がある。誰も近づかない。",
+      "地層に埋もれた骨の壁は、いまの獣より二回り大きい。",
+      "古い狩人は言う。「大陸は、こちらを聴いている」と。",
+      "咆哮のあとの静けさに、耳を澄ませ。次の一歩が聞こえる。",
+      "残響は消えない。薄れるだけだ。それが原初の性質だという。",
+      "刃が鈍るのは、残響が抜けていくからだ。研げば戻る。",
+      "膝をついても、狩りは終わらない。前哨で目を覚ますだけだ。",
+      "獣が眠るとき、残響も静まる。その甲殻は、いちばん脆い。",
+      "沿岸の霧が晴れる朝、大陸の奥から、低い音が届くことがある。",
+      "原初は、まだ鳴っている。"
+    ]
+  },
+  "hub": {
+    "eyebrow": "Verdant Outpost",
+    "title": "翠嵐前哨",
+    "lead": "狩人よ。獣を選び、刃を確かめてから出よ。",
+    "hunter": "狩人",
+    "blade": "刃",
+    "materials": "素材",
+    "journal": "手帳",
+    "hunts": "狩り",
+    "forge": "鍛冶場",
+    "save": "書き留める",
+    "burn": "手帳を焼く",
+    "burnConfirm": "手帳を焼く。素材と鍛えた刃が失われる。",
+    "back": "戻る",
+    "bladeLine": "刃: {name}",
+    "statLine": "攻撃 {power} / 鍛え {level} / {sharpness}",
+    "hpLine": "体力 {hp}",
+    "clearsLine": "討伐 {n} 度",
+    "savedAt": "記した日: {date}",
+    "unsaved": "手帳はまだ白い。狩りの終わりと鍛えで自ずと記される",
+    "none": "なし",
+    "weaponOption": "{name}　攻 {power} / 鍛え {level}",
+    "maxed": "この刃は鍛え尽くした",
+    "forgeButton": "鍛える",
+    "forgeResult": "攻撃 {from} → {to} / {sharpness} / 会心 {crit}%",
+    "materialLine": "{name}　{owned}/{required}",
+    "timeLimit": "刻限",
+    "timeValue": "{minutes} 分",
+    "knees": "膝をつく",
+    "kneesValue": "{n} 度で退く",
+    "start": "狩りに出る",
+    "questType": {
+      "hunt": "討伐",
+      "capture": "捕獲",
+      "investigation": "調査",
+      "gathering": "採取",
+      "survival": "生存",
+      "multiHunt": "連続討伐"
+    }
+  },
+  "settings": {
+    "eyebrow": "Settings",
+    "title": "設定",
+    "quality": "画質",
+    "low": "低",
+    "mid": "中",
+    "high": "高",
+    "volume": "音量",
+    "language": "言語",
+    "controls": "操作",
+    "note": "ゲームパッドは標準配置に対応する。メニューは十字キーと A / B。",
+    "back": "戻る",
+    "actions": {
+      "moveForward": "前へ",
+      "moveBackward": "後ろへ",
+      "moveLeft": "左へ",
+      "moveRight": "右へ",
+      "dash": "駆ける",
+      "dodge": "躱す",
+      "lightAttack": "斬る",
+      "heavyAttack": "振り下ろす（長押しで溜め）",
+      "lockOn": "獣を見据える",
+      "interact": "剥ぐ・崩す",
+      "useItem": "薬を飲む",
+      "pause": "静止"
+    }
+  },
+  "codex": {
+    "eyebrow": "Codex",
+    "title": "図鑑",
+    "unknown": "記録なし",
+    "unknownEyebrow": "Unknown",
+    "unknownText": "痕跡は見つかっていない。狩りに出て、この頁を埋めよ。",
+    "empty": "まだ何も記されていない。",
+    "habitat": "生息域",
+    "ecology": "生態",
+    "hint": "観察の手がかり",
+    "sighting": "目撃記録",
+    "back": "戻る"
+  },
+  "credits": {
+    "eyebrow": "Credits",
+    "title": "語り部",
+    "made": "制作",
+    "design": "設計・実装",
+    "designText": "Kenta",
+    "world": "世界と獣",
+    "worldText": "すべてこの作品のために新しく作られた。既存の作品から借りたものは何もない。",
+    "tech": "技術",
+    "techText": "TypeScript / Three.js / Vite / Web Audio",
+    "fonts": "書体",
+    "fontsText": "Cinzel（Natanael Gama）、Shippori Mincho（FONTDASU）、Cormorant Garamond（Christian Thalmann）— SIL Open Font License",
+    "sound": "音",
+    "soundText": "合成音（Web Audio）。素材音源を使う場合は README に出典を記す",
+    "thanks": "感謝",
+    "thanksText": "この大陸に耳を澄ませてくれた、すべての狩人に。",
+    "close": "原初は、まだ鳴っている。",
+    "back": "戻る"
+  },
+  "pause": {
+    "eyebrow": "Still",
+    "title": "静止",
+    "resume": "続ける",
+    "resumeEyebrow": "Resume",
+    "settings": "設定",
+    "settingsEyebrow": "Settings",
+    "retreat": "狩りを退く",
+    "retreatEyebrow": "Retreat"
+  },
+  "result": {
+    "concluded": "Hunt Concluded",
+    "returned": "Returned",
+    "time": "討伐まで",
+    "damage": "与えた傷",
+    "hits": "受けた傷",
+    "downs": "膝をついた",
+    "parts": "砕いた部位",
+    "rewards": "持ち帰った素材",
+    "none": "なし",
+    "again": "もう一度",
+    "retry": "再び向かう",
+    "outpost": "前哨へ",
+    "killLines": [
+      "残響が、静まった。",
+      "谷は、いまだけ静かだ。",
+      "岩が、動くのをやめた。",
+      "刃は応えた。獣も応えた。",
+      "持ち帰れ。痕跡と、素材と、この静けさを。"
+    ],
+    "returnLines": {
+      "timeLimit": [
+        "刻限が過ぎた。獣は谷に残っている。",
+        "夜が来る前に、前哨へ。獣は逃げない。",
+        "今日は追い切れなかった。痕跡は明日も残る。",
+        "刻限は狩人を守るためにある。退け。",
+        "谷が暗くなった。次は、朝から追え。"
+      ],
+      "downs": [
+        "三度、膝をついた。今日はここまでだ。",
+        "獣は強かった。それを知ったのが今日の収穫だ。",
+        "傷は前哨で癒える。獣の癖は、頭に残る。",
+        "倒れた場所を憶えておけ。次はそこで躱す。",
+        "退くのも狩りのうちだ。骨は折れていない。"
+      ],
+      "none": [
+        "狩りを退いた。獣はまだ谷にいる。",
+        "前哨へ戻る。痕跡は消えない。",
+        "今日は追わない。それも判断だ。",
+        "刃を研ぎ直せ。谷は待っている。",
+        "退いた。次に向かうとき、獣は同じ場所で水を飲んでいる。"
+      ]
+    }
+  },
+  "hud": {
+    "knees": "膝",
+    "objectiveHunt": "{name} を討て",
+    "objectiveReturn": "討った。{seconds} 秒で前哨へ。いまなら剥げる",
+    "objectiveDone": "狩りは終わった",
+    "objectiveFailed": "前哨へ戻る",
+    "respawn": "膝をついた。{seconds} 秒ののち、前哨で目を覚ます",
+    "carving": "剥いでいる",
+    "carve": "E　剥ぐ（残り {n}）",
+    "topple": "E　{name}を崩す",
+    "itemKey": "H",
+    "tutorial": [
+      "W A S D　歩く",
+      "Shift　駆ける",
+      "Space　躱す",
+      "J / K　斬る / 振り下ろす",
+      "Tab　獣を見据える",
+      "H　薬を飲む"
+    ],
+    "tutorialVoice": "――先達の手記より。「まず歩け。獣が見えたら見据えろ。刃は、それからだ」",
+    "banners": {
+      "broke": "{part}を砕いた",
+      "severed": "{part}を断った",
+      "slain": "{name}を討った"
+    },
+    "notices": {
+      "stun": "気絶",
+      "topple": "転倒",
+      "rainStart": "雨が降り始めた",
+      "rainStop": "雨が上がった",
+      "rockHit": "落石が直撃した",
+      "rockMiss": "落石は外れた",
+      "got": "{name} ×{n} を得た",
+      "nothing": "何も得られなかった",
+      "used": "{name} を飲んだ（残り {n}）"
+    },
+    "sharpness": {
+      "dull": "斬れ味: 鈍",
+      "normal": "斬れ味: 並",
+      "sharp": "斬れ味: 鋭",
+      "keen": "斬れ味: 冴"
+    },
+    "failReason": {
+      "timeLimit": "刻限が過ぎた",
+      "downs": "三度、膝をついた",
+      "none": "狩りを退いた"
+    },
+    "badges": {
+      "enraged": "怒り",
+      "exhausted": "疲労",
+      "dying": "瀕死",
+      "sleeping": "睡眠",
+      "eating": "捕食中",
+      "broken": "{part} 破壊",
+      "severed": "{part} 切断"
+    }
+  },
+  "data": {
+    "fields": { "verdant_tempest": "翠嵐峡谷" },
+    "areas": {
+      "base_camp": "前哨",
+      "forest": "苔の谷底",
+      "river": "白瀬",
+      "cave": "獣の寝床"
+    },
+    "areaCatch": {
+      "base_camp": "骨の柱の下で、刃を研ぐ",
+      "forest": "苔が音を吸う。足跡だけが残る",
+      "river": "水音の向こうに、獣がいる",
+      "cave": "ここで獣は眠る。ここで獣は最も脆い"
+    },
+    "areaIntro": {
+      "base_camp": "沿岸に築かれた小さな前哨。獣の骨で組んだ柱と、石の鍛冶場がある。狩人はここで刃を鍛え、痕跡を書き留め、谷へ向かう。大陸で唯一、夜に火を灯せる場所。",
+      "forest": "谷の底に苔が厚く積もり、足音を吸い込む。倒木の陰にグラストの群れが草を食み、その先にはいつも大きな足跡がある。雨が降ると苔は光を帯び、残響の濃さを教える。",
+      "river": "谷を割って流れる白い早瀬。獣はここで喉を潤し、岸辺の岩を寝返りで削る。増水の日は近づくな。水の下に何かがいる、と古い狩人は言う。",
+      "cave": "崖の根元に口を開けた洞。奥は原初の力が濃く、獣は傷を負うとここへ退く。天井から岩棚が崩れかけている。眠る獣は、甲殻の残響が静まっている。"
+    },
+    "gimmicks": { "rockfall_cave_mouth": "崩れ岩棚", "rockfall_forest_edge": "崩れ岩棚" },
+    "quests": { "vs01_hunt_valgaron": "峡谷の岩王" },
+    "questDesc": { "vs01_hunt_valgaron": "苔の谷底に、岩の甲殻をまとう原獣ヴァルガロンの縄張りがある。昼は谷底で草食の群れを追い、白瀬で水を飲む。深く傷つけば寝床へ退く。痕跡を読み、向き合え。" },
+    "monsters": { "valgaron": "ヴァルガロン" },
+    "monsterTitles": { "valgaron": "峡谷の岩王" },
+    "parts": {
+      "head": "角",
+      "body": "甲殻",
+      "foreleg_l": "左前脚",
+      "foreleg_r": "右前脚",
+      "hindleg_l": "左後脚",
+      "hindleg_r": "右後脚",
+      "tail": "尾"
+    },
+    "creatures": { "grast": "グラスト", "skarv": "スカルヴ" },
+    "weapons": { "titan_blade": "巨断刀", "rift_saber": "裂空剣", "break_hammer": "砕岩槌", "arc_bow": "弧月弓" },
+    "recipes": {
+      "titan_blade_lv1": "巨断刀・壱（岩鱗）",
+      "titan_blade_lv2": "巨断刀・弐（大爪）",
+      "titan_blade_lv3": "巨断刀・参（岩王）",
+      "rift_saber_lv1": "裂空剣・壱（残響片）",
+      "rift_saber_lv2": "裂空剣・弐（牙裂）",
+      "break_hammer_lv1": "砕岩槌・壱（大爪）",
+      "break_hammer_lv2": "砕岩槌・弐（角砕）"
+    },
+    "items": {
+      "valgaron_scale": "ヴァルガロンの岩鱗",
+      "valgaron_fang": "ヴァルガロンの牙",
+      "valgaron_claw": "ヴァルガロンの大爪",
+      "valgaron_horn": "ヴァルガロンの角",
+      "valgaron_tail": "ヴァルガロンの尾甲",
+      "echo_core": "残響核",
+      "echo_shard": "残響片",
+      "grast_hide": "グラストの毛皮",
+      "grast_meat": "グラストの肉",
+      "skarv_talon": "スカルヴの鉤爪",
+      "vital_tonic": "蘇生薬"
+    },
+    "itemDesc": {
+      "valgaron_scale": "岩のように硬い甲殻の欠片。残響をわずかに宿す。",
+      "valgaron_fang": "獲物を噛み砕く顎の牙。",
+      "valgaron_claw": "前脚の大きな爪。砕いた前脚から得やすい。",
+      "valgaron_horn": "頭の角。砕かなければ手に入らない。",
+      "valgaron_tail": "断った尾の装甲板。",
+      "echo_core": "原獣の体内で凝った残響の核。刃の心臓になる。",
+      "echo_shard": "残響が結晶した欠片。",
+      "grast_hide": "草食のグラストの厚い毛皮。",
+      "grast_meat": "スカルヴが好む生肉。",
+      "skarv_talon": "腐肉食のスカルヴの鋭い鉤爪。",
+      "vital_tonic": "残響を宿す草を煎じた薬。飲むあいだは無防備になる。"
+    },
+    "beasts": {
+      "valgaron": {
+        "kind": "四足の原獣",
+        "habitat": "翠嵐峡谷 — 苔の谷底、白瀬、獣の寝床",
+        "ecology": "岩のような甲殻をまとう。昼は谷底でグラストの群れを追い、白瀬で喉を潤し、疲れれば寝床で眠る。深く傷つくと寝床へ退き、雨が来れば洞へ入る。怒りは憎しみではなく、体内の残響が沸き立つこと。甲殻の亀裂が光るのはそのときだ。",
+        "hint": "亀裂が光を帯びたとき、角に力が集まり、熱を持つ。尾は根元が薄い。脚は前から砕ける。眠っているあいだ、甲殻の残響は静まる。",
+        "sighting": "「岩が動いた」と最初に書いた狩人は、帰ってこなかった。二人目は、足跡の深さを書き残した。"
+      }
+    }
+  }
+}

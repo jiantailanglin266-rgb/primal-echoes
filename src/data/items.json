@@ -1,15 +1,15 @@
 {
   "items": [
-    { "id": "valgaron_scale", "name": "ヴァルガロンの岩鱗", "category": "material", "rarity": "common", "description": "岩のように硬い甲殻の破片。エーテルを微量に含む。" },
-    { "id": "valgaron_fang", "name": "ヴァルガロンの牙", "category": "material", "rarity": "uncommon", "description": "獲物を噛み砕く発達した顎の牙。" },
-    { "id": "valgaron_claw", "name": "ヴァルガロンの大爪", "category": "material", "rarity": "uncommon", "description": "巨大な前脚の爪。破壊した前脚から得やすい。" },
-    { "id": "valgaron_horn", "name": "ヴァルガロンの角", "category": "material", "rarity": "rare", "description": "頭部の角。破壊しなければ手に入らない。" },
-    { "id": "valgaron_tail", "name": "ヴァルガロンの尾甲", "category": "material", "rarity": "rare", "description": "切断した尾の装甲板。" },
-    { "id": "aether_core", "name": "エーテル核", "category": "material", "rarity": "epic", "description": "タイタンの体内で凝縮したエーテルの結晶核。武器の心臓になる。" },
-    { "id": "aether_shard", "name": "エーテル結晶片", "category": "material", "rarity": "rare", "description": "エーテルが結晶化した欠片。" },
-    { "id": "grast_hide", "name": "グラストの毛皮", "category": "material", "rarity": "common", "description": "草食生物グラストの厚い毛皮。" },
-    { "id": "grast_meat", "name": "グラストの肉", "category": "material", "rarity": "common", "description": "スカベンジャーが好む生肉。" },
-    { "id": "skarv_talon", "name": "スカルヴの鉤爪", "category": "material", "rarity": "common", "description": "腐肉食スカルヴの鋭い鉤爪。" },
-    { "id": "vital_tonic", "name": "活性薬", "category": "consumable", "rarity": "common", "description": "エーテル植物を煎じた回復薬。飲んでいる間は無防備になる。", "effect": { "healAmount": 50, "useSeconds": 1.4 } }
+    { "id": "valgaron_scale", "name": "ヴァルガロンの岩鱗", "category": "material", "rarity": "common", "description": "岩のように硬い甲殻の欠片。残響をわずかに宿す。" },
+    { "id": "valgaron_fang", "name": "ヴァルガロンの牙", "category": "material", "rarity": "uncommon", "description": "獲物を噛み砕く顎の牙。" },
+    { "id": "valgaron_claw", "name": "ヴァルガロンの大爪", "category": "material", "rarity": "uncommon", "description": "前脚の大きな爪。砕いた前脚から得やすい。" },
+    { "id": "valgaron_horn", "name": "ヴァルガロンの角", "category": "material", "rarity": "rare", "description": "頭の角。砕かなければ手に入らない。" },
+    { "id": "valgaron_tail", "name": "ヴァルガロンの尾甲", "category": "material", "rarity": "rare", "description": "断った尾の装甲板。" },
+    { "id": "echo_core", "name": "残響核", "category": "material", "rarity": "epic", "description": "原獣の体内で凝った残響の核。刃の心臓になる。" },
+    { "id": "echo_shard", "name": "残響片", "category": "material", "rarity": "rare", "description": "残響が結晶した欠片。" },
+    { "id": "grast_hide", "name": "グラストの毛皮", "category": "material", "rarity": "common", "description": "草食のグラストの厚い毛皮。" },
+    { "id": "grast_meat", "name": "グラストの肉", "category": "material", "rarity": "common", "description": "スカルヴが好む生肉。" },
+    { "id": "skarv_talon", "name": "スカルヴの鉤爪", "category": "material", "rarity": "common", "description": "腐肉食のスカルヴの鋭い鉤爪。" },
+    { "id": "vital_tonic", "name": "蘇生薬", "category": "consumable", "rarity": "common", "description": "残響を宿す草を煎じた薬。飲むあいだは無防備になる。", "effect": { "healAmount": 50, "useSeconds": 1.4 } }
   ]
 }

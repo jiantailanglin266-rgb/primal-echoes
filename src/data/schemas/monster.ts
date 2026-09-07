@@ -218,7 +218,7 @@ const hitZoneSchema = {
   water: 'number',
   thunder: 'number',
   ice: 'number',
-  aether: 'number',
+  echo: 'number',
 } as const satisfies Schema;
 
 const offsetSchema = { x: 'number', y: 'number', z: 'number' } as const satisfies Schema;

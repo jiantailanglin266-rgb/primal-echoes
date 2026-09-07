@@ -1,6 +1,6 @@
 {
   "id": "break_hammer",
-  "name": "Break Hammer",
+  "name": "砕岩槌",
   "weaponPower": 132,
   "element": { "type": "none", "power": 0 },
   "critRate": 0.0,
@@ -14,7 +14,7 @@
   "attacks": [
     {
       "id": "bh_light_1",
-      "name": "Iron Swing",
+      "name": "薙ぎ",
       "damageType": "impact",
       "motionValue": 0.36,
       "elementMotionValue": 0.3,
@@ -33,7 +33,7 @@
     },
     {
       "id": "bh_light_2",
-      "name": "Uppercut",
+      "name": "掬い",
       "damageType": "impact",
       "motionValue": 0.42,
       "elementMotionValue": 0.3,
@@ -52,7 +52,7 @@
     },
     {
       "id": "bh_light_3",
-      "name": "Crater Drop",
+      "name": "落槌",
       "damageType": "impact",
       "motionValue": 0.62,
       "elementMotionValue": 0.4,
@@ -71,7 +71,7 @@
     },
     {
       "id": "bh_heavy",
-      "name": "Pound",
+      "name": "叩き",
       "damageType": "impact",
       "motionValue": 0.72,
       "elementMotionValue": 0.5,
@@ -90,7 +90,7 @@
     },
     {
       "id": "bh_charge",
-      "name": "Skull Breaker",
+      "name": "砕頭",
       "damageType": "impact",
       "motionValue": 0.95,
       "elementMotionValue": 0.6,
@@ -109,7 +109,7 @@
     },
     {
       "id": "bh_dodge_blow",
-      "name": "Spinning Blow",
+      "name": "回転打",
       "damageType": "impact",
       "motionValue": 0.32,
       "elementMotionValue": 0.3,

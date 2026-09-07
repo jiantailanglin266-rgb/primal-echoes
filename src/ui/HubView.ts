@@ -1,5 +1,6 @@
 import type { QuestDefinition } from '@data/schemas/quest';
 import type { Screen } from './screens/Screen';
+import { t } from '@i18n/index';
 
 export interface HubCraftOption {
   recipeId: string;
@@ -33,6 +34,9 @@ export interface HubModel {
   /** 最終保存日時の表示（未保存なら空）。 */
   savedAtLabel: string;
   questClears: number;
+  /** 狩りの名と説明（i18n 済み）。 */
+  questNames: Record<string, string>;
+  questDescriptions: Record<string, string>;
 }
 
 /**
@@ -61,35 +65,35 @@ export class HubView implements Screen {
     this.root.innerHTML = `
       <div class="pe-screen-inner">
         <header class="pe-screen-header">
-          <div class="pe-eyebrow">Verdant Outpost</div>
-          <h1>翠嵐前哨</h1>
-          <p class="pe-lead">狩人よ。獣を選び、刃を確かめてから出よ。</p>
+          <div class="pe-eyebrow" data-i18n="hub.eyebrow"></div>
+          <h1 data-i18n="hub.title"></h1>
+          <p class="pe-lead" data-i18n="hub.lead"></p>
         </header>
         <div class="pe-hub-columns">
           <section class="pe-panel">
-            <h2>狩人</h2>
+            <h2 data-i18n="hub.hunter"></h2>
             <div class="pe-hub-status"></div>
-            <h2>刃</h2>
+            <h2 data-i18n="hub.blade"></h2>
             <div class="pe-hub-weapons"></div>
-            <h2>素材</h2>
+            <h2 data-i18n="hub.materials"></h2>
             <div class="pe-hub-inventory pe-lines"></div>
-            <h2>手帳</h2>
+            <h2 data-i18n="hub.journal"></h2>
             <div class="pe-hub-actions">
-              <button class="pe-button pe-button-small pe-menu-item pe-hub-save">書き留める</button>
-              <button class="pe-button pe-button-small pe-menu-item pe-hub-delete">手帳を焼く</button>
+              <button class="pe-button pe-button-small pe-menu-item pe-hub-save" data-i18n="hub.save"></button>
+              <button class="pe-button pe-button-small pe-menu-item pe-hub-delete" data-i18n="hub.burn"></button>
             </div>
             <div class="pe-hub-saved"></div>
           </section>
           <section class="pe-panel">
-            <h2>狩り</h2>
+            <h2 data-i18n="hub.hunts"></h2>
             <div class="pe-hub-quests"></div>
           </section>
           <section class="pe-panel">
-            <h2>鍛冶場</h2>
+            <h2 data-i18n="hub.forge"></h2>
             <div class="pe-hub-crafting"></div>
           </section>
         </div>
-        <footer class="pe-hub-foot"><button class="pe-button pe-button-small pe-menu-item pe-hub-back">戻る</button></footer>
+        <footer class="pe-hub-foot"><button class="pe-button pe-button-small pe-menu-item pe-hub-back" data-i18n="hub.back"></button></footer>
       </div>
     `;
     this.questList = q(this.root, '.pe-hub-quests');
@@ -100,7 +104,7 @@ export class HubView implements Screen {
     this.weaponList = q(this.root, '.pe-hub-weapons');
     this.root.querySelector('.pe-hub-save')?.addEventListener('click', () => this.onSave?.());
     this.root.querySelector('.pe-hub-delete')?.addEventListener('click', () => {
-      if (window.confirm('手帳を焼く。素材と鍛えた刃が失われる。')) this.onDeleteSave?.();
+      if (window.confirm(t('hub.burnConfirm'))) this.onDeleteSave?.();
     });
     this.root.querySelector('.pe-hub-back')?.addEventListener('click', () => this.onBack?.());
   }
@@ -108,19 +112,19 @@ export class HubView implements Screen {
   render(m: HubModel): void {
     this.status.innerHTML = `
       <div>${escapeHtml(m.playerName)}</div>
-      <div>刃: ${escapeHtml(m.weaponName)}</div>
-      <div>攻撃 ${m.weaponPower} / 鍛え ${m.weaponLevel} / ${escapeHtml(m.sharpnessLabel)}</div>
-      <div>体力 ${m.maxHp}</div>
-      <div>討伐 ${m.questClears} 度</div>
+      <div>${escapeHtml(t('hub.bladeLine', { name: m.weaponName }))}</div>
+      <div>${escapeHtml(t('hub.statLine', { power: m.weaponPower, level: m.weaponLevel, sharpness: m.sharpnessLabel }))}</div>
+      <div>${escapeHtml(t('hub.hpLine', { hp: m.maxHp }))}</div>
+      <div>${escapeHtml(t('hub.clearsLine', { n: m.questClears }))}</div>
     `;
-    this.savedLabel.textContent = m.savedAtLabel ? `記した日: ${m.savedAtLabel}` : '手帳はまだ白い。狩りの終わりと鍛えで自ずと記される';
-    this.inventory.replaceChildren(...(m.inventoryLines.length ? m.inventoryLines : ['なし']).map((t) => line(t)));
+    this.savedLabel.textContent = m.savedAtLabel ? t('hub.savedAt', { date: m.savedAtLabel }) : t('hub.unsaved');
+    this.inventory.replaceChildren(...(m.inventoryLines.length ? m.inventoryLines : [t('hub.none')]).map((t) => line(t)));
 
     this.weaponList.replaceChildren(
       ...m.weapons.map((w) => {
         const button = document.createElement('button');
         button.className = `pe-button pe-button-small pe-menu-item pe-weapon-option${w.equipped ? ' is-equipped' : ''}`;
-        button.textContent = `${w.equipped ? '◆ ' : ''}${w.name}  攻 ${w.weaponPower} / 鍛え ${w.level}`;
+        button.textContent = `${w.equipped ? '◆ ' : ''}${t('hub.weaponOption', { name: w.name, power: w.weaponPower, level: w.level })}`;
         button.disabled = w.equipped;
         button.addEventListener('click', () => this.onEquip?.(w.id));
         return button;
@@ -129,7 +133,7 @@ export class HubView implements Screen {
 
     this.crafting.replaceChildren();
     if (!m.craft) {
-      this.crafting.appendChild(line('この刃は鍛え尽くした'));
+      this.crafting.appendChild(line(t('hub.maxed')));
     } else {
       const card = document.createElement('article');
       card.className = 'pe-craft-card';
@@ -150,7 +154,7 @@ export class HubView implements Screen {
       card.appendChild(list);
       const button = document.createElement('button');
       button.className = 'pe-button pe-button-primary pe-menu-item';
-      button.textContent = '鍛える';
+      button.textContent = t('hub.forgeButton');
       button.disabled = !m.craft.canCraft;
       const recipeId = m.craft.recipeId;
       button.addEventListener('click', () => this.onCraft?.(recipeId));
@@ -164,16 +168,16 @@ export class HubView implements Screen {
         card.className = 'pe-quest-card';
         card.innerHTML = `
           <div class="pe-quest-type">${questTypeLabel(quest.type)}</div>
-          <h3>${escapeHtml(quest.name)}</h3>
-          <p>${escapeHtml(quest.description)}</p>
+          <h3>${escapeHtml(m.questNames[quest.id] ?? quest.name)}</h3>
+          <p>${escapeHtml(m.questDescriptions[quest.id] ?? quest.description)}</p>
           <dl>
-            <dt>刻限</dt><dd>${Math.round(quest.timeLimitSeconds / 60)} 分</dd>
-            <dt>膝をつく</dt><dd>${quest.maxDowns} 度で退く</dd>
+            <dt>${t('hub.timeLimit')}</dt><dd>${t('hub.timeValue', { minutes: Math.round(quest.timeLimitSeconds / 60) })}</dd>
+            <dt>${t('hub.knees')}</dt><dd>${t('hub.kneesValue', { n: quest.maxDowns })}</dd>
           </dl>
         `;
         const button = document.createElement('button');
         button.className = 'pe-button pe-button-primary pe-menu-item is-default';
-        button.textContent = '狩りに出る';
+        button.textContent = t('hub.start');
         button.addEventListener('click', () => this.onStartQuest?.(quest));
         card.appendChild(button);
         return card;
@@ -195,15 +199,7 @@ function q(root: HTMLElement, selector: string): HTMLElement {
 }
 
 function questTypeLabel(type: QuestDefinition['type']): string {
-  const labels: Record<QuestDefinition['type'], string> = {
-    hunt: '討伐',
-    capture: '捕獲',
-    investigation: '調査',
-    gathering: '採取',
-    survival: '生存',
-    multiHunt: '連続討伐',
-  };
-  return labels[type];
+  return t(`hub.questType.${type}`);
 }
 
 export function escapeHtml(text: string): string {

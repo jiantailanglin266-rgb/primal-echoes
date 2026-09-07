@@ -1,6 +1,6 @@
 {
   "id": "verdant_tempest",
-  "name": "翠嵐峡谷 / Verdant Tempest",
+  "name": "翠嵐峡谷",
   "terrain": {
     "size": 220,
     "segments": 140,
@@ -47,7 +47,7 @@
     {
       "id": "rockfall_cave_mouth",
       "kind": "rockfall",
-      "name": "崩れかけの岩棚",
+      "name": "崩れ岩棚",
       "position": { "x": 14, "z": -44 },
       "triggerRadius": 3.5,
       "impactRadius": 6.5,
@@ -59,7 +59,7 @@
     {
       "id": "rockfall_forest_edge",
       "kind": "rockfall",
-      "name": "崩れかけの岩棚",
+      "name": "崩れ岩棚",
       "position": { "x": -26, "z": 24 },
       "triggerRadius": 3.5,
       "impactRadius": 6.5,

@@ -1,9 +1,9 @@
-import { createScreenRoot, q, type Screen } from './Screen';
+import { createScreenRoot, type Screen } from './Screen';
 import { assetUrl } from '@presentation/render/assetUrl';
 
 /**
  * タイトル画面。背景は 3D シーン（カメラがゆっくり回る）。
- * ロゴは残響のモチーフ（環が外へ広がって消える）とともに現れ、文言「耳を澄ませ」で入力を待つ。
+ * ロゴは残響のモチーフ（環が外へ広がって消える）とともに現れ、「耳を澄ませ」で入力を待つ。
  */
 export class TitleScreen implements Screen {
   readonly id = 'title';
@@ -13,12 +13,12 @@ export class TitleScreen implements Screen {
   constructor() {
     this.root = createScreenRoot('pe-title', `
       <div class="pe-title__ripples" aria-hidden="true"><i></i><i></i><i></i></div>
-      <div class="pe-title__logo"><img src="${assetUrl('assets/brand/logo-vertical.svg')}" alt="PRIMAL ECHOES 原初の残響" draggable="false" /></div>
+      <div class="pe-title__logo"><img src="${assetUrl('assets/brand/logo-vertical.svg')}" alt="PRIMAL ECHOES" draggable="false" /></div>
       <div class="pe-title__prompt">
-        <div class="pe-title__call">耳を澄ませ</div>
-        <div class="pe-title__hint">鍵を押す、または画面に触れる</div>
+        <div class="pe-title__call" data-i18n="title.call"></div>
+        <div class="pe-title__hint" data-i18n="title.hint"></div>
       </div>
-      <div class="pe-title__tagline">原初は、まだ鳴っている。</div>`);
+      <div class="pe-title__tagline" data-i18n="brand.tagline"></div>`);
     this.root.addEventListener('pointerdown', () => this.resolveInput?.());
   }
 
@@ -49,8 +49,4 @@ export class TitleScreen implements Screen {
   onBack = (): void => {
     this.resolveInput?.();
   };
-
-  get logoElement(): HTMLElement {
-    return q(this.root, '.pe-title__logo');
-  }
 }

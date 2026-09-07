@@ -1,6 +1,6 @@
 {
   "id": "titan_blade",
-  "name": "Titan Blade",
+  "name": "巨断刀",
   "weaponPower": 120,
   "element": { "type": "none", "power": 0 },
   "critRate": 0.05,
@@ -14,7 +14,7 @@
   "attacks": [
     {
       "id": "tb_light_1",
-      "name": "Cleave",
+      "name": "断",
       "damageType": "slash",
       "motionValue": 0.34,
       "elementMotionValue": 0.3,
@@ -33,7 +33,7 @@
     },
     {
       "id": "tb_light_2",
-      "name": "Rising Cleave",
+      "name": "昇断",
       "damageType": "slash",
       "motionValue": 0.38,
       "elementMotionValue": 0.3,
@@ -52,7 +52,7 @@
     },
     {
       "id": "tb_light_3",
-      "name": "Sundering Arc",
+      "name": "裂弧",
       "damageType": "slash",
       "motionValue": 0.55,
       "elementMotionValue": 0.4,
@@ -71,7 +71,7 @@
     },
     {
       "id": "tb_heavy",
-      "name": "Overhead Crush",
+      "name": "圧砕",
       "damageType": "slash",
       "motionValue": 0.7,
       "elementMotionValue": 0.5,
@@ -90,7 +90,7 @@
     },
     {
       "id": "tb_charge",
-      "name": "Titan Fall",
+      "name": "巨断",
       "damageType": "slash",
       "motionValue": 0.9,
       "elementMotionValue": 0.6,
@@ -109,7 +109,7 @@
     },
     {
       "id": "tb_dodge_slash",
-      "name": "Rift Step Cut",
+      "name": "返し断",
       "damageType": "slash",
       "motionValue": 0.3,
       "elementMotionValue": 0.3,

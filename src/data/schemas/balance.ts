@@ -37,7 +37,6 @@ export interface CameraBalance {
   pitchMaxRad: number;
   initialPitchRad: number;
   lookSensitivity: number;
-  followSharpness: number;
   groundMargin: number;
   collisionSamples: number;
   /** ロックオン時にターゲット方向へ向く速さ（指数追従の鋭さ）。 */
@@ -52,6 +51,16 @@ export interface CameraBalance {
   softLockSharpness: number;
   /** マウスを動かしてからこの秒数はソフトロックを止める。 */
   softLockSuppressSeconds: number;
+  /** 肩越し: 注視点を右へずらす量（m）。 */
+  shoulderOffset: number;
+  fovDeg: number;
+  /** ダッシュ時に FOV を広げる量（度）。 */
+  dashFovBoostDeg: number;
+  /** バネ追従（位置 / 注視点）。剛性が高いほど速く、減衰が高いほど揺り戻しが少ない。 */
+  springStiffness: number;
+  springDamping: number;
+  lookSpringStiffness: number;
+  lookSpringDamping: number;
 }
 
 export const SHARPNESS_LEVELS = ['dull', 'normal', 'sharp', 'keen'] as const;
@@ -96,6 +105,15 @@ export interface FeedbackBalance {
   shakeOnPartBreak: number;
   /** これ以上の Hit Stop は「重い一撃」として重い音を鳴らす。 */
   heavyHitStopThresholdSeconds: number;
+  slowMoOnKillScale: number;
+  slowMoOnKillSeconds: number;
+  slowMoOnHeavyHitScale: number;
+  slowMoOnHeavyHitSeconds: number;
+  /** スロー中に DoF の絞りへ掛ける倍率。 */
+  slowMoDofMultiplier: number;
+  roarChromaticPulse: number;
+  hitLightIntensity: number;
+  hitLightSeconds: number;
 }
 
 export interface BalanceData {
@@ -142,7 +160,6 @@ export const balanceSchema = {
     pitchMaxRad: 'number',
     initialPitchRad: 'number',
     lookSensitivity: 'number',
-    followSharpness: 'number',
     groundMargin: 'number',
     collisionSamples: 'number',
     lockOnSharpness: 'number',
@@ -152,6 +169,13 @@ export const balanceSchema = {
     softLockAngleRad: 'number',
     softLockSharpness: 'number',
     softLockSuppressSeconds: 'number',
+    shoulderOffset: 'number',
+    fovDeg: 'number',
+    dashFovBoostDeg: 'number',
+    springStiffness: 'number',
+    springDamping: 'number',
+    lookSpringStiffness: 'number',
+    lookSpringDamping: 'number',
   },
   combat: {
     critMultiplier: 'number',
@@ -181,5 +205,13 @@ export const balanceSchema = {
     shakeOnRoar: 'number',
     shakeOnPartBreak: 'number',
     heavyHitStopThresholdSeconds: 'number',
+    slowMoOnKillScale: 'number',
+    slowMoOnKillSeconds: 'number',
+    slowMoOnHeavyHitScale: 'number',
+    slowMoOnHeavyHitSeconds: 'number',
+    slowMoDofMultiplier: 'number',
+    roarChromaticPulse: 'number',
+    hitLightIntensity: 'number',
+    hitLightSeconds: 'number',
   },
 } as const satisfies Schema;

@@ -25,7 +25,14 @@ export class CameraRig {
   private readonly target = new Vec3();
   private readonly desired = new Vec3();
   private readonly current = new Vec3();
+  /** バネ追従の速度（位置 / 注視点）。 */
+  private readonly velocity = new Vec3();
+  private readonly lookCurrent = new Vec3();
+  private readonly lookVelocity = new Vec3();
   private initialized = false;
+  /** 0〜1。ダッシュ中に 1 へ寄せ、FOV を広げる。 */
+  private speedRatio = 0;
+  private fovCurrent: number;
   private shakeAmplitude = 0;
   private shakeSeconds = 0;
   private shakeTotalSeconds = 0;
@@ -37,6 +44,12 @@ export class CameraRig {
     private readonly balance: CameraBalance,
   ) {
     this.pitch = balance.initialPitchRad;
+    this.fovCurrent = balance.fovDeg;
+  }
+
+  /** 移動速度の割合（ダッシュ = 1）。FOV の広がりに使う。 */
+  setSpeedRatio(ratio: number): void {
+    this.speedRatio = clamp(ratio, 0, 1);
   }
 
   get isLockedOn(): boolean {
@@ -93,6 +106,10 @@ export class CameraRig {
   update(followPosition: Vec3, frameDt: number): void {
     this.target.copy(followPosition);
     this.target.y += this.balance.targetHeight;
+    // 肩越し: カメラの右方向へ注視点をずらす（ロックオン中はターゲットが見やすいよう半分）
+    const shoulder = this.balance.shoulderOffset * (this.lockOnTarget ? 0.5 : 1);
+    this.target.x += -Math.cos(this.yaw) * shoulder;
+    this.target.z += Math.sin(this.yaw) * shoulder;
 
     if (this.lockOnTarget) {
       const lock = this.lockOnTarget();
@@ -118,15 +135,25 @@ export class CameraRig {
 
     if (!this.initialized) {
       this.current.copy(this.desired);
+      this.lookCurrent.copy(this.target);
       this.initialized = true;
     } else {
-      // 指数減衰でフレームレート非依存に追従させる
-      const t = 1 - Math.exp(-this.balance.followSharpness * frameDt);
-      this.current.lerp(this.desired, t);
+      // 位置と注視点を別々のバネで追従させる（注視点は硬め、位置は柔らかめ）
+      const dt = Math.min(frameDt, 1 / 20);
+      springStep(this.current, this.velocity, this.desired, this.balance.springStiffness, this.balance.springDamping, dt);
+      springStep(this.lookCurrent, this.lookVelocity, this.target, this.balance.lookSpringStiffness, this.balance.lookSpringDamping, dt);
+    }
+
+    // ダッシュで FOV を広げる（速度感）
+    const fovTarget = this.balance.fovDeg + this.balance.dashFovBoostDeg * this.speedRatio;
+    this.fovCurrent += (fovTarget - this.fovCurrent) * Math.min(1, frameDt * 6);
+    if (Math.abs(this.camera.fov - this.fovCurrent) > 0.01) {
+      this.camera.fov = this.fovCurrent;
+      this.camera.updateProjectionMatrix();
     }
 
     this.camera.position.set(this.current.x, this.current.y, this.current.z);
-    this.camera.lookAt(this.target.x, this.target.y, this.target.z);
+    this.camera.lookAt(this.lookCurrent.x, this.lookCurrent.y, this.lookCurrent.z);
     this.applyShake(frameDt);
   }
 
@@ -191,3 +218,13 @@ export class CameraRig {
 }
 
 const projectScratch = new THREE.Vector3();
+
+/** 減衰バネの 1 ステップ（半陰的オイラー）。 */
+function springStep(position: Vec3, velocity: Vec3, target: Vec3, stiffness: number, damping: number, dt: number): void {
+  velocity.x += ((target.x - position.x) * stiffness - velocity.x * damping) * dt;
+  velocity.y += ((target.y - position.y) * stiffness - velocity.y * damping) * dt;
+  velocity.z += ((target.z - position.z) * stiffness - velocity.z * damping) * dt;
+  position.x += velocity.x * dt;
+  position.y += velocity.y * dt;
+  position.z += velocity.z * dt;
+}

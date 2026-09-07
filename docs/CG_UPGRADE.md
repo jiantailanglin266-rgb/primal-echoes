@@ -135,3 +135,41 @@ FPS 影響（1280×720、開発機のブラウザペイン、ms/フレーム）:
 | high（+ GTAO 10 サンプル + DoF） | 約 37 |
 
 1080p / pixelRatio 2 で 60fps を切る場合は、GTAO → DoF → SMAA の順に落とす（GTAO が最も重い）。Phase 6 で端末判定と実測 FPS から自動選択する。
+
+## Phase 5 — カメラと手応え（完了 2026-09-07）
+
+| 変更ファイル | 内容 |
+|---|---|
+| `src/presentation/CameraRig.ts` | 肩越しオフセット（注視点をカメラ右へ、ロックオン中は半分）、位置と注視点を別々の減衰バネで追従（半陰的オイラー、dt は 1/20 秒で頭打ち）、ダッシュ時の FOV +8°。地形コリジョン・ロックオン・シェイクは従来どおり |
+| `src/presentation/fx/Juice.ts` | 新規。討伐・重い一撃のスローモーション（`GameLoop.timeScale` を実時間で管理し、DoF の絞りを 3 倍に）、命中の点光源（3 灯をプールして常時シーンに置き、強度だけ変える＝シェーダ再コンパイル無し）、咆哮の色収差パルス |
+| `src/app/HitStop.ts` | `setRestoreTimeScale()`。Hit Stop 中に始まったスローを、停止解除時に 1.0 へ戻してしまわないため |
+| `src/app/GameManager.ts` | イベント接続: `hit` → 点光源 + 重い一撃なら短いスロー、`monsterDied` → スロー 1.5 秒、`monsterEnraged` → 色収差パルス + 既存のシェイク。ダッシュ状態を毎フレーム CameraRig へ |
+| `src/data/balance.json` / `schemas/balance.ts` | camera: shoulderOffset / fovDeg / dashFovBoostDeg / spring*（followSharpness は廃止）。feedback: slowMo* / roarChromaticPulse / hitLight* |
+| `src/presentation/render/DebugPanel.ts` | Camera フォルダ（距離・肩越し・FOV・ダッシュ FOV+・バネ剛性/減衰 ×2） |
+| `tests/app/Juice.test.ts` | Hit Stop 解除後にスローの時間スケールへ戻ることのテスト |
+
+### 演出パラメータ表（`balance.json`）
+| 演出 | 項目 | 値 | トリガー |
+|---|---|---|---|
+| Hit Stop | 武器重量別（既存） | 0.06〜0.16 秒 | `hit` |
+| カメラシェイク | shakePerHitStopSecond / shakeOnRoar（既存） | | `hit` / `monsterEnraged` |
+| 重い一撃のスロー | slowMoOnHeavyHitScale / Seconds | 0.55× / 0.22 秒 | `hit` で hitStop ≥ heavyHitStopThreshold × 1.5 |
+| 討伐スロー | slowMoOnKillScale / Seconds | 0.3× / 1.5 秒 | `monsterDied` |
+| スロー中の DoF | slowMoDofMultiplier | 絞り ×3 | スロー開始〜終了 |
+| 咆哮の色収差 | roarChromaticPulse | +0.012（毎秒 0.02 減衰） | `monsterEnraged` |
+| 命中の点光源 | hitLightIntensity / Seconds | 18 / 0.22 秒（二次減衰、会心は橙） | `hit` |
+| 肩越し | shoulderOffset | 0.55 m | 常時（ロックオン中 0.275） |
+| ダッシュ FOV | fovDeg + dashFovBoostDeg | 60° → 68° | controller.state === 'dash' |
+| 位置バネ | springStiffness / Damping | 90 / 16 | 常時 |
+| 注視バネ | lookSpringStiffness / Damping | 140 / 20 | 常時 |
+
+デバッグ UI（`?debug=1` の右パネル Camera フォルダ）: 距離、肩越し、FOV、ダッシュ FOV+、位置バネ、位置減衰、注視バネ、注視減衰。スローや色収差は F3（討伐）/ F6（激昂）で確認できる。
+
+見送り: モンスターの動きによる Perlin シェイク（既存の減衰シェイクで十分と判断。必要なら `CameraRig.applyShake` のノイズ源を差し替える）、被弾時の追加スロー（連続被弾で操作感が損なわれるため入れない）。
+
+つまずいた点と学び:
+- `HitStop` は発動時の timeScale を覚えて戻すため、Hit Stop 中に始まった討伐スローが数フレーム後に 1.0 へ戻されていた。戻す値を `Juice` 側から更新する形で解決
+- 点光源を都度 add/remove すると全マテリアルのシェーダが再コンパイルされ、命中の瞬間に数十 ms のスパイクが出る。3 灯を常駐させ強度 0 で待機させる
+- ブラウザペインを隠したまま `loop.advance` で検証する場合、`render()` 内でダッシュ判定を毎フレーム上書きするので FOV の検証は CameraRig を直接回す
+
+FPS 影響: 点光源 3 灯常駐で標準マテリアルの照明計算がわずかに増えるが、1280×720 で計測ばらつき（±10 ms）の範囲内。スロー・FOV・バネは CPU 側の数演算で無視できる。

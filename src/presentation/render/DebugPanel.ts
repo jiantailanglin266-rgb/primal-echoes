@@ -5,6 +5,7 @@ import type { Environment } from './Environment';
 import { getWindStrength, setWindStrength } from './Vegetation';
 import type { PostFX } from './PostFX';
 import type { RenderQuality } from './Renderer';
+import type { CameraBalance } from '@data/schemas/balance';
 
 /**
  * 描画調整パネル（lil-gui、`?debug=1` のときだけ）。
@@ -13,7 +14,7 @@ import type { RenderQuality } from './Renderer';
 export class DebugPanel {
   readonly gui: GUI;
 
-  constructor(_renderer: THREE.WebGLRenderer, lighting: Lighting, environment: Environment, postfx: PostFX) {
+  constructor(_renderer: THREE.WebGLRenderer, lighting: Lighting, environment: Environment, postfx: PostFX, camera: CameraBalance | null = null) {
     this.gui = new GUI({ title: 'Render', width: 260 });
     this.gui.domElement.classList.add('pe-render-gui');
 
@@ -68,6 +69,18 @@ export class DebugPanel {
     fx.add(postfx.settings, 'saturation', 0, 1.5, 0.01).name('彩度').onChange(fxApply);
     fx.add(postfx.settings, 'gradeAmount', 0, 1, 0.01).name('グレード').onChange(fxApply);
     fx.add(postfx.settings, 'smaa').name('SMAA').onChange(fxApply);
+
+    if (camera) {
+      const cam = this.gui.addFolder('Camera');
+      cam.add(camera, 'distance', 2, 12, 0.1).name('距離');
+      cam.add(camera, 'shoulderOffset', 0, 1.5, 0.05).name('肩越し');
+      cam.add(camera, 'fovDeg', 40, 90, 1).name('FOV');
+      cam.add(camera, 'dashFovBoostDeg', 0, 20, 1).name('ダッシュ FOV+');
+      cam.add(camera, 'springStiffness', 10, 300, 1).name('位置バネ');
+      cam.add(camera, 'springDamping', 2, 40, 0.5).name('位置減衰');
+      cam.add(camera, 'lookSpringStiffness', 10, 400, 1).name('注視バネ');
+      cam.add(camera, 'lookSpringDamping', 2, 50, 0.5).name('注視減衰');
+    }
 
     const wind = this.gui.addFolder('Wind');
     const windState = { strength: getWindStrength() };

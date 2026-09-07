@@ -163,11 +163,11 @@ src/core/crafting/ CraftingManager
 src/core/save/   SaveManager（localStorage / memory）
 src/data/        balance.json, weapons/, monsters/, creatures/, fields/, quests/, items.json, recipes.json, schemas/, validate, DataRegistry
 src/input/       bindings, InputState, KeyboardMouseInput
-src/presentation/ SceneRenderer, CameraRig（LockOn/SoftLock/Collision/Shake）, PlayerView, MonsterView, EcosystemView, ProjectileView,
+src/presentation/ SceneRenderer, CameraRig（LockOn/SoftLock/Collision/Shake/肩越し/バネ追従/FOV）, fx/Juice（スロー・命中光・咆哮色収差）, PlayerView, MonsterView, EcosystemView, ProjectileView,
                   FieldView, TerrainView, WeatherView（雨・霧）, GimmickView, HitSparkView, HitboxDebugView, AudioManager（合成 SE）, placeholders
 src/ui/          HudView, HubView, ResultView, PauseMenuView, DamageNumberView, styles/base.css
 src/debug/       DebugOverlay, PlaytestBot
-tests/           23 ファイル 155 テスト（core の全システム）
+tests/           25 ファイル 160 テスト（core の全システム + presentation の一部）
 ```
 
 依存の向きは §2 のとおり。`core/` から `presentation/`・`ui/`・`three` への import は無い（`grep -r "from 'three'" src/core` が空であることを CI 条件にできる）。

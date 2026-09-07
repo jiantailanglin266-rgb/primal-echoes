@@ -15,6 +15,11 @@ export class HitStop {
     return this.remainingSeconds > 0;
   }
 
+  /** 停止解除後に戻す時間スケール。スローモーション（Juice）が変える。 */
+  setRestoreTimeScale(scale: number): void {
+    this.previousTimeScale = scale;
+  }
+
   trigger(seconds: number): void {
     if (seconds <= 0) return;
     if (!this.isActive) {

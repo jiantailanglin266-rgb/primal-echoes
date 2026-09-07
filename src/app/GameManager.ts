@@ -50,6 +50,7 @@ import { PlaytestBot } from '@debug/PlaytestBot';
 import { DebugPanel } from '@presentation/render/DebugPanel';
 import { Vegetation } from '@presentation/render/Vegetation';
 import { AssetLoader } from '@presentation/render/AssetLoader';
+import { Juice } from '@presentation/fx/Juice';
 import { EventBus } from '@shared/events/EventBus';
 import type { GameEvents } from '@shared/events/GameEvents';
 import { Random } from '@shared/rng/Random';
@@ -88,6 +89,7 @@ export class GameManager {
   private readonly hitSparks = new HitSparkView();
   private readonly vegetation: Vegetation;
   readonly assets: AssetLoader;
+  private readonly juice: Juice;
   readonly player: Player;
   readonly monster: Monster;
   readonly monsterAI: MonsterAI;
@@ -300,7 +302,7 @@ export class GameManager {
       this.bot = new PlaytestBot(this.player, this.monster);
     }
     this.hitboxDebugView = debugEnabled ? new HitboxDebugView() : null;
-    this.renderPanel = debugEnabled ? new DebugPanel(this.renderer.renderer, this.renderer.lighting, this.renderer.environment, this.renderer.postfx) : null;
+    this.renderPanel = debugEnabled ? new DebugPanel(this.renderer.renderer, this.renderer.lighting, this.renderer.environment, this.renderer.postfx, this.balance.camera) : null;
     // 全 View を追加し終えたので影・CSM を一括適用
     this.renderer.refreshShadows();
     if (this.hitboxDebugView) this.renderer.scene.add(this.hitboxDebugView.object);
@@ -311,6 +313,7 @@ export class GameManager {
       render: (alpha, frameDt) => this.render(alpha, frameDt),
     });
     this.hitStop = new HitStop(this.loop);
+    this.juice = new Juice(this.loop, this.hitStop, this.renderer.postfx, this.renderer.scene, this.balance.feedback);
     this.subscribeEvents();
 
     this.placeWorldForHub();
@@ -555,6 +558,8 @@ export class GameManager {
         this.bot.stats.damageDealt += e.result.total;
       }
       this.hitStop.trigger(e.hitStopSeconds);
+      this.juice.hitLight(e.position, e.result.isCritical ? 0xffb347 : 0xfff0d0, fb.hitLightIntensity, fb.hitLightSeconds);
+      if (e.hitStopSeconds >= fb.heavyHitStopThresholdSeconds * 1.5) this.juice.slowMotion(fb.slowMoOnHeavyHitScale, fb.slowMoOnHeavyHitSeconds);
       this.cameraRig.shake(e.hitStopSeconds * fb.shakePerHitStopSecond, Math.min(fb.shakeMaxSeconds, e.hitStopSeconds * 1.5));
       this.audio.play(e.hitStopSeconds >= fb.heavyHitStopThresholdSeconds ? 'hitHeavy' : 'hitLight');
       this.monsterView.flashPart(e.partId);
@@ -597,6 +602,7 @@ export class GameManager {
       this.lastHitSummary = `gimmick impact hits=${e.hitMonsterIds.length}`;
     });
     this.events.on('monsterEnraged', () => {
+      this.juice.roar();
       this.cameraRig.shake(fb.shakeOnRoar, 0.6);
       this.audio.play('roar');
     });
@@ -605,6 +611,7 @@ export class GameManager {
     });
     this.events.on('monsterDied', () => {
       if (this.bot) this.bot.stats.killedAtSeconds = this.quest?.elapsed ?? null;
+      this.juice.slowMotion(fb.slowMoOnKillScale, fb.slowMoOnKillSeconds);
       this.cameraRig.setLockOnTarget(null);
       this.lastHitSummary = 'MONSTER DOWN';
       // 討伐した大型の死骸は剥ぎ取り対象として残す（T15）。スカベンジャーも寄ってくる。
@@ -859,7 +866,9 @@ export class GameManager {
       this.hitboxDebugView.add(this.projectileSpheres, 'projectile');
       this.hitboxDebugView.end();
     }
+    this.cameraRig.setSpeedRatio(this.player.controller.state === 'dash' ? 1 : 0);
     this.cameraRig.update(this.playerView.renderPosition, frameDt);
+    this.juice.update(frameDt);
     // DoF の焦点はプレイヤー（カメラからの距離）に自動追従
     this.renderer.postfx.setFocusDistance(this.renderer.camera.position.distanceTo(this.playerView.object.position) + 0.4);
     this.weatherView.update(frameDt, this.renderer.camera.position);

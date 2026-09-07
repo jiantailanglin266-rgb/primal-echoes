@@ -31,7 +31,6 @@
     "pitchMaxRad": 1.05,
     "initialPitchRad": 0.28,
     "lookSensitivity": 0.0022,
-    "followSharpness": 14,
     "groundMargin": 0.45,
     "collisionSamples": 12,
     "lockOnSharpness": 7,
@@ -40,15 +39,34 @@
     "softLockRange": 24,
     "softLockAngleRad": 1.2,
     "softLockSharpness": 0.9,
-    "softLockSuppressSeconds": 0.7
+    "softLockSuppressSeconds": 0.7,
+    "shoulderOffset": 0.55,
+    "fovDeg": 60,
+    "dashFovBoostDeg": 8,
+    "springStiffness": 90,
+    "springDamping": 16,
+    "lookSpringStiffness": 140,
+    "lookSpringDamping": 20
   },
   "combat": {
     "critMultiplier": 1.25,
     "sharpnessModifiers": {
-      "dull": { "physical": 0.8, "element": 0.85 },
-      "normal": { "physical": 1.0, "element": 1.0 },
-      "sharp": { "physical": 1.1, "element": 1.05 },
-      "keen": { "physical": 1.2, "element": 1.1 }
+      "dull": {
+        "physical": 0.8,
+        "element": 0.85
+      },
+      "normal": {
+        "physical": 1.0,
+        "element": 1.0
+      },
+      "sharp": {
+        "physical": 1.1,
+        "element": 1.05
+      },
+      "keen": {
+        "physical": 1.2,
+        "element": 1.1
+      }
     },
     "flinchDecayPerSecond": 12,
     "flinchThresholdGrowth": 1.2,
@@ -69,6 +87,14 @@
     "shakeOnPlayerHit": 0.28,
     "shakeOnRoar": 0.18,
     "shakeOnPartBreak": 0.2,
-    "heavyHitStopThresholdSeconds": 0.12
+    "heavyHitStopThresholdSeconds": 0.12,
+    "slowMoOnKillScale": 0.3,
+    "slowMoOnKillSeconds": 1.5,
+    "slowMoOnHeavyHitScale": 0.55,
+    "slowMoOnHeavyHitSeconds": 0.22,
+    "slowMoDofMultiplier": 3.0,
+    "roarChromaticPulse": 0.012,
+    "hitLightIntensity": 18,
+    "hitLightSeconds": 0.22
   }
 }

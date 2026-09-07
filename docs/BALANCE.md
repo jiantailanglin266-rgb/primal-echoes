@@ -33,7 +33,10 @@
 |---|---|---|
 | distance / targetHeight | 6.5 / 1.5 | 巨大生物の全身が入り、かつプレイヤーの足元も見える距離 |
 | pitch -0.55〜1.05 rad | | 上を見上げる角度を広めに取る（飛びかかり・大型の頭部確認） |
-| followSharpness | 14 | 指数追従。約 0.07 秒で 63% 追従。ダッシュ時でも遅れが目立たない |
+| springStiffness / springDamping | 90 / 16 | 位置のバネ追従。臨界減衰（2√90≈19）よりやや柔らかく、停止時にわずかな揺り戻しが出る |
+| lookSpringStiffness / lookSpringDamping | 140 / 20 | 注視点は位置より硬く。注視点が遅れると酔いやすいため |
+| shoulderOffset | 0.55 | 肩越し: 注視点をカメラ右へ 0.55m。ロックオン中は半分にして標的を中央寄りに |
+| fovDeg / dashFovBoostDeg | 60 / +8 | ダッシュで 68° へ。約 0.2 秒で追従 |
 | groundMargin / collisionSamples | 0.45 / 12 | 地形めり込み防止。サンプル 12 で 0.54m 刻み |
 
 ## Titan Blade（`src/data/weapons/titan_blade.json`）

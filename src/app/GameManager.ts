@@ -419,9 +419,7 @@ export class GameManager {
     this.hitStop = new HitStop(this.loop);
     this.juice = new Juice(this.loop, this.hitStop, this.renderer.postfx, this.renderer.scene, this.balance.feedback);
     this.quality.apply(this.quality.current);
-    this.quality.onChange((q, reason) => {
-      if (reason === 'auto') this.pushNotice(`描画品質を ${q} に下げました（FPS ${this.quality.averageFps.toFixed(0)}）`);
-    });
+    // 自動降格は HUD に出さない（世界の外の言葉）。設定画面の表示が追従する
     this.subscribeEvents();
 
     this.placeWorldForHub();
@@ -652,6 +650,7 @@ export class GameManager {
   /** 現在の見た目を scale 倍の解像度で描いて PNG の data URL にする。 */
   captureScreenshot(scale: number): string {
     const r = this.renderer.renderer;
+    if (r.domElement.clientWidth === 0) return 'data:,';
     const ratio = r.getPixelRatio();
     r.setPixelRatio(ratio * scale);
     this.renderer.postfx.setPixelRatio(ratio * scale);

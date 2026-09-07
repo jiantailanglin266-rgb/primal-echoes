@@ -49,8 +49,8 @@ import { ProjectileView } from '@presentation/ProjectileView';
 import { EcosystemView } from '@presentation/EcosystemView';
 import { HitboxDebugView, type DebugSphere } from '@presentation/HitboxDebugView';
 import { createFieldView } from '@presentation/FieldView';
-import { DamageNumberView, type ScreenPoint } from '@ui/DamageNumberView';
-import { HudView, createHudModel } from '@ui/HudView';
+import { DamageNumberView, type ScreenPoint } from '@ui/hud/DamageNumberView';
+import { HudView, createHudModel } from '@ui/hud/HudView';
 import { HubView } from '@ui/HubView';
 import { DebugOverlay } from '@debug/DebugOverlay';
 import { PlaytestBot } from '@debug/PlaytestBot';
@@ -74,6 +74,9 @@ const FAIL_REASON_LABELS = { timeLimit: '刻限が過ぎた', downs: '三度、�
 const BEAST_NAMES: Record<string, { name: string; title: string }> = { valgaron: { name: 'ヴァルガロン', title: '峡谷の岩王' } };
 export const STUDIO_NAME = 'Hollow Signal';
 const LANGUAGE_KEY = 'pe.lang';
+const TUTORIAL_KEY = 'pe.tutorialSeen';
+/** 初回の狩りでだけ右下に小さく出す手引き（モーダルにしない）。 */
+const TUTORIAL_LINES = ['W A S D　歩く', 'Shift　駆ける', 'Space　躱す', 'J / K　斬る / 振り下ろす', 'Tab　獣を見据える', 'H　薬を飲む'];
 
 /**
  * ゲーム全体の起動・シーン遷移・各システムの接続を担当する。
@@ -138,6 +141,9 @@ export class GameManager {
   /** 静止を解いた直後、同じ Esc 押下で再び静止しないための猶予（実時間 ms）。 */
   private pauseIgnoreUntil = 0;
   private readonly questStats = { damageDealt: 0, hitsTaken: 0 };
+  /** 直近にいたエリア（到達バナー用）。 */
+  private lastAreaId: string | null = null;
+  private lastFrameDt = 1 / 60;
   private paused = false;
   /** `?bot=1` で有効。通しプレイの自動検証用。 */
   bot: PlaytestBot | null = null;
@@ -310,6 +316,7 @@ export class GameManager {
     });
     this.damageNumbers = new DamageNumberView(uiRoot, (world, out) => this.projectToScreen(world, out));
     this.hud = new HudView(uiRoot);
+    this.hud.onStaminaEmpty = () => this.audio.play('staminaOut');
     this.hubView = new HubView();
     this.screens = new ScreenManager(uiRoot);
     this.studioScreen = new StudioScreen(STUDIO_NAME);
@@ -627,8 +634,14 @@ export class GameManager {
     this.quest = new QuestManager(def, this.balance.quest);
     this.quest.start();
     this.setScene('field');
-    this.pushNotice(`任務開始: ${def.name}`);
+    this.hud.reset();
+    this.hud.banner(def.name, 'strong');
     this.events.emit('questStarted', { questId: def.id });
+    this.lastAreaId = this.field.areaAt(this.player.controller.position)?.id ?? null;
+    if (!readFlag(TUTORIAL_KEY)) {
+      this.hud.showTutorial(TUTORIAL_LINES);
+      writeFlag(TUTORIAL_KEY);
+    }
   }
 
   private finishQuest(): void {
@@ -762,14 +775,14 @@ export class GameManager {
       this.quest?.notifyPartBroken(e.partId);
       this.cameraRig.shake(fb.shakeOnPartBreak, fb.shakeMaxSeconds);
       this.audio.play('partBreak');
-      this.pushNotice(`${this.monster.getPart(e.partId).def.name} を破壊`);
+      this.hud.banner(`${this.monster.getPart(e.partId).def.name}を砕いた`);
     });
     this.events.on('partSevered', (e) => {
       this.lastHitSummary = `PART SEVERED: ${this.monster.getPart(e.partId).def.name}`;
       this.quest?.notifyPartBroken(e.partId);
       this.cameraRig.shake(fb.shakeOnPartBreak, fb.shakeMaxSeconds);
       this.audio.play('partBreak');
-      this.pushNotice(`${this.monster.getPart(e.partId).def.name} を切断`);
+      this.hud.banner(`${this.monster.getPart(e.partId).def.name}を断った`);
     });
     this.events.on('monsterAttackStarted', () => this.audio.play('telegraph'));
     this.events.on('weatherChanged', (e) => {
@@ -796,6 +809,7 @@ export class GameManager {
       if (e.source === 'carve') this.audio.play('carve');
     });
     this.events.on('monsterDied', () => {
+      this.hud.banner(`${(BEAST_NAMES[this.monster.def.id] ?? { name: this.monster.def.name }).name}を討った`, 'strong');
       if (this.bot) this.bot.stats.killedAtSeconds = this.quest?.elapsed ?? null;
       this.juice.slowMotion(fb.slowMoOnKillScale, fb.slowMoOnKillSeconds);
       this.cameraRig.setLockOnTarget(null);
@@ -826,8 +840,8 @@ export class GameManager {
     });
     this.events.on('monsterToppled', (e) => (this.lastHitSummary = `TOPPLED via ${e.partId}`));
     this.events.on('monsterEnraged', () => (this.lastHitSummary = 'ENRAGED!'));
-    this.events.on('monsterStunned', () => this.pushNotice('気絶！'));
-    this.events.on('monsterToppled', () => this.pushNotice('転倒！'));
+    this.events.on('monsterStunned', () => this.pushNotice('気絶'));
+    this.events.on('monsterToppled', () => this.pushNotice('転倒'));
     this.events.on('monsterCalmed', () => (this.lastHitSummary = 'calmed down'));
     this.events.on('monsterExhausted', () => (this.lastHitSummary = 'EXHAUSTED'));
     this.events.on('monsterRecovered', () => (this.lastHitSummary = 'recovered'));
@@ -1053,6 +1067,7 @@ export class GameManager {
       this.hitboxDebugView.add(this.projectileSpheres, 'projectile');
       this.hitboxDebugView.end();
     }
+    this.lastFrameDt = frameDt;
     this.cameraRig.setOrbit(this.cinematic);
     // タイトル・メニューの背景では狩人を映さない（風景だけを見せる）
     this.playerView.object.visible = !this.cinematic;
@@ -1085,7 +1100,9 @@ export class GameManager {
     m.staminaRatio = stats.staminaRatio;
     m.weaponName = combat.weapon.name;
     m.sharpnessLabel = SHARPNESS_LABELS[combat.weapon.sharpness];
-    m.objective = `${this.weather.isRaining ? '☂ 雨　' : ''}${quest?.objectiveText ?? ''}`;
+    m.objective = quest?.objectiveText ?? '';
+    m.raining = this.weather.isRaining;
+    m.weaponKind = combat.weapon.id.includes('hammer') ? 'hammer' : combat.weapon.id.includes('saber') ? 'saber' : combat.weapon.id.includes('bow') ? 'bow' : 'blade';
     m.timeRemaining = quest?.timeRemaining ?? 0;
     m.timeWarning = quest?.isTimeWarning ?? false;
     m.downs = quest?.downs ?? 0;
@@ -1094,13 +1111,13 @@ export class GameManager {
     m.lockOn = this.cameraRig.isLockedOn;
     const carve = this.carve.prompt;
     if (this.carve.isCarving) {
-      m.prompt = '剥ぎ取り中…';
+      m.prompt = '剥いでいる';
       m.promptProgress = controller.interactProgress;
     } else if (this.gimmicks.prompt.available) {
-      m.prompt = `E: ${this.gimmicks.prompt.name}を崩す`;
+      m.prompt = `E　${this.gimmicks.prompt.name}を崩す`;
       m.promptProgress = 0;
     } else if (carve.available) {
-      m.prompt = `E: 剥ぎ取る（残り ${carve.carvesRemaining}）`;
+      m.prompt = `E　剥ぐ（残り ${carve.carvesRemaining}）`;
       m.promptProgress = 0;
     } else {
       m.prompt = '';
@@ -1108,11 +1125,29 @@ export class GameManager {
     }
     m.notices = this.notices.map((n) => n.text);
     const quickDef = this.items.get(GameManager.QUICK_ITEM_ID);
-    m.itemSlot = quickDef ? `${quickDef.name} ×${this.pouch.count(GameManager.QUICK_ITEM_ID)}  [H]` : '';
+    m.itemName = quickDef?.name ?? '';
+    m.itemCount = this.pouch.count(GameManager.QUICK_ITEM_ID);
+    m.itemKey = 'H';
     // 対象の情報は「見つけている / 見つけられている」ときだけ出す（観察を促す）
     const near = controller.position.horizontalDistanceTo(monster.position) <= this.balance.camera.lockOnMaxDistance;
     m.monsterVisible = monster.isAlive && (near || this.monsterAI.perception.detected);
-    m.monsterName = monster.def.name;
+    const beastNames = BEAST_NAMES[monster.def.id] ?? { name: monster.def.name, title: '' };
+    m.monsterName = beastNames.name;
+    m.monsterTitle = beastNames.title;
+    if (m.monsterVisible) this.hud.beastIntro(beastNames.name, beastNames.title);
+    // 方位: 北 = +Z。獣は見えているときだけ
+    m.headingRad = this.cameraRig.yaw;
+    const dxm = monster.position.x - controller.position.x;
+    const dzm = monster.position.z - controller.position.z;
+    m.beastBearingRad = m.monsterVisible ? Math.atan2(dxm, dzm) : null;
+    const spawn = this.field.def.playerSpawn;
+    m.outpostBearingRad = Math.atan2(spawn.x - controller.position.x, spawn.z - controller.position.z);
+    // 新しい土地に入ったらバナー
+    const area = this.field.areaAt(controller.position);
+    if (area && area.id !== this.lastAreaId) {
+      this.lastAreaId = area.id;
+      if (quest) this.hud.banner(area.name, 'strong');
+    }
     m.monsterHpRatio = monster.stats.hpRatio;
     m.monsterBadges.length = 0;
     if (monster.condition.isEnraged) m.monsterBadges.push('怒り');
@@ -1124,7 +1159,7 @@ export class GameManager {
       if (part.state === 'broken') m.monsterBadges.push(`${part.def.name} 破壊`);
       if (part.state === 'severed') m.monsterBadges.push(`${part.def.name} 切断`);
     }
-    this.hud.render(m);
+    this.hud.render(m, this.lastFrameDt);
   }
 }
 
@@ -1160,5 +1195,21 @@ function writeLanguage(language: Language): void {
     window.localStorage.setItem(LANGUAGE_KEY, language);
   } catch {
     /* 保存できない環境では無視 */
+  }
+}
+
+function readFlag(key: string): boolean {
+  try {
+    return window.localStorage.getItem(key) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writeFlag(key: string): void {
+  try {
+    window.localStorage.setItem(key, '1');
+  } catch {
+    /* 保存できない環境では毎回出す */
   }
 }

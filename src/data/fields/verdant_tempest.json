@@ -14,10 +14,10 @@
   },
   "playerSpawn": { "x": 0, "z": -6, "yaw": 0 },
   "areas": [
-    { "id": "base_camp", "name": "ベースキャンプ", "center": { "x": 0, "z": 0 }, "radius": 18 },
-    { "id": "forest", "name": "森林", "center": { "x": -48, "z": 42 }, "radius": 32 },
-    { "id": "river", "name": "川", "center": { "x": 52, "z": 38 }, "radius": 24 },
-    { "id": "cave", "name": "洞窟", "center": { "x": 22, "z": -66 }, "radius": 20 }
+    { "id": "base_camp", "name": "前哨", "center": { "x": 0, "z": 0 }, "radius": 18 },
+    { "id": "forest", "name": "苔の谷底", "center": { "x": -48, "z": 42 }, "radius": 32 },
+    { "id": "river", "name": "白瀬", "center": { "x": 52, "z": 38 }, "radius": 24 },
+    { "id": "cave", "name": "獣の寝床", "center": { "x": 22, "z": -66 }, "radius": 20 }
   ],
   "pointsOfInterest": [
     { "id": "nest_cave", "kind": "nest", "areaId": "cave", "position": { "x": 24, "z": -70 } },

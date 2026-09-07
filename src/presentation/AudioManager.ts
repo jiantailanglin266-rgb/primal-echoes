@@ -13,6 +13,7 @@ export type SoundId =
   | 'itemGet'
   | 'uiClick'
   | 'uiHover'
+  | 'staminaOut'
   | 'questClear'
   | 'questFail'
   | 'telegraph';
@@ -48,6 +49,7 @@ const TONES: Record<SoundId, Tone[]> = {
   ],
   uiClick: [{ type: 'sine', from: 900, to: 700, seconds: 0.05, gain: 0.2 }],
   uiHover: [{ type: 'sine', from: 1400, to: 1200, seconds: 0.025, gain: 0.05 }],
+  staminaOut: [{ type: 'triangle', from: 320, to: 240, seconds: 0.12, gain: 0.12 }],
   questClear: [
     { type: 'triangle', from: 523, to: 523, seconds: 0.15, gain: 0.3 },
     { type: 'triangle', from: 659, to: 659, seconds: 0.15, gain: 0.3 },

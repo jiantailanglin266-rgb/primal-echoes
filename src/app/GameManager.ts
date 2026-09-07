@@ -48,6 +48,7 @@ import { ResultView } from '@ui/ResultView';
 import { DebugOverlay } from '@debug/DebugOverlay';
 import { PlaytestBot } from '@debug/PlaytestBot';
 import { DebugPanel } from '@presentation/render/DebugPanel';
+import { Vegetation } from '@presentation/render/Vegetation';
 import { EventBus } from '@shared/events/EventBus';
 import type { GameEvents } from '@shared/events/GameEvents';
 import { Random } from '@shared/rng/Random';
@@ -84,6 +85,7 @@ export class GameManager {
   private readonly weatherView: WeatherView;
   private readonly gimmickView: GimmickView;
   private readonly hitSparks = new HitSparkView();
+  private readonly vegetation: Vegetation;
   readonly player: Player;
   readonly monster: Monster;
   readonly monsterAI: MonsterAI;
@@ -178,7 +180,9 @@ export class GameManager {
     this.renderer.scene.add(createFieldView(this.field));
     const terrain = this.field.terrain;
     this.weather = new Weather(this.field.def.weather, rng);
-    this.weatherView = new WeatherView(this.weather, this.renderer.scene);
+    this.weatherView = new WeatherView(this.weather);
+    this.vegetation = new Vegetation(this.field);
+    this.renderer.scene.add(this.vegetation.object);
     this.renderer.scene.add(this.weatherView.object);
     this.gimmicks = new GimmickManager(this.field.def.gimmicks, (x, z) => terrain.getHeight(x, z), {
       onTriggered: (g) => {
@@ -293,7 +297,7 @@ export class GameManager {
       this.bot = new PlaytestBot(this.player, this.monster);
     }
     this.hitboxDebugView = debugEnabled ? new HitboxDebugView() : null;
-    this.renderPanel = debugEnabled ? new DebugPanel(this.renderer.renderer, this.renderer.lighting) : null;
+    this.renderPanel = debugEnabled ? new DebugPanel(this.renderer.renderer, this.renderer.lighting, this.renderer.environment) : null;
     // 全 View を追加し終えたので影・CSM を一括適用
     this.renderer.refreshShadows();
     if (this.hitboxDebugView) this.renderer.scene.add(this.hitboxDebugView.object);
@@ -854,6 +858,8 @@ export class GameManager {
     }
     this.cameraRig.update(this.playerView.renderPosition, frameDt);
     this.weatherView.update(frameDt, this.renderer.camera.position);
+    this.renderer.environment.setRain(this.weather.intensity);
+    this.vegetation.update(frameDt);
     this.gimmickView.update(frameDt);
     this.hitSparks.update(frameDt);
     this.renderer.render(frameDt);

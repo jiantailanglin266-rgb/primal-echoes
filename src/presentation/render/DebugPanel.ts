@@ -1,30 +1,50 @@
 import GUI from 'lil-gui';
 import type * as THREE from 'three';
 import type { Lighting } from './Lighting';
+import type { Environment } from './Environment';
+import { getWindStrength, setWindStrength } from './Vegetation';
 
 /**
  * 描画調整パネル（lil-gui、`?debug=1` のときだけ）。
- * 露出・太陽・影・環境光を実行中に触って、値が決まったら balance/JSON へ書き戻す運用。
+ * 露出・太陽・影・環境光・空・フォグ・風を実行中に触って、値が決まったらコードへ書き戻す運用。
  */
 export class DebugPanel {
   readonly gui: GUI;
 
-  constructor(renderer: THREE.WebGLRenderer, lighting: Lighting) {
+  constructor(_renderer: THREE.WebGLRenderer, lighting: Lighting, environment: Environment) {
     this.gui = new GUI({ title: 'Render', width: 260 });
     this.gui.domElement.classList.add('pe-render-gui');
 
     const tone = this.gui.addFolder('Tone');
-    tone.add(renderer, 'toneMappingExposure', 0.2, 2.5, 0.01).name('露出');
+    tone.add(environment.settings, 'exposure', 0.2, 2.5, 0.01).name('露出').onChange(() => environment.applySettings());
 
     const sun = this.gui.addFolder('Sun');
     const sunState = { azimuth: lighting.sun.azimuthDeg, elevation: lighting.sun.elevationDeg, intensity: lighting.sun.intensity, shadow: lighting.getShadowIntensity() };
-    sun.add(sunState, 'azimuth', 0, 360, 1).name('方位').onChange((v: number) => lighting.setSun(v, sunState.elevation));
-    sun.add(sunState, 'elevation', 5, 89, 1).name('高度').onChange((v: number) => lighting.setSun(sunState.azimuth, v));
+    const onSun = (): void => {
+      lighting.setSun(sunState.azimuth, sunState.elevation);
+      environment.onSunChanged();
+    };
+    sun.add(sunState, 'azimuth', 0, 360, 1).name('方位').onChange(onSun);
+    sun.add(sunState, 'elevation', 3, 89, 1).name('高度').onChange(onSun);
     sun.add(sunState, 'intensity', 0, 8, 0.05).name('強さ').onChange((v: number) => lighting.setSunIntensity(v));
     sun.add(sunState, 'shadow', 0, 1, 0.01).name('影の濃さ').onChange((v: number) => lighting.setShadowIntensity(v));
 
     const ambient = this.gui.addFolder('Ambient');
     ambient.add(lighting.hemisphere, 'intensity', 0, 2, 0.01).name('環境光');
+    ambient.add(environment.settings, 'envIntensity', 0, 2, 0.01).name('IBL').onChange(() => environment.applySettings());
+
+    const sky = this.gui.addFolder('Sky / Fog');
+    const apply = (): void => environment.applySettings();
+    sky.add(environment.settings, 'turbidity', 1, 20, 0.1).name('濁り').onChange(apply);
+    sky.add(environment.settings, 'rayleigh', 0, 4, 0.05).name('レイリー').onChange(apply);
+    sky.add(environment.settings, 'mieCoefficient', 0, 0.05, 0.001).name('ミー').onChange(apply);
+    sky.add(environment.settings, 'fogDensity', 0, 0.02, 0.0002).name('フォグ濃度').onChange(apply);
+    sky.add(environment.settings, 'heightFogDensity', 0, 2, 0.01).name('高さフォグ').onChange(apply);
+    sky.add(environment.settings, 'heightFogFalloff', 0.01, 0.5, 0.005).name('高さ減衰').onChange(apply);
+
+    const wind = this.gui.addFolder('Wind');
+    const windState = { strength: getWindStrength() };
+    wind.add(windState, 'strength', 0, 1.5, 0.01).name('風の強さ').onChange((v: number) => setWindStrength(v));
   }
 
   addFolder(name: string): GUI {

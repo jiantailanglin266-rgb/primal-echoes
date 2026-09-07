@@ -67,3 +67,22 @@ WebGPU は見送り（Phase 0 の判断参照）。
 確認手順: `npm run dev` → `http://localhost:5173/?debug=1` → 出発 → 右上パネルで露出・太陽を動かすと即時反映。影は足元がシャープ（近景カスケードは約 2cm/テクセル）。
 
 FPS 影響: ドローコール 250 → 614（影パスが 3 カスケード分増加）。開発機のブラウザペインでは 60fps を維持。低スペック向けには quality=low（カスケード 2・1024）を用意済み（Phase 6 で自動選択）。
+
+## Phase 2 — 環境と空気感（完了 2026-09-05）
+
+ステージは「森林と峡谷（翠嵐峡谷）」。外部アセットは未配置でも成立するよう、すべて手続き生成で代替し、置けば自動で差し替わるローダーを用意した。
+
+| 変更ファイル | 内容 |
+|---|---|
+| `src/presentation/render/Environment.ts` | 大気散乱の空（three/addons Sky）。太陽位置は Lighting と同期。空を PMREM に焼いて IBL（scene.environment）、太陽や天候が変わると 0.5 秒間隔で焼き直し。`assets/hdri/environment.hdr` があれば HDRI を IBL + 背景（blurriness 0.12）に使用。距離フォグ FogExp2（色は太陽高度と雨から近似）、高さフォグはマテリアルへのシェーダ注入（`patchMaterial`、CSM の後に連結）。雨で濁り・フォグ・太陽色・環境光を連続的に変化 |
+| `src/presentation/render/ProceduralTextures.ts` | タイル可能な fBm から草/土/岩の albedo と法線を生成（512²、ミップ・異方性） |
+| `src/presentation/render/TerrainMaterial.ts` | MeshStandardMaterial に 3 層ブレンドを注入。重み = 高さ（土 1.2m〜、岩 2.6m〜）と傾斜（法線 y < 0.82 で岩）。セルごとに UV を回転・平行移動した 2 サンプルを混ぜてタイル感を消す（簡易 stochastic） |
+| `src/presentation/render/Vegetation.ts` | InstancedMesh: 草 14,000（交差板、上向き法線、風の頂点シェーダ、色ばらつき）、木 140（森エリア優先、幹 + 多面体の樹冠、樹冠に弱い風）、岩 90。配置はキャンプ・水場を避け、傾斜で絞る。glTF へ差し替える際はジオメトリ/マテリアルを渡すだけ |
+| `src/presentation/render/DebugPanel.ts` | 空（濁り・レイリー・ミー）、フォグ濃度、高さフォグ、IBL 強度、風の強さを追加 |
+| `src/presentation/TerrainView.ts` / `WeatherView.ts` / `SceneRenderer.ts` | 地形マテリアル差し替え、雨の空/フォグ処理を Environment へ移管、高さフォグの一括注入 |
+
+見送り: ゴッドレイ用ボリューム板（Phase 4 のブルームで代替し、必要なら後日）。LOD は InstancedMesh のため未適用（glTF 導入時に three/addons LOD を `Scatter` へ追加）。
+
+確認手順: `?debug=1` → 出発 → 右上パネル「Sky / Fog」「Wind」を操作。雨は F6 ではなく `__game.weather.force('rain')`（コンソール）で即時確認できる。
+
+FPS 影響: 三角形 19 万 → 36 万、ドローコール +12（草・木・岩は各 1 コール）。ペインで 60fps 維持。PMREM 焼き直しは 0.5 秒に 1 回で体感遅延なし。

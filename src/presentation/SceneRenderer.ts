@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { createRenderer, type RenderQuality } from './render/Renderer';
 import { Lighting } from './render/Lighting';
+import { Environment } from './render/Environment';
 
 const SHADOW_REFRESH_INTERVAL_SECONDS = 1.5;
 
 /**
- * Three.js のレンダラ・シーン・カメラ・ライティングの facade。
+ * Three.js のレンダラ・シーン・カメラ・ライティング・環境の facade。
  * core 層の状態を読んで描画するだけで、シミュレーションには一切書き込まない。
  * 実体は presentation/render/ の各モジュールに分かれている。
  */
@@ -14,6 +15,7 @@ export class SceneRenderer {
   readonly scene: THREE.Scene;
   readonly camera: THREE.PerspectiveCamera;
   readonly lighting: Lighting;
+  readonly environment: Environment;
   readonly quality: RenderQuality;
 
   private readonly resizeObserver: ResizeObserver;
@@ -27,14 +29,13 @@ export class SceneRenderer {
     this.renderer = createRenderer(canvas, quality);
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0b0d10);
-    this.scene.fog = new THREE.Fog(0x0b0d10, 60, 220);
 
-    this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 500);
+    this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 600);
     this.camera.position.set(0, 4, -8);
     this.camera.lookAt(0, 1, 0);
 
     this.lighting = new Lighting(this.scene, this.camera, quality);
+    this.environment = new Environment(this.renderer, this.scene, this.lighting);
 
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(canvas.parentElement ?? document.body);
@@ -52,20 +53,27 @@ export class SceneRenderer {
   }
 
   /**
-   * 影のフラグと CSM マテリアル設定を全メッシュへ適用する。
+   * 影のフラグ・CSM・高さフォグを全メッシュへ適用する。
    * View が個別に設定し忘れても揃うように、追加直後と一定間隔で呼ぶ。
    */
   refreshShadows(): void {
     this.scene.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       if (!mesh.isMesh) return;
-      if (mesh.userData['noShadow']) return;
-      const material = mesh.material as THREE.Material;
-      const flat = (material as THREE.MeshBasicMaterial).isMeshBasicMaterial;
-      // 地面の目印など発光ベーシック材質は影を落とさない
-      mesh.castShadow = !flat;
-      mesh.receiveShadow = true;
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      if (!mesh.userData['noShadow']) {
+        const flat = (materials[0] as THREE.MeshBasicMaterial | undefined)?.isMeshBasicMaterial;
+        // 地面の目印など発光ベーシック材質は影を落とさない
+        mesh.castShadow = !flat;
+        mesh.receiveShadow = true;
+      }
+      for (const material of materials) {
+        if ((material as THREE.MeshStandardMaterial).isMeshStandardMaterial && (material as THREE.MeshStandardMaterial).fog !== false) {
+          this.environment.patchMaterial(material);
+        }
+      }
     });
+    // CSM は高さフォグより先に注入されている必要があるため refreshMaterials → patch の順を保つ
     this.lighting.refreshMaterials();
   }
 
@@ -75,12 +83,14 @@ export class SceneRenderer {
       this.shadowRefreshTimer = 0;
       this.refreshShadows();
     }
+    this.environment.update(frameDt);
     this.lighting.update();
     this.renderer.render(this.scene, this.camera);
   }
 
   dispose(): void {
     this.resizeObserver.disconnect();
+    this.environment.dispose();
     this.lighting.dispose();
     this.renderer.dispose();
   }

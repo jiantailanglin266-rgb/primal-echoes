@@ -23,7 +23,7 @@ export class Lighting {
   readonly csm: CSM;
   readonly hemisphere: THREE.HemisphereLight;
   readonly sun: SunSettings = { ...DEFAULT_SUN };
-  private shadowIntensity = 0.85;
+  private shadowIntensity = 0.7;
   private readonly direction = new THREE.Vector3();
 
   constructor(
@@ -51,7 +51,7 @@ export class Lighting {
       light.shadow.intensity = this.shadowIntensity;
     }
 
-    this.hemisphere = new THREE.HemisphereLight(0xbcd0e6, 0x3a4a2c, 0.55);
+    this.hemisphere = new THREE.HemisphereLight(0xbcd0e6, 0x3a4a2c, 0.9);
     scene.add(this.hemisphere);
   }
 

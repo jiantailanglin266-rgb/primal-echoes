@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import type { ProceduralTerrain } from '@core/world/Terrain';
-import { PLACEHOLDER_COLORS } from './placeholders';
+import { createTerrainMaterial } from './render/TerrainMaterial';
 
 /**
  * HeightProvider をサンプリングして地形メッシュを作る。
  * core 側の高さ関数と描画が必ず一致するよう、独自に高さを計算せず必ず terrain から取る。
+ * マテリアルは草/土/岩の高さ・傾斜ブレンド（render/TerrainMaterial）。
  */
 export function createTerrainView(terrain: ProceduralTerrain): THREE.Group {
   const { size, segments } = terrain.data;
@@ -23,20 +24,12 @@ export function createTerrainView(terrain: ProceduralTerrain): THREE.Group {
   positions.needsUpdate = true;
   geometry.computeVertexNormals();
 
-  const material = new THREE.MeshStandardMaterial({
-    color: PLACEHOLDER_COLORS.ground,
-    roughness: 1,
-    flatShading: false,
-  });
-  const mesh = new THREE.Mesh(geometry, material);
+  const mesh = new THREE.Mesh(geometry, createTerrainMaterial());
   mesh.receiveShadow = true;
+  mesh.castShadow = false;
+  mesh.userData['noShadow'] = true;
+  mesh.name = 'terrain-mesh';
   group.add(mesh);
-
-  const wire = new THREE.LineSegments(
-    new THREE.WireframeGeometry(geometry),
-    new THREE.LineBasicMaterial({ color: PLACEHOLDER_COLORS.gridMinor, transparent: true, opacity: 0.25 }),
-  );
-  group.add(wire);
 
   return group;
 }

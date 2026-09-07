@@ -43,6 +43,17 @@ npm run dev
 - `?debug=1` でオーバーレイと当たり判定表示。F1 回復 / F2 無限スタミナ / F3 討伐 / F4 モンスター初期化 / F5 AI 停止 / F6 怒り / F7 モンスターの背後へワープ / F9 任務中断
 - `?bot=1` で通しプレイ検証ボット。コンソールから `__game.update(1/60)` を回すと早回しできる（検証手順は [docs/BALANCE.md](docs/BALANCE.md)）
 
+## アセットの配置（任意）
+外部アセットが無くても手続き生成で動きます。置くと自動で差し替わります（すべて CC0 など再配布可能なものを使うこと）。
+
+| 置く場所 | 内容 | 用途 |
+|---|---|---|
+| `public/assets/hdri/environment.hdr` | 等距円筒 HDRI（Poly Haven など、2K 推奨） | IBL と背景。無ければ大気散乱の手続き空 |
+| `public/assets/textures/terrain/{grass,dirt,rock}_{albedo,normal}.jpg` | 地形テクスチャ 1K〜2K | 地形 3 層ブレンド（現状は手続き生成。差し替え対応は Phase 3 以降） |
+| `public/assets/models/*.glb` | glTF（Draco/KTX2 圧縮可） | プレイヤー/モンスター/植生（Phase 3 のパイプライン） |
+
+描画の調整は `?debug=1` の右上パネル（露出・太陽・影・空・フォグ・風）で行い、決まった値をコードへ書き戻します。
+
 ## 検証
 
 ```bash

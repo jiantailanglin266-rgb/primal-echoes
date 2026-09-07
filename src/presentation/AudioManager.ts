@@ -12,6 +12,7 @@ export type SoundId =
   | 'carve'
   | 'itemGet'
   | 'uiClick'
+  | 'uiHover'
   | 'questClear'
   | 'questFail'
   | 'telegraph';
@@ -46,6 +47,7 @@ const TONES: Record<SoundId, Tone[]> = {
     { type: 'sine', from: 990, to: 990, seconds: 0.14, gain: 0.3 },
   ],
   uiClick: [{ type: 'sine', from: 900, to: 700, seconds: 0.05, gain: 0.2 }],
+  uiHover: [{ type: 'sine', from: 1400, to: 1200, seconds: 0.025, gain: 0.05 }],
   questClear: [
     { type: 'triangle', from: 523, to: 523, seconds: 0.15, gain: 0.3 },
     { type: 'triangle', from: 659, to: 659, seconds: 0.15, gain: 0.3 },

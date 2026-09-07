@@ -33,6 +33,7 @@ export class CameraRig {
   /** 0〜1。ダッシュ中に 1 へ寄せ、FOV を広げる。 */
   private speedRatio = 0;
   private fovCurrent: number;
+  private orbit = false;
   private shakeAmplitude = 0;
   private shakeSeconds = 0;
   private shakeTotalSeconds = 0;
@@ -45,6 +46,11 @@ export class CameraRig {
   ) {
     this.pitch = balance.initialPitchRad;
     this.fovCurrent = balance.fovDeg;
+  }
+
+  /** タイトルやメニューの背景で、入力に関係なくゆっくり回る。 */
+  setOrbit(enabled: boolean): void {
+    this.orbit = enabled;
   }
 
   /** 移動速度の割合（ダッシュ = 1）。FOV の広がりに使う。 */
@@ -111,7 +117,11 @@ export class CameraRig {
     this.target.x += -Math.cos(this.yaw) * shoulder;
     this.target.z += Math.sin(this.yaw) * shoulder;
 
-    if (this.lockOnTarget) {
+    if (this.orbit) {
+      this.yaw += frameDt * ORBIT_YAW_SPEED;
+      this.pitch += (ORBIT_PITCH - this.pitch) * Math.min(1, frameDt * 2);
+      this.target.y += 0.6;
+    } else if (this.lockOnTarget) {
       const lock = this.lockOnTarget();
       const desiredYaw = Math.atan2(lock.x - followPosition.x, lock.z - followPosition.z);
       const t = 1 - Math.exp(-this.balance.lockOnSharpness * frameDt);
@@ -126,7 +136,7 @@ export class CameraRig {
     const dirY = Math.sin(this.pitch);
     const dirZ = -Math.cos(this.yaw) * cosPitch;
 
-    const distance = this.resolveCollisionDistance(dirX, dirY, dirZ);
+    const distance = this.resolveCollisionDistance(dirX, dirY, dirZ, this.balance.distance * (this.orbit ? ORBIT_DISTANCE_SCALE : 1));
     this.desired.set(
       this.target.x + dirX * distance,
       this.target.y + dirY * distance,
@@ -200,8 +210,9 @@ export class CameraRig {
   }
 
   /** ターゲットからカメラ方向へ進み、地形へめり込む直前の距離を返す。 */
-  private resolveCollisionDistance(dirX: number, dirY: number, dirZ: number): number {
-    const { distance, minDistance, groundMargin, collisionSamples } = this.balance;
+  private resolveCollisionDistance(dirX: number, dirY: number, dirZ: number, maxDistance = this.balance.distance): number {
+    const { minDistance, groundMargin, collisionSamples } = this.balance;
+    const distance = maxDistance;
     for (let i = 1; i <= collisionSamples; i++) {
       const d = (distance * i) / collisionSamples;
       const x = this.target.x + dirX * d;
@@ -218,6 +229,11 @@ export class CameraRig {
 }
 
 const projectScratch = new THREE.Vector3();
+
+/** タイトル・メニュー背景の回転カメラ。ゆっくり、少し高く、少し遠く。 */
+const ORBIT_YAW_SPEED = 0.05;
+const ORBIT_PITCH = 0.16;
+const ORBIT_DISTANCE_SCALE = 1.7;
 
 /** 減衰バネの 1 ステップ（半陰的オイラー）。 */
 function springStep(position: Vec3, velocity: Vec3, target: Vec3, stiffness: number, damping: number, dt: number): void {

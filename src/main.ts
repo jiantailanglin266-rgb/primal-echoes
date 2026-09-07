@@ -1,5 +1,5 @@
 import { GameManager, nextFrame } from '@app/GameManager';
-import { LoadingView } from '@ui/LoadingView';
+import { LoadingScreen } from '@ui/screens/LoadingScreen';
 
 function requireElement<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
@@ -13,11 +13,14 @@ const canvas = requireElement<HTMLCanvasElement>('game-canvas');
 const uiRoot = requireElement<HTMLDivElement>('ui-root');
 const debugRoot = requireElement<HTMLDivElement>('debug-root');
 
-const loading = new LoadingView(uiRoot);
+const loading = new LoadingScreen();
+loading.root.classList.add('pe-screen-anim');
+uiRoot.appendChild(loading.root);
+const params = new URLSearchParams(window.location.search);
 
 // ローディング画面を 1 フレーム描かせてから重い初期化に入る
 void nextFrame().then(() => {
-  loading.set(0.02, '世界を生成');
+  loading.set(0.02, '大陸を起こす');
   const game = new GameManager(canvas, uiRoot, debugRoot);
   // 開発中にコンソールから触れるように公開する（本番ビルドでは無効化予定）
   if (import.meta.env.DEV) {
@@ -32,5 +35,11 @@ void nextFrame().then(() => {
     .finally(() => {
       loading.finish();
       game.start();
+      // 環が満ちてから、少し置いて消す
+      window.setTimeout(() => {
+        loading.root.classList.add('is-leaving');
+        window.setTimeout(() => loading.root.remove(), 400);
+        void game.showOpening({ skip: params.get('bot') === '1' || params.get('skipIntro') === '1' });
+      }, 350);
     });
 });

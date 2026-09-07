@@ -12,7 +12,15 @@ import { mergeDrops, rollPartBreakRewards, rollQuestRewards, type LootDrop } fro
 import { CraftingManager } from '@core/crafting/CraftingManager';
 import { LocalStorageSaveStorage, SaveManager, createEmptySave, type SaveData } from '@core/save/SaveManager';
 import { AudioManager } from '@presentation/AudioManager';
-import { PauseMenuView } from '@ui/PauseMenuView';
+import { ScreenManager } from '@ui/screens/ScreenManager';
+import { StudioScreen } from '@ui/screens/StudioScreen';
+import { TitleScreen } from '@ui/screens/TitleScreen';
+import { MenuScreen } from '@ui/screens/MenuScreen';
+import { CodexScreen } from '@ui/screens/CodexScreen';
+import { SettingsScreen, type Language } from '@ui/screens/SettingsScreen';
+import { CreditsScreen } from '@ui/screens/CreditsScreen';
+import { ResultScreen } from '@ui/screens/ResultScreen';
+import { PauseScreen } from '@ui/screens/PauseScreen';
 import type { WeaponDefinition } from '@data/schemas/weapon';
 import type { WeaponUpgradeRecipe } from '@data/schemas/recipe';
 import { Field } from '@core/world/Field';
@@ -44,7 +52,6 @@ import { createFieldView } from '@presentation/FieldView';
 import { DamageNumberView, type ScreenPoint } from '@ui/DamageNumberView';
 import { HudView, createHudModel } from '@ui/HudView';
 import { HubView } from '@ui/HubView';
-import { ResultView } from '@ui/ResultView';
 import { DebugOverlay } from '@debug/DebugOverlay';
 import { PlaytestBot } from '@debug/PlaytestBot';
 import { DebugPanel } from '@presentation/render/DebugPanel';
@@ -61,7 +68,12 @@ import { Vec3 } from '@shared/math/Vec3';
 export type GameScene = 'hub' | 'field' | 'result';
 
 const SHARPNESS_LABELS = { dull: '斬れ味: 鈍', normal: '斬れ味: 並', sharp: '斬れ味: 鋭', keen: '斬れ味: 冴' } as const;
-const FAIL_REASON_LABELS = { timeLimit: '制限時間切れ', downs: '規定回数の戦闘不能', none: '任務を中断した' } as const;
+/** 帰還の理由。「失敗」と言わず、世界の言葉で。 */
+const FAIL_REASON_LABELS = { timeLimit: '刻限が過ぎた', downs: '三度、膝をついた', none: '狩りを退いた' } as const;
+/** 獣の和名と二つ名（B5 でデータ／i18n へ移す）。 */
+const BEAST_NAMES: Record<string, { name: string; title: string }> = { valgaron: { name: 'ヴァルガロン', title: '峡谷の岩王' } };
+export const STUDIO_NAME = 'Hollow Signal';
+const LANGUAGE_KEY = 'pe.lang';
 
 /**
  * ゲーム全体の起動・シーン遷移・各システムの接続を担当する。
@@ -111,7 +123,21 @@ export class GameManager {
   readonly recipes: WeaponUpgradeRecipe[];
   readonly saveManager: SaveManager;
   readonly audio = new AudioManager();
-  private readonly pauseMenu: PauseMenuView;
+  /** 画面遷移（タイトル・メニュー・図鑑・設定・語り部・討伐/帰還・静止）。 */
+  readonly screens: ScreenManager;
+  private readonly studioScreen: StudioScreen;
+  private readonly titleScreen: TitleScreen;
+  private readonly menuScreen: MenuScreen;
+  private readonly codexScreen: CodexScreen;
+  private readonly settingsScreen: SettingsScreen;
+  private readonly resultScreen: ResultScreen;
+  private readonly pauseScreen: PauseScreen;
+  /** 設定画面から戻る先。 */
+  private settingsReturn: 'menu' | 'pause' = 'menu';
+  private lastQuestDef: QuestDefinition | null = null;
+  /** 静止を解いた直後、同じ Esc 押下で再び静止しないための猶予（実時間 ms）。 */
+  private pauseIgnoreUntil = 0;
+  private readonly questStats = { damageDealt: 0, hitsTaken: 0 };
   private paused = false;
   /** `?bot=1` で有効。通しプレイの自動検証用。 */
   bot: PlaytestBot | null = null;
@@ -147,7 +173,6 @@ export class GameManager {
   private readonly hud: HudView;
   private readonly hudModel = createHudModel();
   private readonly hubView: HubView;
-  private readonly resultView: ResultView;
 
   private readonly intent: PlayerIntent = createEmptyIntent();
   private readonly cameraForward = new Vec3();
@@ -285,9 +310,56 @@ export class GameManager {
     });
     this.damageNumbers = new DamageNumberView(uiRoot, (world, out) => this.projectToScreen(world, out));
     this.hud = new HudView(uiRoot);
-    this.hubView = new HubView(uiRoot);
-    this.resultView = new ResultView(uiRoot);
-    this.pauseMenu = new PauseMenuView(uiRoot);
+    this.hubView = new HubView();
+    this.screens = new ScreenManager(uiRoot);
+    this.studioScreen = new StudioScreen(STUDIO_NAME);
+    this.titleScreen = new TitleScreen();
+    this.menuScreen = new MenuScreen(
+      {
+        hunt: () => this.enterHub(),
+        codex: () => this.openCodex(),
+        settings: () => this.openSettings('menu'),
+        credits: () => void this.screens.show('credits'),
+      },
+      `v${__PE_BUILD_ID__}`,
+    );
+    this.menuScreen.onHover = () => this.audio.play('uiHover');
+    this.codexScreen = new CodexScreen();
+    this.codexScreen.onBack = () => this.enterMenu();
+    this.settingsScreen = new SettingsScreen(
+      { quality: this.quality.current, volume: this.audio.masterVolume, language: readLanguage() },
+      {
+        onQuality: (q) => this.quality.apply(q),
+        onVolume: (v) => this.audio.setMasterVolume(v),
+        onLanguage: (l) => writeLanguage(l),
+      },
+    );
+    this.settingsScreen.onBack = () => {
+      if (this.settingsReturn === 'pause') this.screens.showOverlay('pause');
+      else this.enterMenu();
+    };
+    this.quality.onChange((q) => this.settingsScreen.set({ quality: q }));
+    const creditsScreen = new CreditsScreen(STUDIO_NAME);
+    creditsScreen.onBack = () => this.enterMenu();
+    this.resultScreen = new ResultScreen();
+    this.resultScreen.onReturn = () => {
+      this.audio.play('uiClick');
+      this.enterHub();
+    };
+    this.resultScreen.onRetry = () => {
+      this.audio.play('uiClick');
+      if (this.lastQuestDef) this.startQuest(this.lastQuestDef);
+      else this.enterHub();
+    };
+    this.pauseScreen = new PauseScreen();
+    this.pauseScreen.onResume = () => this.setPaused(false);
+    this.pauseScreen.onSettings = () => this.openSettings('pause');
+    this.pauseScreen.onAbandon = () => {
+      this.setPaused(false);
+      this.quest?.abandon();
+    };
+    for (const screen of [this.studioScreen, this.titleScreen, this.menuScreen, this.hubView, this.codexScreen, this.settingsScreen, creditsScreen, this.resultScreen, this.pauseScreen]) this.screens.register(screen);
+
     this.hubView.onStartQuest = (quest) => {
       this.audio.unlock();
       this.audio.play('uiClick');
@@ -301,16 +373,7 @@ export class GameManager {
       this.renderHub();
     };
     this.hubView.onDeleteSave = () => this.deleteSave();
-    this.resultView.onReturn = () => {
-      this.audio.play('uiClick');
-      this.enterHub();
-    };
-    this.pauseMenu.onResume = () => this.setPaused(false);
-    this.pauseMenu.onAbandon = () => {
-      this.setPaused(false);
-      this.quest?.abandon();
-    };
-    this.pauseMenu.onVolumeChange = (v) => this.audio.setMasterVolume(v);
+    this.hubView.onBack = () => this.enterMenu();
     // 音はユーザー操作後にしか鳴らせない。最初のクリック/キーで解錠する。
     canvas.addEventListener('click', () => this.audio.unlock());
     window.addEventListener('keydown', () => this.audio.unlock(), { once: true });
@@ -360,21 +423,21 @@ export class GameManager {
   async preload(onProgress?: (ratio: number, label: string) => void): Promise<{ seconds: number }> {
     const t0 = performance.now();
     const step = (ratio: number, label: string): void => onProgress?.(ratio, label);
-    step(0.08, 'アセットを確認');
+    step(0.08, '痕跡を辿る');
     await Promise.all([this.playerView.ready, this.monsterView.ready, this.renderer.environment.ready]);
-    step(0.35, '環境光を焼き込み');
+    step(0.35, '空を写す');
     await nextFrame();
     this.renderer.environment.bakeNow();
     this.renderer.refreshShadows();
-    step(0.5, 'シェーダをコンパイル');
+    step(0.5, '刃を研ぐ');
     await nextFrame();
     await this.renderer.renderer.compileAsync(this.renderer.scene, this.renderer.camera);
-    step(0.85, '最初のフレーム');
+    step(0.85, '目を慣らす');
     await nextFrame();
     // 影マップ・ポストプロセスのレンダーターゲットをここで確保しておく
     this.render(1, 1 / 60);
     this.render(1, 1 / 60);
-    step(1, '準備完了');
+    step(1, '耳を澄ませた');
     return { seconds: (performance.now() - t0) / 1000 };
   }
 
@@ -394,6 +457,7 @@ export class GameManager {
     this.setScene('hub');
     this.quest = null;
     this.renderHub();
+    void this.screens.show('hub');
   }
 
   // ---------------- save ----------------
@@ -405,7 +469,7 @@ export class GameManager {
     this.player.equipWeapon(this.crafting.restore(save.crafting, this.baseWeapon));
     this.questClears = { ...save.questClears };
     this.audio.setMasterVolume(save.settings.masterVolume);
-    this.pauseMenu.setVolume(save.settings.masterVolume);
+    this.settingsScreen.set({ volume: save.settings.masterVolume });
     this.savedAt = save.savedAt;
   }
 
@@ -437,16 +501,71 @@ export class GameManager {
   private setPaused(paused: boolean): void {
     if (this.scene !== 'field') return;
     this.paused = paused;
-    this.pauseMenu.visible = paused;
-    this.pauseMenu.setVolume(this.audio.masterVolume);
+    if (paused) this.screens.showOverlay('pause');
+    else {
+      this.screens.hideOverlay();
+      this.pauseIgnoreUntil = performance.now() + 200;
+    }
     if (paused && document.pointerLockElement) document.exitPointerLock();
+  }
+
+  private openSettings(from: 'menu' | 'pause'): void {
+    this.settingsReturn = from;
+    this.settingsScreen.set({ quality: this.quality.current, volume: this.audio.masterVolume });
+    if (from === 'pause') this.screens.showOverlay('settings');
+    else void this.screens.show('settings');
+  }
+
+  private openCodex(): void {
+    const attempted = this.lastQuestDef !== null || Object.values(this.questClears).some((n) => n > 0);
+    const beast = BEAST_NAMES[this.monster.def.id] ?? { name: this.monster.def.name, title: '' };
+    this.codexScreen.render([
+      {
+        id: this.monster.def.id,
+        name: beast.name,
+        title: beast.title,
+        kind: '四足の原獣',
+        habitat: '翠嵐峡谷 — 苔の谷底、白瀬、獣の寝床',
+        ecology: '岩のような甲殻をまとい、日中は谷底で草食の群れを追い、白瀬で喉を潤す。深く傷つくと寝床へ退き、雨が来れば洞へ入る。',
+        hint: '甲殻の亀裂が光を帯びたとき、角に力が集まっている。尾は根元から、脚は前から。',
+        sighting: '「岩が動いた」と最初に書いた狩人は、帰ってこなかった。',
+        seen: attempted,
+      },
+    ]);
+    void this.screens.show('codex');
+  }
+
+  /** 起動時の流れ: スタジオ → タイトル（入力待ち）→ メニュー。bot 検証では飛ばす。 */
+  async showOpening(options: { skip?: boolean } = {}): Promise<void> {
+    if (options.skip) {
+      this.enterHub();
+      return;
+    }
+    await this.screens.show('studio', { instant: true });
+    await this.studioScreen.play();
+    await this.screens.show('title');
+    await this.titleScreen.waitForInput();
+    this.audio.unlock();
+    this.audio.play('uiClick');
+    this.enterMenu();
+  }
+
+  enterMenu(): void {
+    this.setScene('hub');
+    this.quest = null;
+    void this.screens.show('menu');
+  }
+
+  /** タイトルやメニューの背景で、カメラをゆっくり回す。 */
+  private get cinematic(): boolean {
+    return this.scene === 'hub' && this.screens.currentId !== 'hub';
   }
 
   private renderHub(): void {
     const weapon = this.player.combat.weapon;
     const next = this.crafting.nextRecipe(weapon.id);
     this.hubView.render({
-      playerName: 'レンジャー',
+      playerName: '狩人',
       weapons: [...this.weapons.values()].map((w) => {
         const leveled = this.crafting.weaponAtCurrentLevel(w);
         return { id: w.id, name: leveled.name, weaponPower: leveled.weaponPower, level: this.crafting.weaponLevel(w.id), equipped: w.id === this.equippedWeaponId };
@@ -502,6 +621,9 @@ export class GameManager {
     this.notices.length = 0;
     this.pouch.clear();
     for (const s of def.supplies) this.pouch.add(s.itemId, s.count);
+    this.lastQuestDef = def;
+    this.questStats.damageDealt = 0;
+    this.questStats.hitsTaken = 0;
     this.quest = new QuestManager(def, this.balance.quest);
     this.quest.start();
     this.setScene('field');
@@ -533,11 +655,14 @@ export class GameManager {
     // 剥ぎ取った素材が失われないよう、クエスト終了時点で自動記録する
     this.saveGame();
 
-    this.resultView.render({
+    const beast = BEAST_NAMES[this.monster.def.id] ?? { name: this.monster.def.name, title: '' };
+    this.resultScreen.render({
       success,
-      questName: quest.def.name,
-      failReason: FAIL_REASON_LABELS[quest.failReason ?? 'none'],
+      headline: success ? beast.name : quest.def.name,
+      subline: success ? beast.title : FAIL_REASON_LABELS[quest.failReason ?? 'none'],
       clearTimeSeconds: quest.clearTimeSeconds,
+      damageDealt: this.questStats.damageDealt,
+      hitsTaken: this.questStats.hitsTaken,
       downs: quest.downs,
       brokenParts: quest.brokenPartIds.map((id) => this.monster.getPart(id).def.name),
       rewardLines: mergeDrops(this.questLoot).map((d) => `${this.itemName(d.itemId)} ×${d.count}`),
@@ -557,10 +682,9 @@ export class GameManager {
   private setScene(scene: GameScene): void {
     this.scene = scene;
     this.hud.visible = scene === 'field';
-    this.hubView.visible = scene === 'hub';
-    this.resultView.visible = scene === 'result';
     this.paused = false;
-    this.pauseMenu.visible = false;
+    if (scene === 'field') void this.screens.show(null);
+    else if (scene === 'result') void this.screens.show('result');
     this.cameraRig.setLockOnTarget(null);
     this.loop.timeScale = 1;
     if (scene !== 'field' && document.pointerLockElement) document.exitPointerLock();
@@ -610,7 +734,11 @@ export class GameManager {
 
   private subscribeEvents(): void {
     const fb = this.balance.feedback;
+    this.events.on('playerHit', () => {
+      this.questStats.hitsTaken++;
+    });
     this.events.on('hit', (e) => {
+      this.questStats.damageDealt += e.result.total;
       if (this.bot) {
         this.bot.stats.hitsLanded++;
         this.bot.stats.damageDealt += e.result.total;
@@ -798,7 +926,8 @@ export class GameManager {
   private update(dt: number): void {
     const input = this.input.poll();
     if (this.scene !== 'field') return;
-    if (input.pausePressed) this.setPaused(!this.paused);
+    // 静止中の Esc は画面側（PauseScreen.onBack）が扱う。設定を開いているときに閉じてしまわないため
+    if (input.pausePressed && !this.paused && this.screens.isClear && performance.now() > this.pauseIgnoreUntil) this.setPaused(true);
     if (this.paused) return;
 
     // カメラ回転はシミュレーションではなく入力処理なので、timeScale=0 の Hit Stop 中でも動かす
@@ -924,6 +1053,11 @@ export class GameManager {
       this.hitboxDebugView.add(this.projectileSpheres, 'projectile');
       this.hitboxDebugView.end();
     }
+    this.cameraRig.setOrbit(this.cinematic);
+    // タイトル・メニューの背景では狩人を映さない（風景だけを見せる）
+    this.playerView.object.visible = !this.cinematic;
+    this.monsterView.object.visible = !this.cinematic;
+    this.screens.update(frameDt);
     this.cameraRig.setSpeedRatio(this.player.controller.state === 'dash' ? 1 : 0);
     this.cameraRig.update(this.playerView.renderPosition, frameDt);
     this.juice.update(frameDt);
@@ -1011,4 +1145,20 @@ function createStats(root: HTMLElement): Stats {
   stats.dom.classList.add('pe-stats');
   root.appendChild(stats.dom);
   return stats;
+}
+
+function readLanguage(): Language {
+  try {
+    return window.localStorage.getItem(LANGUAGE_KEY) === 'en' ? 'en' : 'ja';
+  } catch {
+    return 'ja';
+  }
+}
+
+function writeLanguage(language: Language): void {
+  try {
+    window.localStorage.setItem(LANGUAGE_KEY, language);
+  } catch {
+    /* 保存できない環境では無視 */
+  }
 }

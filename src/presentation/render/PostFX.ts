@@ -106,8 +106,9 @@ const GradeShader = {
       vec3 color = vec3(rC, gC, bC);
       // カラーグレード: 輝度で影/ハイライトを分け、それぞれ色を寄せる
       float luma = dot(color, vec3(0.299, 0.587, 0.114));
-      vec3 shadowTint = vec3(0.86, 0.96, 1.0);
-      vec3 highlightTint = vec3(1.0, 0.96, 0.88);
+      // 影は緑青、ハイライトは古金（docs/brand/VISUAL_IDENTITY.md §1.3）
+      vec3 shadowTint = vec3(0.84, 0.95, 0.93);
+      vec3 highlightTint = vec3(1.0, 0.95, 0.82);
       vec3 tint = mix(shadowTint, highlightTint, smoothstep(0.2, 0.8, luma));
       color = mix(color, color * tint, uGrade);
       color = mix(vec3(luma), color, uSaturation);

@@ -212,24 +212,28 @@ body {
 .pe-screen-inner { max-width: 1100px; margin: 0 auto; padding: 40px 32px 56px; }
 .pe-screen-header { margin-bottom: 24px; }
 .pe-eyebrow { font-family: var(--pe-display-font); letter-spacing: 0.3em; font-size: 12px; color: var(--pe-accent); }
-.pe-screen h1 { font-family: var(--pe-display-font); font-size: 36px; margin: 6px 0 4px; letter-spacing: 0.04em; }
+.pe-screen h1 { font-family: var(--pe-font-body); font-weight: 500; font-size: var(--pe-fs-3xl); margin: 6px 0 4px; letter-spacing: 0.12em; }
 .pe-screen h2 { font-size: 13px; letter-spacing: 0.2em; color: var(--pe-hud-dim); margin: 18px 0 8px; text-transform: uppercase; }
-.pe-screen h3 { font-size: 20px; margin: 4px 0 8px; }
+.pe-screen h3 { font-size: var(--pe-fs-lg); font-weight: 500; margin: 4px 0 8px; letter-spacing: 0.08em; }
 .pe-lead { color: var(--pe-hud-dim); margin: 0; }
 .pe-hub-columns { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 16px; }
 @media (max-width: 900px) { .pe-hub-columns { grid-template-columns: 1fr; } }
-.pe-panel { background: var(--pe-panel-bg); border: 1px solid var(--pe-line); border-radius: 6px; padding: 8px 18px 18px; }
+.pe-panel { position: relative; background: var(--pe-panel-bg); border: 1px solid var(--pe-line); border-radius: var(--pe-radius); padding: 8px 18px 18px; }
+.pe-panel::before, .pe-panel::after { content: ''; position: absolute; width: 6px; height: 6px; border: 1px solid var(--pe-accent-deep); pointer-events: none; }
+.pe-panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.pe-panel::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+.pe-hub-foot { margin-top: 20px; }
 .pe-panel h2:first-child { margin-top: 8px; }
 .pe-lines { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
 .pe-hub-status { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
-.pe-quest-card { border: 1px solid var(--pe-line); border-radius: 6px; padding: 14px 16px; }
+.pe-quest-card { border: 1px solid var(--pe-line); border-radius: var(--pe-radius); padding: 14px 16px; }
 .pe-quest-type { font-size: 11px; letter-spacing: 0.2em; color: var(--pe-accent); }
 .pe-quest-card p { color: var(--pe-hud-dim); font-size: 13px; line-height: 1.7; }
 .pe-quest-card dl, .pe-result-grid dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 8px 0 14px; font-size: 13px; }
 .pe-quest-card dt, .pe-result-grid dt { color: var(--pe-hud-dim); }
 .pe-quest-card dd, .pe-result-grid dd { margin: 0; }
 
-.pe-craft-card { border: 1px solid var(--pe-line); border-radius: 6px; padding: 14px 16px; }
+.pe-craft-card { border: 1px solid var(--pe-line); border-radius: var(--pe-radius); padding: 14px 16px; }
 .pe-craft-result { color: var(--pe-accent); font-size: 13px; margin-bottom: 8px; }
 .pe-craft-materials { padding-left: 18px; margin: 0 0 14px; font-size: 13px; line-height: 1.8; }
 .pe-craft-materials .is-short { color: var(--pe-hp-low); }
@@ -263,7 +267,7 @@ body {
 
 .pe-result-inner { text-align: center; padding-top: 80px; }
 .pe-result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: left; margin: 28px 0; }
-.pe-result-grid section { background: var(--pe-panel-bg); border: 1px solid var(--pe-line); border-radius: 6px; padding: 8px 18px 14px; }
+.pe-result-grid section { background: var(--pe-panel-bg); border: 1px solid var(--pe-line); border-radius: var(--pe-radius); padding: 8px 18px 14px; }
 .pe-result-grid ul { padding-left: 18px; margin: 0; font-size: 14px; line-height: 1.8; }
 
 /* ---------- Render debug panel (lil-gui) ---------- */
@@ -278,53 +282,6 @@ body {
   --focus-color: rgba(216, 178, 106, 0.4);
   --number-color: #d8b26a;
   font-size: 11px;
-}
-
-/* ---- ローディング画面 ---- */
-.pe-loading {
-  position: absolute;
-  inset: 0;
-  z-index: 50;
-  display: grid;
-  place-items: center;
-  background: radial-gradient(ellipse at 50% 60%, #16211c 0%, #0b0d10 70%);
-  transition: opacity 0.6s ease;
-}
-.pe-loading--done {
-  opacity: 0;
-  pointer-events: none;
-}
-.pe-loading__inner {
-  width: min(360px, 80vw);
-  text-align: center;
-}
-.pe-loading__title {
-  font-family: var(--pe-display-font);
-  font-size: 34px;
-  letter-spacing: 0.32em;
-  color: var(--pe-accent);
-}
-.pe-loading__sub {
-  margin-top: 6px;
-  font-size: 12px;
-  letter-spacing: 0.3em;
-  color: var(--pe-hud-dim);
-}
-.pe-loading__track {
-  margin: 28px auto 10px;
-  height: 3px;
-  background: var(--pe-line);
-}
-.pe-loading__bar {
-  width: 0;
-  height: 100%;
-  background: var(--pe-accent);
-  transition: width 0.25s ease;
-}
-.pe-loading__label {
-  font-size: 11px;
-  color: var(--pe-hud-dim);
-  letter-spacing: 0.1em;
 }
 
 /* stats.js は inline style で左上固定なので、オーバーレイと重ならないよう左下へ */
